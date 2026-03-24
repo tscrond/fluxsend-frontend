@@ -37,6 +37,11 @@ async function request<T>(path: string, options: RequestInit & { rawResponse?: b
     }
     return json as T;
   } catch {
+    const normalized = text.trim().toLowerCase();
+    // If an API route returns the SPA index page, force an error so callers can fallback.
+    if (normalized.startsWith('<!doctype html') || normalized.startsWith('<html')) {
+      throw new ApiError(res.status, 'Unexpected HTML response from API route');
+    }
     return text as unknown as T;
   }
 }
@@ -129,9 +134,10 @@ export function getUserBucket(): Promise<BucketData> {
   return request<BucketData>('/user/bucket');
 }
 
-export function uploadFile(file: File): Promise<{ message: string }> {
+export function uploadFile(file: File, folder?: string): Promise<{ message: string }> {
   const formData = new FormData();
   formData.append('file', file);
+  if (folder) formData.append('folder', folder);
   return request<{ message: string }>('/files/upload', {
     method: 'POST',
     body: formData,
@@ -237,5 +243,52 @@ export function deleteAccount(deleteUserData: boolean): Promise<DeleteAccountRes
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ delete_user_data: deleteUserData }),
+  });
+}
+
+// ─── Folders ────────────────────────────────────────────────────────────────
+
+export interface TreeEntry {
+  name: string;
+  file_type: string;
+  size: number;
+  md5_checksum: string;
+}
+
+export interface TreeResponse {
+  path: string;
+  folders: string[] | null;
+  files: TreeEntry[] | null;
+}
+
+export function getFilesTree(path?: string): Promise<TreeResponse> {
+  const qs = path ? `?path=${encodeURIComponent(path)}` : '';
+  return request<TreeResponse>(`/files/tree${qs}`);
+}
+
+export function getFolders(parentPath?: string): Promise<{ path: string; folders: string[] | null }> {
+  const qs = parentPath ? `?path=${encodeURIComponent(parentPath)}` : '';
+  return request<{ path: string; folders: string[] | null }>(`/folders${qs}`);
+}
+
+export function deleteFolder(folderPath: string, recursive: boolean): Promise<{ folder_deleted: string; files_deleted: number }> {
+  return request(`/folders?path=${encodeURIComponent(folderPath)}&recursive=${recursive}`, {
+    method: 'DELETE',
+  });
+}
+
+export function moveFile(source: string, destination: string): Promise<{ source: string; destination: string }> {
+  return request('/files/move', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source, destination }),
+  });
+}
+
+export function moveFolder(source: string, destination: string): Promise<{ source: string; destination: string; files_moved: number }> {
+  return request('/folders/move', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source, destination }),
   });
 }

@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { uploadFile } from '@/api';
 import { useToast } from '@/hooks/useToast';
-import { Button, Paper, Typography, IconButton, LinearProgress } from '@mui/material';
+import { Button, Paper, Typography, IconButton, LinearProgress, TextField } from '@mui/material';
 import { Upload, FileUp, CheckCircle, XCircle, X } from 'lucide-react';
 
 interface QueuedFile {
@@ -16,6 +16,7 @@ let fileId = 0;
 export default function UploadPage() {
   const [queue, setQueue] = useState<QueuedFile[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [folder, setFolder] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -41,7 +42,7 @@ export default function UploadPage() {
         prev.map((f) => (f.id === item.id ? { ...f, status: 'uploading' as const } : f)),
       );
       try {
-        await uploadFile(item.file);
+        await uploadFile(item.file, folder.trim() || undefined);
         setQueue((prev) =>
           prev.map((f) => (f.id === item.id ? { ...f, status: 'success' as const } : f)),
         );
@@ -58,7 +59,7 @@ export default function UploadPage() {
 
     const successCount = pending.length;
     toast('success', `Uploaded ${successCount} file${successCount !== 1 ? 's' : ''}`);
-  }, [queue, toast]);
+  }, [queue, folder, toast]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -83,6 +84,18 @@ export default function UploadPage() {
           Drag and drop or browse to upload
         </Typography>
       </div>
+
+      {/* Optional folder */}
+      <TextField
+        size="small"
+        label="Destination folder (optional)"
+        placeholder="e.g. work/docs"
+        value={folder}
+        onChange={(e) => setFolder(e.target.value)}
+        sx={{ maxWidth: 360, mb: 3 }}
+        fullWidth
+        helperText="Leave empty to upload to Main. Use / to nest folders (max 3 levels)."
+      />
 
       {/* Drop zone */}
       <Paper

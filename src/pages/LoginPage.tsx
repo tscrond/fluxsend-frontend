@@ -1,10 +1,12 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useThemeMode } from '@/hooks/useThemeMode';
 import { Navigate } from 'react-router';
-import { Button, CircularProgress, Typography, Box } from '@mui/material';
-import { Zap, Shield, Share2, Cloud } from 'lucide-react';
+import { Button, CircularProgress, Typography, Box, IconButton } from '@mui/material';
+import { Zap, Shield, Share2, Cloud, Sun, Moon } from 'lucide-react';
 
 export default function LoginPage() {
   const { isAuthenticated, isLoading, login } = useAuth();
+  const { mode, toggleMode } = useThemeMode();
 
   if (isLoading) {
     return (
@@ -25,7 +27,7 @@ export default function LoginPage() {
         <div className="max-w-md">
           <div className="flex items-center gap-2.5 text-2xl font-bold mb-8 opacity-90">
             <Zap size={32} />
-            <span>Dropper</span>
+            <span>FluxSend</span>
           </div>
           <h1 className="text-4xl font-extrabold leading-tight mb-4 max-md:text-2xl">
             Secure file sharing,<br />
@@ -55,7 +57,14 @@ export default function LoginPage() {
       </div>
 
       {/* Right login */}
-      <div className="flex-1 flex items-center justify-center p-12 bg-slate-50 max-md:p-8">
+      <Box className="flex-1 flex items-center justify-center p-12 max-md:p-8 relative" sx={{ bgcolor: 'background.default' }}>
+        <IconButton
+          onClick={toggleMode}
+          size="small"
+          sx={{ position: 'absolute', top: 16, right: 16 }}
+        >
+          {mode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+        </IconButton>
         <div className="max-w-sm w-full text-center">
           <Typography variant="h5" fontWeight={700} gutterBottom>
             Welcome back
@@ -92,7 +101,7 @@ export default function LoginPage() {
             By signing in, you agree to our terms and privacy policy.
           </Typography>
         </div>
-      </div>
+      </Box>
     </div>
   );
 }

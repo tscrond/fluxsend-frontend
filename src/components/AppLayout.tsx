@@ -59,7 +59,7 @@ export default function AppLayout() {
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2.5 px-5 pt-5 pb-3">
         <Zap size={22} className="text-indigo-500" />
-        <span className="text-lg font-bold text-indigo-500">Dropper</span>
+        <span className="text-lg font-bold text-indigo-500">FluxSend</span>
       </div>
       <List className="flex-1 px-3">
         {navItems.map((item) => (
