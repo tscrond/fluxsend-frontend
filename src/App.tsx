@@ -26,13 +26,17 @@ function buildTheme(mode: 'light' | 'dark') {
         : { background: { default: '#0f172a', paper: '#1e293b' } }),
     },
     typography: {
-      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+      fontFamily: "'Iosevka Charon', system-ui, -apple-system, sans-serif",
+      allVariants: { fontWeight: 700 },
+      fontWeightRegular: 700,
+      fontWeightMedium: 700,
+      fontWeightBold: 800,
     },
     shape: { borderRadius: 10 },
     components: {
       MuiButton: {
         styleOverrides: {
-          root: { textTransform: 'none', fontWeight: 500 },
+          root: { textTransform: 'none', fontWeight: 700 },
         },
       },
     },

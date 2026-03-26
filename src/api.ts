@@ -6,6 +6,22 @@ interface ApiEnvelope {
   response: unknown;
 }
 
+function getApiErrorMessage(status: number, body: string): string {
+  try {
+    const json = JSON.parse(body) as Partial<ApiEnvelope>;
+    if (typeof json.msg === 'string' && json.msg.trim() !== '') {
+      return json.msg;
+    }
+    if (typeof json.response === 'string' && json.response.trim() !== '') {
+      return json.response;
+    }
+  } catch {
+    // Fall back to a generic message when the body is not JSON.
+  }
+
+  return `Request failed (${status})`;
+}
+
 async function request<T>(path: string, options: RequestInit & { rawResponse?: boolean } = {}): Promise<T> {
   const { rawResponse, ...fetchOptions } = options;
   const url = `${API_BASE}${path}`;
@@ -24,7 +40,7 @@ async function request<T>(path: string, options: RequestInit & { rawResponse?: b
 
   if (!res.ok) {
     const body = await res.text();
-    throw new ApiError(res.status, body);
+    throw new ApiError(res.status, body, getApiErrorMessage(res.status, body));
   }
 
   // Backend may return JSON with text/plain content-type, so try parsing body as JSON
@@ -50,8 +66,8 @@ export class ApiError extends Error {
   status: number;
   body: string;
 
-  constructor(status: number, body: string) {
-    super(`API error ${status}: ${body}`);
+  constructor(status: number, body: string, message?: string) {
+    super(message ?? `Request failed (${status})`);
     this.name = 'ApiError';
     this.status = status;
     this.body = body;

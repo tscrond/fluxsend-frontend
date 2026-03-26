@@ -28,7 +28,6 @@ import {
   Settings,
   LogOut,
   Menu as MenuIcon,
-  Zap,
   Sun,
   Moon,
 } from 'lucide-react';
@@ -57,9 +56,9 @@ export default function AppLayout() {
 
   const drawerContent = (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2.5 px-5 pt-5 pb-3">
-        <Zap size={22} className="text-indigo-500" />
-        <span className="text-lg font-bold text-indigo-500">FluxSend</span>
+      <div className="flex flex-row items-center px-5 pt-5 pb-3">
+        <img src="/fs.png" alt="FluxSend logo" className="h-16 w-16" />
+        <Typography sx={{ fontSize: '1.5rem', fontWeight: 800, color: 'text.primary' }}>FluxSend</Typography>
       </div>
       <List className="flex-1 px-3">
         {navItems.map((item) => (
@@ -82,7 +81,7 @@ export default function AppLayout() {
                 </ListItemIcon>
                 <ListItemText
                   primary={item.label}
-                  primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
+                  primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 700 }}
                 />
               </ListItemButton>
             )}
@@ -108,7 +107,7 @@ export default function AppLayout() {
               </ListItemIcon>
               <ListItemText
                 primary="Settings"
-                primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
+                primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 700 }}
               />
             </ListItemButton>
           )}
@@ -144,7 +143,7 @@ export default function AppLayout() {
       )}
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex min-w-0 flex-1 flex-col min-h-screen">
         <AppBar
           position="sticky"
           color="inherit"
@@ -192,7 +191,7 @@ export default function AppLayout() {
           </Toolbar>
         </AppBar>
 
-        <main className="flex-1 p-8 max-w-6xl w-full mx-auto max-md:p-4">
+        <main className="mx-auto w-full max-w-6xl min-w-0 flex-1 p-8 max-md:p-4">
           <Outlet />
         </main>
       </div>
