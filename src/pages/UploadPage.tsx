@@ -37,28 +37,39 @@ export default function UploadPage() {
     const pending = queue.filter((f) => f.status === 'pending' || f.status === 'error');
     if (pending.length === 0) return;
 
+    let successCount = 0;
+    let errorCount = 0;
+
     for (const item of pending) {
       setQueue((prev) =>
         prev.map((f) => (f.id === item.id ? { ...f, status: 'uploading' as const } : f)),
       );
       try {
         await uploadFile(item.file, folder.trim() || undefined);
+        successCount++;
         setQueue((prev) =>
           prev.map((f) => (f.id === item.id ? { ...f, status: 'success' as const } : f)),
         );
       } catch (err) {
+        errorCount++;
+        const errorMsg = err instanceof Error ? err.message : 'Upload failed';
         setQueue((prev) =>
           prev.map((f) =>
             f.id === item.id
-              ? { ...f, status: 'error' as const, error: err instanceof Error ? err.message : 'Upload failed' }
+              ? { ...f, status: 'error' as const, error: errorMsg }
               : f,
           ),
         );
       }
     }
 
-    const successCount = pending.length;
-    toast('success', `Uploaded ${successCount} file${successCount !== 1 ? 's' : ''}`);
+    // Show appropriate toast based on actual results
+    if (successCount > 0) {
+      toast('success', `Uploaded ${successCount} file${successCount !== 1 ? 's' : ''}`);
+    }
+    if (errorCount > 0) {
+      toast('error', `Failed to upload ${errorCount} file${errorCount !== 1 ? 's' : ''}`);
+    }
   }, [queue, folder, toast]);
 
   const handleDrop = useCallback(
@@ -129,14 +140,14 @@ export default function UploadPage() {
 
       {/* Queue */}
       {queue.length > 0 && (
-        <div className="mt-7">
-          <div className="flex items-center justify-between mb-3">
+        <div className="mt-7 min-w-0">
+          <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <Typography variant="body2" color="text.secondary">
               {successCount > 0 && `${successCount} uploaded`}
               {successCount > 0 && pendingCount > 0 && ' · '}
               {pendingCount > 0 && `${pendingCount} pending`}
             </Typography>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button size="small" variant="outlined" onClick={() => setQueue([])} disabled={isUploading}>
                 Clear all
               </Button>
@@ -152,24 +163,24 @@ export default function UploadPage() {
             </div>
           </div>
 
-          <Paper variant="outlined">
+          <Paper variant="outlined" className="w-full max-w-full overflow-x-hidden">
             {queue.map((item) => (
-              <div key={item.id} className="flex items-center justify-between px-4 py-3 border-b border-slate-200 last:border-b-0">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div key={item.id} className="flex w-full min-w-0 items-start gap-1.5 border-b border-slate-200 px-2 py-2.5 last:border-b-0 sm:items-center sm:gap-2 sm:px-4 sm:py-3">
+                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                   {item.status === 'success' && <CheckCircle size={16} className="text-green-500 shrink-0" />}
                   {item.status === 'error' && <XCircle size={16} className="text-red-500 shrink-0" />}
                   {item.status === 'uploading' && <LinearProgress sx={{ width: 16, height: 16, borderRadius: '50%' }} />}
                   {item.status === 'pending' && <FileUp size={16} className="text-slate-400 shrink-0" />}
                   <div className="min-w-0 flex flex-col">
-                    <span className="text-sm font-medium truncate">{item.file.name}</span>
-                    <span className="text-xs text-slate-400">
+                    <span className="block max-w-full break-all text-sm font-medium sm:truncate sm:break-normal">{item.file.name}</span>
+                    <span className="block break-all pr-1 text-xs text-slate-400">
                       {(item.file.size / 1024).toFixed(1)} KB
-                      {item.error && <span className="text-red-500"> · {item.error}</span>}
+                      {item.error && <span className="break-all text-red-500"> · {item.error}</span>}
                     </span>
                   </div>
                 </div>
                 {item.status !== 'uploading' && (
-                  <IconButton size="small" onClick={() => removeFromQueue(item.id)}>
+                  <IconButton size="small" onClick={() => removeFromQueue(item.id)} className="shrink-0">
                     <X size={14} />
                   </IconButton>
                 )}

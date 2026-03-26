@@ -2,7 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useThemeMode } from '@/hooks/useThemeMode';
 import { Navigate } from 'react-router';
 import { Button, CircularProgress, Typography, Box, IconButton } from '@mui/material';
-import { Zap, Shield, Share2, Cloud, Sun, Moon } from 'lucide-react';
+import { Shield, Share2, Cloud, Sun, Moon } from 'lucide-react';
 
 export default function LoginPage() {
   const { isAuthenticated, isLoading, login } = useAuth();
@@ -23,11 +23,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen max-md:flex-col">
       {/* Left hero */}
-      <div className="flex-1 bg-gradient-to-br from-indigo-900 via-indigo-700 to-indigo-500 flex items-center justify-center p-12 text-white max-md:p-8">
+      <div className="flex-1 bg-linear-to-r from-black via-slate-900 to-sky-500 flex items-center justify-center p-12 text-white max-md:p-8">
         <div className="max-w-md">
-          <div className="flex items-center gap-2.5 text-2xl font-bold mb-8 opacity-90">
-            <Zap size={32} />
-            <span>FluxSend</span>
+          <div className="flex flex-row items-center mb-8 opacity-90">
+            <img src="/fs.png" alt="FluxSend logo" className="h-32 w-auto" />
+            <span className="text-2xl font-extrabold">FluxSend</span>
           </div>
           <h1 className="text-4xl font-extrabold leading-tight mb-4 max-md:text-2xl">
             Secure file sharing,<br />

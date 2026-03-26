@@ -1,8 +1,19 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  font-weight: 700;
+}
+
+.font-normal,
+.font-medium,
+.font-semibold {
+  font-weight: 700 !important;
+}
 
 @theme {
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Datatype', system-ui, -apple-system, sans-serif;
   --color-primary-50: #eef2ff;
   --color-primary-100: #e0e7ff;
   --color-primary-500: #6366f1;

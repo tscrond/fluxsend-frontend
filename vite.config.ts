@@ -14,10 +14,11 @@ export default defineConfig({
   server: {
     port: 8000,
     proxy: {
-      '/auth': { target: 'http://localhost:3000', changeOrigin: true },
-      '/files': { target: 'http://localhost:3000', changeOrigin: true },
-      '/user': { target: 'http://localhost:3000', changeOrigin: true },
-      '/d': { target: 'http://localhost:3000', changeOrigin: true },
+      '/auth/': { target: 'http://localhost:3000', changeOrigin: true },
+      '/files/': { target: 'http://localhost:3000', changeOrigin: true },
+      '/folders/': { target: 'http://localhost:3000', changeOrigin: true },
+      '/user/': { target: 'http://localhost:3000', changeOrigin: true },
+      '/d/': { target: 'http://localhost:3000', changeOrigin: true },
     },
   },
 })
