@@ -8,7 +8,7 @@ import {
 import { useToast } from '@/hooks/useToast';
 import { formatBytes, getFileIcon } from '@/lib/utils';
 import ShareModal from '@/components/ShareModal';
-import NoteModal from '@/components/NoteModal';
+import FilePreviewDrawer from '@/components/FilePreviewDrawer';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, TextField, InputAdornment, IconButton, Menu, MenuItem,
@@ -17,8 +17,9 @@ import {
   Checkbox, Toolbar,
 } from '@mui/material';
 import {
-  Download, Trash2, Share2, StickyNote, Search, FileQuestion, MoreVertical,
+  Download, Trash2, Share2, Search, FileQuestion, MoreVertical,
   Folder, FolderOpen, MoveRight, AlertTriangle,
+  Eye,
 } from 'lucide-react';
 
 // ObjectMetadata-compatible shim so ShareModal / NoteModal still work
@@ -93,8 +94,8 @@ export default function FilesPage() {
   const [menuFile, setMenuFile] = useState<TreeEntry | null>(null);
   const [menuFolder, setMenuFolder] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<FileLike[] | null>(null);
+  const [previewFile, setPreviewFile] = useState<TreeEntry | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
-  const [noteFile, setNoteFile] = useState<FileLike | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [folderDeleting, setFolderDeleting] = useState(false);
   const [batchDeleting, setBatchDeleting] = useState(false);
@@ -479,6 +480,9 @@ export default function FilesPage() {
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, color: 'text.secondary', fontSize: '0.8125rem' }}>—</TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-0.5">
+                      <IconButton size="small" onClick={() => setPreviewFile(file)} title="Preview">
+                        <Eye size={16} />
+                      </IconButton>
                       <IconButton size="small" onClick={() => handleDownload(file)} title="Download">
                         <Download size={16} />
                       </IconButton>
@@ -508,9 +512,9 @@ export default function FilesPage() {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <MenuItem onClick={() => { setMenuAnchor(null); if (menuFile) setNoteFile(treeEntryToFileLike(menuFile)); setMenuFile(null); }}>
-          <ListItemIcon><StickyNote size={16} /></ListItemIcon>
-          <ListItemText>Add Note</ListItemText>
+        <MenuItem onClick={() => { setMenuAnchor(null); if (menuFile) setPreviewFile(menuFile); setMenuFile(null); }}>
+          <ListItemIcon><Eye size={16} /></ListItemIcon>
+          <ListItemText>Preview / Note</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => { if (menuFile) openMoveDialog(menuFile.name, false); }}>
           <ListItemIcon><MoveRight size={16} /></ListItemIcon>
@@ -681,7 +685,11 @@ export default function FilesPage() {
         </Toolbar>
       )}
       {shareTarget && <ShareModal files={shareTarget} onClose={() => { setShareTarget(null); setSelectedFiles(new Set()); }} />}
-      {noteFile && <NoteModal file={noteFile} onClose={() => setNoteFile(null)} />}
+      <FilePreviewDrawer
+        open={Boolean(previewFile)}
+        file={previewFile}
+        onClose={() => setPreviewFile(null)}
+      />
     </div>
   );
 }
