@@ -167,6 +167,19 @@ export function deleteFile(fileName: string): Promise<{ file_deleted: string }> 
   );
 }
 
+export interface BatchDeleteFilesResponse {
+  files_deleted: string[];
+  files_failed: string[];
+}
+
+export function deleteFilesBatch(files: string[]): Promise<BatchDeleteFilesResponse> {
+  return request<BatchDeleteFilesResponse>('/files/delete/batch', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files }),
+  });
+}
+
 export interface PrivateTokenResponse {
   private_download_token: string;
 }
