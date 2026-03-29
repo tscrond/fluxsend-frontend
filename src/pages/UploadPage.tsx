@@ -105,7 +105,7 @@ export default function UploadPage() {
         onChange={(e) => setFolder(e.target.value)}
         sx={{ maxWidth: 360, mb: 3 }}
         fullWidth
-        helperText="Leave empty to upload to Main. Use / to nest folders (max 3 levels)."
+        helperText="Leave empty to upload to Root. Use / to nest folders (max 3 levels)."
       />
 
       {/* Drop zone */}

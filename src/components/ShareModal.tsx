@@ -1,25 +1,36 @@
 import { useState } from 'react';
-import { shareFiles, type ObjectMetadata } from '@/api';
+import { shareFiles } from '@/api';
 import { useToast } from '@/hooks/useToast';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, IconButton,
-  MenuItem, FormControlLabel, Checkbox, Typography, CircularProgress, InputAdornment,
+  MenuItem, FormControlLabel, Checkbox, Typography, CircularProgress, InputAdornment, Stack,
 } from '@mui/material';
 import { X, Send, Copy, Check } from 'lucide-react';
 
+interface ShareFile {
+  name: string;
+}
+
+interface ShareLink {
+  fileName: string;
+  url: string;
+  copied: boolean;
+}
+
 interface Props {
-  file: ObjectMetadata;
+  files: ShareFile[];
   onClose: () => void;
 }
 
-export default function ShareModal({ file, onClose }: Props) {
+export default function ShareModal({ files, onClose }: Props) {
   const [email, setEmail] = useState('');
   const [duration, setDuration] = useState('24h');
   const [sendEmail, setSendEmail] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [shareLink, setShareLink] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [shareLinks, setShareLinks] = useState<ShareLink[] | null>(null);
   const { toast } = useToast();
+
+  const isSingle = files.length === 1;
 
   const handleShare = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,28 +39,44 @@ export default function ShareModal({ file, onClose }: Props) {
     try {
       const res = await shareFiles({
         email: email.trim(),
-        objects: [file.name],
+        objects: files.map((f) => f.name),
         duration,
         send_email: sendEmail,
       });
       if (res.sharing_info?.length > 0) {
-        const token = res.sharing_info[0].sharing_token;
-        const link = `${window.location.origin}/d/${token}`;
-        setShareLink(link);
-        toast('success', 'File shared successfully');
+        setShareLinks(
+          res.sharing_info.map((info, i) => ({
+            fileName: info.file_name ?? files[i]?.name ?? '',
+            url: `${window.location.origin}/d/${info.sharing_token}`,
+            copied: false,
+          })),
+        );
+        toast('success', isSingle ? 'File shared successfully' : `${res.sharing_info.length} files shared successfully`);
       }
     } catch {
-      toast('error', 'Failed to share file');
+      toast('error', 'Failed to share file(s)');
     } finally {
       setLoading(false);
     }
   };
 
-  const copyLink = async () => {
-    if (!shareLink) return;
-    await navigator.clipboard.writeText(shareLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyLink = async (index: number) => {
+    if (!shareLinks) return;
+    await navigator.clipboard.writeText(shareLinks[index].url);
+    setShareLinks((prev) =>
+      prev
+        ? prev.map((l, i) => (i === index ? { ...l, copied: true } : l))
+        : prev,
+    );
+    setTimeout(
+      () =>
+        setShareLinks((prev) =>
+          prev
+            ? prev.map((l, i) => (i === index ? { ...l, copied: false } : l))
+            : prev,
+        ),
+      2000,
+    );
   };
 
   const durationOptions = [
@@ -62,37 +89,56 @@ export default function ShareModal({ file, onClose }: Props) {
     { value: '720h', label: '30 days' },
   ];
 
+  const title = isSingle
+    ? `Share "${files[0].name.split('/').pop()}"`
+    : `Share ${files.length} files`;
+
   return (
     <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle className="flex items-center justify-between">
-        <span className="truncate pr-4">Share &ldquo;{file.name}&rdquo;</span>
+        <span className="truncate pr-4">{title}</span>
         <IconButton size="small" onClick={onClose} edge="end"><X size={18} /></IconButton>
       </DialogTitle>
 
-      {shareLink ? (
+      {shareLinks ? (
         <>
           <DialogContent>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-              Share link created! Copy it below:
+              {isSingle ? 'Share link created! Copy it below:' : 'Share links created! Copy them below:'}
             </Typography>
-            <TextField
-              fullWidth
-              size="small"
-              value={shareLink}
-              slotProps={{
-                input: {
-                  readOnly: true,
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Button size="small" onClick={copyLink} startIcon={copied ? <Check size={14} /> : <Copy size={14} />}>
-                        {copied ? 'Copied' : 'Copy'}
-                      </Button>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              onClick={(e) => (e.target as HTMLInputElement).select?.()}
-            />
+            <Stack spacing={1.5}>
+              {shareLinks.map((link, i) => (
+                <div key={link.fileName}>
+                  {!isSingle && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                      {(link.fileName || '').split('/').pop() || link.fileName}
+                    </Typography>
+                  )}
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={link.url}
+                    slotProps={{
+                      input: {
+                        readOnly: true,
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Button
+                              size="small"
+                              onClick={() => copyLink(i)}
+                              startIcon={link.copied ? <Check size={14} /> : <Copy size={14} />}
+                            >
+                              {link.copied ? 'Copied' : 'Copy'}
+                            </Button>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                    onClick={(e) => (e.target as HTMLInputElement).select?.()}
+                  />
+                </div>
+              ))}
+            </Stack>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button onClick={onClose}>Close</Button>
@@ -101,6 +147,11 @@ export default function ShareModal({ file, onClose }: Props) {
       ) : (
         <form onSubmit={handleShare}>
           <DialogContent className="flex flex-col gap-4">
+            {!isSingle && (
+              <Typography variant="body2" color="text.secondary">
+                {files.length} files selected
+              </Typography>
+            )}
             <TextField
               type="email"
               label="Recipient email"

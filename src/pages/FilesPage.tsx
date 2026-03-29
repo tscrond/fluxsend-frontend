@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  getFilesTree, deleteFile, deleteFolder, moveFile, moveFolder,
+  getFilesTree, deleteFile, deleteFilesBatch, deleteFolder, moveFile, moveFolder,
   getPrivateDownloadToken, getPrivateDownloadUrl,
   getUserBucket,
   type TreeEntry, type TreeResponse, type ObjectMetadata,
@@ -14,10 +14,11 @@ import {
   Paper, Typography, TextField, InputAdornment, IconButton, Menu, MenuItem,
   ListItemIcon, ListItemText, Chip, CircularProgress, Box,
   Breadcrumbs, Link, Dialog, DialogTitle, DialogContent, DialogActions, Button,
+  Checkbox, Toolbar,
 } from '@mui/material';
 import {
   Download, Trash2, Share2, StickyNote, Search, FileQuestion, MoreVertical,
-  Folder, FolderOpen, MoveRight,
+  Folder, FolderOpen, MoveRight, AlertTriangle,
 } from 'lucide-react';
 
 // ObjectMetadata-compatible shim so ShareModal / NoteModal still work
@@ -78,6 +79,11 @@ function isTreeResponseLike(value: unknown): value is TreeResponse {
   return typeof candidate.path === 'string' && foldersOk && filesOk;
 }
 
+type PendingDeleteAction =
+  | { kind: 'file'; file: TreeEntry }
+  | { kind: 'folder'; folderPath: string }
+  | { kind: 'batch'; files: string[] };
+
 export default function FilesPage() {
   const [currentPath, setCurrentPath] = useState<string>('');
   const [treeData, setTreeData] = useState<TreeResponse | null>(null);
@@ -86,13 +92,32 @@ export default function FilesPage() {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [menuFile, setMenuFile] = useState<TreeEntry | null>(null);
   const [menuFolder, setMenuFolder] = useState<string | null>(null);
-  const [shareFile, setShareFile] = useState<FileLike | null>(null);
+  const [shareTarget, setShareTarget] = useState<FileLike[] | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [noteFile, setNoteFile] = useState<FileLike | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [folderDeleting, setFolderDeleting] = useState(false);
+  const [batchDeleting, setBatchDeleting] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<PendingDeleteAction | null>(null);
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [moveSource, setMoveSource] = useState<{ path: string; isFolder: boolean } | null>(null);
   const [moveDestination, setMoveDestination] = useState('');
   const { toast } = useToast();
+
+  const toggleFileSelection = (name: string) => {
+    setSelectedFiles((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (fileNames: string[]) => {
+    setSelectedFiles((prev) =>
+      prev.size === fileNames.length ? new Set() : new Set(fileNames),
+    );
+  };
 
   const fetchTree = useCallback(async (path: string) => {
     setLoading(true);
@@ -132,7 +157,7 @@ export default function FilesPage() {
     }
   }, [toast]);
 
-  useEffect(() => { fetchTree(currentPath); }, [fetchTree, currentPath]);
+  useEffect(() => { fetchTree(currentPath); setSelectedFiles(new Set()); }, [fetchTree, currentPath]);
 
   const breadcrumbs = currentPath ? currentPath.split('/') : [];
 
@@ -150,29 +175,79 @@ export default function FilesPage() {
     }
   };
 
-  const handleDeleteFile = async (file: TreeEntry) => {
-    if (!confirm(`Delete "${file.name}"? This cannot be undone.`)) return;
-    setDeleting(file.name);
-    try {
-      await deleteFile(file.name);
-      toast('success', `"${file.name.split('/').pop()}" deleted`);
-      fetchTree(currentPath);
-    } catch {
-      toast('error', 'Failed to delete file');
-    } finally {
-      setDeleting(null);
-    }
+  const handleDeleteFile = (file: TreeEntry) => {
+    setPendingDelete({ kind: 'file', file });
   };
 
-  const handleDeleteFolder = async (folderPath: string) => {
-    const name = folderPath.split('/').pop()!;
-    if (!confirm(`Delete folder "${name}" and all its contents?`)) return;
+  const handleDeleteFolder = (folderPath: string) => {
+    setPendingDelete({ kind: 'folder', folderPath });
+  };
+
+  const handleBatchDelete = () => {
+    const names = Array.from(selectedFiles);
+    if (names.length === 0) return;
+    setPendingDelete({ kind: 'batch', files: names });
+  };
+
+  const closeDeleteDialog = () => {
+    if (deleting || batchDeleting || folderDeleting) return;
+    setPendingDelete(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+
+    if (pendingDelete.kind === 'file') {
+      const { file } = pendingDelete;
+      setDeleting(file.name);
+      try {
+        await deleteFile(file.name);
+        toast('success', `"${file.name.split('/').pop()}" deleted`);
+        setSelectedFiles((prev) => {
+          const next = new Set(prev);
+          next.delete(file.name);
+          return next;
+        });
+        setPendingDelete(null);
+        fetchTree(currentPath);
+      } catch {
+        toast('error', 'Failed to delete file');
+      } finally {
+        setDeleting(null);
+      }
+      return;
+    }
+
+    if (pendingDelete.kind === 'folder') {
+      const folderName = pendingDelete.folderPath.split('/').pop() || pendingDelete.folderPath;
+      setFolderDeleting(true);
+      try {
+        await deleteFolder(pendingDelete.folderPath, true);
+        toast('success', `Folder "${folderName}" deleted`);
+        setPendingDelete(null);
+        fetchTree(currentPath);
+      } catch {
+        toast('error', 'Failed to delete folder');
+      } finally {
+        setFolderDeleting(false);
+      }
+      return;
+    }
+
+    setBatchDeleting(true);
     try {
-      await deleteFolder(folderPath, true);
-      toast('success', `Folder "${name}" deleted`);
+      const { files_deleted, files_failed } = await deleteFilesBatch(pendingDelete.files);
+      const succeeded = files_deleted.length;
+      const failed = files_failed.length;
+      if (succeeded > 0) toast('success', `${succeeded} file${succeeded !== 1 ? 's' : ''} deleted`);
+      if (failed > 0) toast('error', `${failed} file${failed !== 1 ? 's' : ''} could not be deleted`);
+      setSelectedFiles(new Set());
+      setPendingDelete(null);
       fetchTree(currentPath);
     } catch {
-      toast('error', 'Failed to delete folder');
+      toast('error', 'Failed to delete selected files');
+    } finally {
+      setBatchDeleting(false);
     }
   };
 
@@ -210,6 +285,37 @@ export default function FilesPage() {
   const filteredFolders = folders.filter((f) => f.toLowerCase().includes(search.toLowerCase()));
   const filteredFiles = files.filter((f) => f.name.toLowerCase().includes(search.toLowerCase()));
   const totalItems = folders.length + files.length;
+  const deleteDialogBusy = Boolean(deleting) || batchDeleting || folderDeleting;
+
+  const deleteDialogData = (() => {
+    if (!pendingDelete) return null;
+
+    if (pendingDelete.kind === 'file') {
+      const fileName = pendingDelete.file.name.split('/').pop() || pendingDelete.file.name;
+      return {
+        title: `Delete ${fileName}?`,
+        body: 'This file will be permanently removed. This action cannot be undone.',
+        highlight: pendingDelete.file.name,
+      };
+    }
+
+    if (pendingDelete.kind === 'folder') {
+      const folderName = pendingDelete.folderPath.split('/').pop() || pendingDelete.folderPath;
+      return {
+        title: `Delete folder ${folderName}?`,
+        body: 'All files and nested folders inside this folder will be permanently removed.',
+        highlight: pendingDelete.folderPath,
+      };
+    }
+
+    const preview = pendingDelete.files.slice(0, 3);
+    const remaining = pendingDelete.files.length - preview.length;
+    return {
+      title: `Delete ${pendingDelete.files.length} selected file${pendingDelete.files.length !== 1 ? 's' : ''}?`,
+      body: 'Selected files will be permanently removed and cannot be recovered.',
+      highlight: remaining > 0 ? `${preview.join(', ')} + ${remaining} more` : preview.join(', '),
+    };
+  })();
 
   if (loading) {
     return (
@@ -296,6 +402,15 @@ export default function FilesPage() {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    indeterminate={selectedFiles.size > 0 && selectedFiles.size < filteredFiles.length}
+                    checked={filteredFiles.length > 0 && selectedFiles.size === filteredFiles.length}
+                    onChange={() => toggleSelectAll(filteredFiles.map((f) => f.name))}
+                    disabled={filteredFiles.length === 0}
+                  />
+                </TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Size</TableCell>
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Modified</TableCell>
@@ -308,6 +423,7 @@ export default function FilesPage() {
                 const folderPath = currentPath ? `${currentPath}/${folderName}` : folderName;
                 return (
                   <TableRow key={`folder:${folderName}`} hover sx={{ cursor: 'pointer' }}>
+                    <TableCell padding="checkbox" />
                     <TableCell onClick={() => navigateTo(folderPath)}>
                       <div className="flex items-center gap-2">
                         <Folder size={18} className="text-yellow-500 shrink-0" />
@@ -330,7 +446,20 @@ export default function FilesPage() {
 
               {/* Files */}
               {filteredFiles.map((file) => (
-                <TableRow key={file.name} hover>
+                <TableRow
+                  key={file.name}
+                  hover
+                  selected={selectedFiles.has(file.name)}
+                  onClick={() => toggleFileSelection(file.name)}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      size="small"
+                      checked={selectedFiles.has(file.name)}
+                      onChange={() => toggleFileSelection(file.name)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-lg shrink-0">{getFileIcon(file.file_type)}</span>
@@ -348,12 +477,12 @@ export default function FilesPage() {
                     {formatBytes(file.size)}
                   </TableCell>
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, color: 'text.secondary', fontSize: '0.8125rem' }}>—</TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-0.5">
                       <IconButton size="small" onClick={() => handleDownload(file)} title="Download">
                         <Download size={16} />
                       </IconButton>
-                      <IconButton size="small" onClick={() => setShareFile(treeEntryToFileLike(file))} title="Share">
+                      <IconButton size="small" onClick={() => setShareTarget([treeEntryToFileLike(file)])} title="Share">
                         <Share2 size={16} />
                       </IconButton>
                       <IconButton
@@ -442,7 +571,116 @@ export default function FilesPage() {
         </DialogActions>
       </Dialog>
 
-      {shareFile && <ShareModal file={shareFile} onClose={() => setShareFile(null)} />}
+      {/* Pretty delete confirmation dialog */}
+      <Dialog open={Boolean(pendingDelete)} onClose={closeDeleteDialog} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ pb: 1.25 }}>
+          <Box className="flex items-center gap-3">
+            <Box
+              sx={{
+                width: 38,
+                height: 38,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: 'rgba(239, 68, 68, 0.16)',
+                color: 'error.main',
+              }}
+            >
+              <AlertTriangle size={18} />
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight={700} lineHeight={1.2}>
+                {deleteDialogData?.title}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Please confirm this destructive action.
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: '6px !important' }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 1.5,
+              borderColor: 'rgba(239, 68, 68, 0.4)',
+              bgcolor: 'rgba(239, 68, 68, 0.04)',
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              {deleteDialogData?.body}
+            </Typography>
+            <Typography variant="body2" fontWeight={600} sx={{ wordBreak: 'break-word' }}>
+              {deleteDialogData?.highlight}
+            </Typography>
+          </Paper>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.25 }}>
+          <Button onClick={closeDeleteDialog} disabled={deleteDialogBusy}>
+            Keep Files
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={confirmDelete}
+            disabled={deleteDialogBusy}
+            startIcon={deleteDialogBusy ? <CircularProgress size={14} color="inherit" /> : <Trash2 size={14} />}
+          >
+            {deleteDialogBusy ? 'Removing...' : 'Delete Permanently'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {selectedFiles.size > 0 && (
+        <Toolbar
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            bgcolor: 'background.paper',
+            boxShadow: 4,
+            borderRadius: 2,
+            gap: 2,
+            px: 3,
+            zIndex: 1200,
+            border: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            {selectedFiles.size} file{selectedFiles.size !== 1 ? 's' : ''} selected
+          </Typography>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<Share2 size={14} />}
+            onClick={() => {
+              const targets = filteredFiles
+                .filter((f) => selectedFiles.has(f.name))
+                .map(treeEntryToFileLike);
+              setShareTarget(targets);
+            }}
+          >
+            Share Selected
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            color="error"
+            startIcon={batchDeleting ? <CircularProgress size={14} color="inherit" /> : <Trash2 size={14} />}
+            onClick={handleBatchDelete}
+            disabled={batchDeleting}
+          >
+            {batchDeleting ? 'Deleting...' : 'Delete Selected'}
+          </Button>
+          <Button size="small" onClick={() => setSelectedFiles(new Set())}>
+            Clear
+          </Button>
+        </Toolbar>
+      )}
+      {shareTarget && <ShareModal files={shareTarget} onClose={() => { setShareTarget(null); setSelectedFiles(new Set()); }} />}
       {noteFile && <NoteModal file={noteFile} onClose={() => setNoteFile(null)} />}
     </div>
   );
