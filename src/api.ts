@@ -232,6 +232,7 @@ export interface SharedFile {
   sharing_token: string;
   created_at: string;
   expires_at: string;
+  seen: boolean;
 }
 
 export function getReceivedFiles(): Promise<{ files: SharedFile[] | null }> {
@@ -244,6 +245,36 @@ export function getSharedByUser(): Promise<{ files: SharedFile[] | null }> {
 
 export function getSharedDownloadUrl(token: string, mode: 'inline' | 'download' = 'download'): string {
   return `${API_BASE}/d/${token}?mode=${mode}`;
+}
+
+// ─── Quick Share ────────────────────────────────────────────────────────────
+
+export interface QuickShareResponse {
+  sharing_token: string;
+  expires_at: string;
+  sharing_link: string;
+}
+
+export function quickShare(object: string, duration: string): Promise<QuickShareResponse> {
+  return request<QuickShareResponse>('/files/quick_share', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ object, duration }),
+  });
+}
+
+// ─── Received / Unseen ─────────────────────────────────────────────────────
+
+export function getUnseenReceivedCount(): Promise<{ count: number }> {
+  return request<{ count: number }>('/files/received/unseen_count');
+}
+
+export function markReceivedSeen(sharingToken: string): Promise<unknown> {
+  return request('/files/received/mark_seen', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sharing_token: sharingToken }),
+  });
 }
 
 // ─── Notes ──────────────────────────────────────────────────────────────────
