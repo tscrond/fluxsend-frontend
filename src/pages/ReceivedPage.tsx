@@ -1,14 +1,23 @@
-import { useState, useEffect } from 'react';
-import { getReceivedFiles, getSharedDownloadUrl, type SharedFile } from '@/api';
+import { useState, useEffect, useCallback } from 'react';
+import { getReceivedFiles, getSharedDownloadUrl, markReceivedSeen, type SharedFile } from '@/api';
 import { useToast } from '@/hooks/useToast';
 import { formatBytes, formatDateFull, isExpired, getFileIcon } from '@/lib/utils';
+import ReceivedFilePreviewDrawer from '@/components/ReceivedFilePreviewDrawer';
 import { Paper, Typography, Chip, Button, CircularProgress, Box } from '@mui/material';
-import { Inbox, Download, Clock } from 'lucide-react';
+import { Inbox, Download, Clock, Eye } from 'lucide-react';
 
 export default function ReceivedPage() {
   const [files, setFiles] = useState<SharedFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [previewFile, setPreviewFile] = useState<SharedFile | null>(null);
   const { toast } = useToast();
+
+  const markSeen = useCallback((token: string) => {
+    setFiles(prev =>
+      prev.map(f => f.sharing_token === token ? { ...f, seen: true } : f)
+    );
+    markReceivedSeen(token).catch(() => {});
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -51,15 +60,26 @@ export default function ReceivedPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {files.map((file, idx) => {
             const expired = isExpired(file.expires_at);
+            const unseen = !file.seen && !expired;
             return (
-              <Paper key={`${file.sharing_token}-${idx}`} variant="outlined" className="p-5 hover:shadow-md transition-shadow">
+              <Paper
+                key={`${file.sharing_token}-${idx}`}
+                variant="outlined"
+                className="p-5 hover:shadow-md transition-shadow"
+                sx={unseen ? { borderColor: 'primary.main', borderWidth: 2 } : undefined}
+              >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-2xl">{getFileIcon(file.file_type)}</span>
-                  <Chip
-                    label={expired ? 'Expired' : 'Active'}
-                    size="small"
-                    color={expired ? 'error' : 'success'}
-                  />
+                  <div className="flex items-center gap-1.5">
+                    {unseen && (
+                      <Chip label="New" size="small" color="primary" />
+                    )}
+                    <Chip
+                      label={expired ? 'Expired' : 'Active'}
+                      size="small"
+                      color={expired ? 'error' : 'success'}
+                    />
+                  </div>
                 </div>
                 <Typography variant="subtitle2" className="truncate" sx={{ mb: 1 }}>
                   {file.file_name}
@@ -74,22 +94,41 @@ export default function ReceivedPage() {
                   <span>Expires: {formatDateFull(file.expires_at)}</span>
                 </div>
                 {!expired && (
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    href={getSharedDownloadUrl(file.sharing_token)}
-                    target="_blank"
-                    startIcon={<Download size={14} />}
-                    sx={{ mt: 2 }}
-                  >
-                    Download
-                  </Button>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => {
+                        setPreviewFile(file);
+                        markSeen(file.sharing_token);
+                      }}
+                      startIcon={<Eye size={14} />}
+                    >
+                      Preview
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      href={getSharedDownloadUrl(file.sharing_token)}
+                      target="_blank"
+                      onClick={() => markSeen(file.sharing_token)}
+                      startIcon={<Download size={14} />}
+                    >
+                      Download
+                    </Button>
+                  </div>
                 )}
               </Paper>
             );
           })}
         </div>
       )}
+
+      <ReceivedFilePreviewDrawer
+        open={Boolean(previewFile)}
+        file={previewFile}
+        onClose={() => setPreviewFile(null)}
+      />
     </div>
   );
 }

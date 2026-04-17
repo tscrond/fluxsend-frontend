@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeMode } from '@/hooks/useThemeMode';
+import { getUnseenReceivedCount } from '@/api';
 import {
   Drawer,
   AppBar,
@@ -17,6 +18,7 @@ import {
   Box,
   List,
   ListItemButton,
+  Badge,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -46,13 +48,38 @@ export default function AppLayout() {
   const { mode, toggleMode } = useThemeMode();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [unseenCount, setUnseenCount] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
 
+  const fetchUnseenCount = useCallback(async () => {
+    try {
+      const { count } = await getUnseenReceivedCount();
+      setUnseenCount(count);
+    } catch {
+      // silently ignore
+    }
+  }, []);
+
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  // Fetch unseen count on mount and on window focus
+  useEffect(() => {
+    fetchUnseenCount();
+    const onFocus = () => fetchUnseenCount();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [fetchUnseenCount]);
+
+  // Re-fetch when navigating away from received page (user may have previewed files)
+  useEffect(() => {
+    if (location.pathname !== '/received') {
+      fetchUnseenCount();
+    }
+  }, [location.pathname, fetchUnseenCount]);
 
   const drawerContent = (
     <div className="flex flex-col h-full">
@@ -77,7 +104,13 @@ export default function AppLayout() {
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                  <item.icon size={18} />
+                  {item.to === '/received' && unseenCount > 0 ? (
+                    <Badge badgeContent={unseenCount} color="error" max={99}>
+                      <item.icon size={18} />
+                    </Badge>
+                  ) : (
+                    <item.icon size={18} />
+                  )}
                 </ListItemIcon>
                 <ListItemText
                   primary={item.label}

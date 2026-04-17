@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getNote, getPrivateDownloadToken, getPrivateDownloadUrl, saveNote, type TreeEntry } from '@/api';
+import { getNote, getPrivateDownloadToken, getPrivateDownloadUrl, quickShare, saveNote, type TreeEntry } from '@/api';
 import { useToast } from '@/hooks/useToast';
 import {
   Drawer,
@@ -12,8 +12,10 @@ import {
   Button,
   CircularProgress,
   TextField,
+  MenuItem,
+  InputAdornment,
 } from '@mui/material';
-import { X, Eye, Image as ImageIcon, Music2, Video, FileText, ExternalLink, Save } from 'lucide-react';
+import { X, Eye, Image as ImageIcon, Music2, Video, FileText, ExternalLink, Save, Link2, Copy, Check } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -78,6 +80,11 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
   const [noteLoading, setNoteLoading] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
 
+  const [quickShareDuration, setQuickShareDuration] = useState('24h');
+  const [quickShareLoading, setQuickShareLoading] = useState(false);
+  const [quickShareUrl, setQuickShareUrl] = useState<string | null>(null);
+  const [quickShareCopied, setQuickShareCopied] = useState(false);
+
   const { toast } = useToast();
 
   const kind = useMemo(() => getMediaKind(file), [file]);
@@ -93,6 +100,9 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
       setNote('');
       setNoteLoading(false);
       setNoteSaving(false);
+      setQuickShareUrl(null);
+      setQuickShareCopied(false);
+      setQuickShareLoading(false);
       return;
     }
 
@@ -146,6 +156,39 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
     } finally {
       setNoteSaving(false);
     }
+  };
+
+  const durationOptions = [
+    { value: '30m', label: '30 minutes' },
+    { value: '1h', label: '1 hour' },
+    { value: '6h', label: '6 hours' },
+    { value: '24h', label: '24 hours' },
+    { value: '72h', label: '3 days' },
+    { value: '168h', label: '7 days' },
+    { value: '720h', label: '30 days' },
+  ];
+
+  const handleQuickShare = async () => {
+    if (!file) return;
+
+    setQuickShareLoading(true);
+    try {
+      const res = await quickShare(file.name, quickShareDuration);
+      const url = `${window.location.origin}/d/${res.sharing_token}`;
+      setQuickShareUrl(url);
+      toast('success', 'Public link created');
+    } catch {
+      toast('error', 'Failed to create quick share link');
+    } finally {
+      setQuickShareLoading(false);
+    }
+  };
+
+  const handleCopyQuickShare = async () => {
+    if (!quickShareUrl) return;
+    await navigator.clipboard.writeText(quickShareUrl);
+    setQuickShareCopied(true);
+    setTimeout(() => setQuickShareCopied(false), 2000);
   };
 
   const renderPreview = () => {
@@ -300,6 +343,60 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
                 <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>{file?.md5_checksum || '-'}</Typography>
               </Box>
             </Box>
+          </Paper>
+
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Box className="flex items-center justify-between" sx={{ mb: 1.25 }}>
+              <Typography variant="subtitle2" fontWeight={700}>Quick Share Link</Typography>
+            </Box>
+            {quickShareUrl ? (
+              <TextField
+                fullWidth
+                size="small"
+                value={quickShareUrl}
+                slotProps={{
+                  input: {
+                    readOnly: true,
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Button
+                          size="small"
+                          onClick={handleCopyQuickShare}
+                          startIcon={quickShareCopied ? <Check size={14} /> : <Copy size={14} />}
+                        >
+                          {quickShareCopied ? 'Copied' : 'Copy'}
+                        </Button>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                onClick={(e) => (e.target as HTMLInputElement).select?.()}
+              />
+            ) : (
+              <Box className="flex items-center gap-2">
+                <TextField
+                  select
+                  size="small"
+                  label="Expires in"
+                  value={quickShareDuration}
+                  onChange={(e) => setQuickShareDuration(e.target.value)}
+                  sx={{ minWidth: 150 }}
+                >
+                  {durationOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </TextField>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={quickShareLoading ? <CircularProgress size={14} color="inherit" /> : <Link2 size={14} />}
+                  onClick={handleQuickShare}
+                  disabled={quickShareLoading || !file}
+                >
+                  {quickShareLoading ? 'Creating...' : 'Generate Link'}
+                </Button>
+              </Box>
+            )}
           </Paper>
 
           <Paper variant="outlined" sx={{ p: 2 }}>
