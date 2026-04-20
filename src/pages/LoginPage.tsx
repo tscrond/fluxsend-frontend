@@ -7,7 +7,6 @@ import { Shield, Share2, Cloud, Sun, Moon, Terminal } from 'lucide-react';
 export default function LoginPage() {
   const { isAuthenticated, isLoading, login } = useAuth();
   const { mode, toggleMode } = useThemeMode();
-  const dark = mode === 'dark';
 
   if (isLoading) {
     return (
