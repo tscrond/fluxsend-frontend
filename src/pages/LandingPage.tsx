@@ -59,108 +59,17 @@ const features = [
   },
 ];
 
-// Stylised terminal-style mockup blocks
-const MockupBlock = ({ dark }: { dark: boolean }) => (
-  <Paper
-    variant="outlined"
-    sx={{
-      borderColor: dark ? '#30363d' : '#d0d7de',
-      backgroundColor: dark ? '#161b22' : '#ffffff',
-      borderRadius: 2,
-      overflow: 'hidden',
-      width: '100%',
-      maxWidth: 680,
-      mx: 'auto',
-    }}
-  >
-    {/* Window chrome */}
-    <Box
-      sx={{
-        px: 2,
-        py: 1.25,
-        borderBottom: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
-        backgroundColor: dark ? '#0d1117' : '#f6f8fa',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-      }}
-    >
-      {['#f85149', '#d29922', '#3fb950'].map((c) => (
-        <Box key={c} sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: c }} />
-      ))}
-      <Typography variant="caption" color="text.disabled" sx={{ ml: 1, fontFamily: 'monospace' }}>
-        fluxsend — file manager
-      </Typography>
-    </Box>
-
-    {/* Fake file table rows */}
-    <Box sx={{ p: 0 }}>
-      {[
-        { name: 'project-report-final.pdf', size: '1.4 MB', type: 'PDF', shared: true },
-        { name: 'architecture-diagram.png', size: '890 KB', type: 'Image', shared: false },
-        { name: 'deployment-notes.md', size: '12 KB', type: 'Text', shared: false },
-        { name: 'backup-2026-04.tar.gz', size: '48 MB', type: 'Archive', shared: false },
-      ].map((row, i) => (
-        <Box
-          key={row.name}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            px: 2,
-            py: 1.25,
-            gap: 2,
-            borderBottom: i < 3 ? `1px solid ${dark ? '#21262d' : '#eaecef'}` : 'none',
-            '&:hover': { backgroundColor: dark ? 'rgba(177,186,196,0.07)' : 'rgba(31,35,40,0.04)' },
-          }}
-        >
-          <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: 1,
-              backgroundColor: dark ? '#21262d' : '#f6f8fa',
-              border: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Typography variant="caption" sx={{ fontSize: '0.6rem', fontFamily: 'monospace', color: dark ? '#7d8590' : '#57606a' }}>
-              {row.type.substring(0, 3).toUpperCase()}
-            </Typography>
-          </Box>
-          <Typography variant="body2" sx={{ flex: 1, fontFamily: 'monospace', fontSize: '0.8rem' }}>
-            {row.name}
-          </Typography>
-          <Typography variant="caption" color="text.disabled" sx={{ fontFamily: 'monospace' }}>
-            {row.size}
-          </Typography>
-          {row.shared && (
-            <Box
-              sx={{
-                px: 0.75,
-                py: 0.2,
-                borderRadius: 0.75,
-                backgroundColor: 'rgba(99,102,241,0.12)',
-                border: '1px solid rgba(99,102,241,0.3)',
-              }}
-            >
-              <Typography variant="caption" sx={{ color: '#6366f1', fontSize: '0.65rem', fontFamily: 'monospace' }}>
-                shared
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      ))}
-    </Box>
-  </Paper>
-);
-
 export default function LandingPage() {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { mode } = useThemeMode();
   const dark = mode === 'dark';
+
+  const scrollToSection = (id: 'home' | 'features' | 'start') => {
+    const section = document.getElementById(id);
+    if (!section) return;
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Redirect authenticated users straight to the app
   useEffect(() => {
@@ -175,6 +84,23 @@ export default function LandingPage() {
     <Box
       sx={{
         minHeight: '100vh',
+        scrollBehavior: 'smooth',
+        msOverflowStyle: 'none',
+        scrollbarWidth: 'none',
+        '&::-webkit-scrollbar': {
+          display: 'none',
+          width: 0,
+          height: 0,
+        },
+        '& *::-webkit-scrollbar': {
+          display: 'none',
+          width: 0,
+          height: 0,
+        },
+        '& *': {
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        },
         backgroundColor: dark ? '#0d1117' : '#f6f8fa',
         color: dark ? '#e6edf3' : '#1f2328',
       }}
@@ -195,18 +121,39 @@ export default function LandingPage() {
           backgroundColor: dark ? '#0d1117' : '#f6f8fa',
         }}
       >
+        <div className="flex items-center align-left gap-2">
+        <img src="/fs.png" alt="FluxSend logo" className="h-6 sm:h-8 w-auto opacity-90" />
         <Typography
           variant="h6"
           fontWeight={800}
           sx={{ letterSpacing: '-0.02em', color: dark ? '#e6edf3' : '#1f2328' }}
         >
-          Flux<span style={{ color: '#6366f1' }}>Send</span>
+          FLUX<span style={{ color: '#6366f1' }}>SEND</span>
         </Typography>
+        </div>
+
+        <div className="flex items-center align-left gap-2">
         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
           <Button
             variant="text"
             size="small"
-            href="https://github.com"
+            onClick={() => scrollToSection('home')}
+            sx={{ color: dark ? '#7d8590' : '#57606a', display: { xs: 'none', md: 'inline-flex' } }}
+          >
+            Home
+          </Button>
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => scrollToSection('features')}
+            sx={{ color: dark ? '#7d8590' : '#57606a', display: { xs: 'none', md: 'inline-flex' } }}
+          >
+            Features
+          </Button>
+          <Button
+            variant="text"
+            size="small"
+            href="https://github.com/tscrond/fluxsend-backend"
             target="_blank"
             startIcon={<Github size={15} />}
             sx={{ color: dark ? '#7d8590' : '#57606a' }}
@@ -222,30 +169,48 @@ export default function LandingPage() {
             Sign in
           </Button>
         </Box>
+        </div>
+
+
       </Box>
 
       {/* ── Hero ── */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
+      <Box
+        id="home"
+        component="section"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+      <motion.div
+        initial={{ opacity: 0, y: 26, filter: 'blur(4px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        transition={{ duration: 0.65, ease: 'easeOut' }}
+        style={{ width: '100%' }}
+      >
         <Container maxWidth="md" sx={{ pt: { xs: 8, md: 12 }, pb: { xs: 6, md: 10 }, textAlign: 'center' }}>
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }}>
+          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.05 }}>
             <Box
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 0.75,
-            px: 1.5,
-            py: 0.5,
+            px: { xs: 1.5, md: 2 },
+            py: { xs: 0.5, md: 0.75 },
             mb: 4,
             borderRadius: 5,
             border: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
             backgroundColor: dark ? '#161b22' : '#ffffff',
           }}
             >
-              <Box sx={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#3fb950' }} />
-              <Typography variant="caption" sx={{ fontFamily: 'monospace', color: dark ? '#7d8590' : '#57606a', fontSize: '0.72rem' }}>
-                self-hosted · open source
-              </Typography>
-            </Box>
+              <Box sx={{ width: { xs: 6, md: 8 }, height: { xs: 6, md: 8 }, borderRadius: '50%', backgroundColor: '#3fb950' }} />
+                <Typography variant="caption" sx={{ fontFamily: 'monospace', color: dark ? '#7d8590' : '#57606a', fontSize: { xs: '0.6rem', md: '0.72rem' } }}>
+                  self-hostable · open source · developer-friendly
+                </Typography>
+              </Box>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.12 }}>
@@ -278,7 +243,7 @@ export default function LandingPage() {
             </Typography>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.3 }}>
+          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button
                 variant="contained"
@@ -291,6 +256,8 @@ export default function LandingPage() {
                   px: 3.5,
                   py: 1.25,
                   fontSize: '0.95rem',
+                  transition: 'transform 0.2s ease',
+                  '&:active': { transform: 'scale(0.98)' },
                 }}
               >
                 Get Started
@@ -298,7 +265,7 @@ export default function LandingPage() {
               <Button
                 variant="outlined"
                 size="large"
-                href="#features"
+                onClick={() => scrollToSection('features')}
                 sx={{ px: 3.5, py: 1.25, fontSize: '0.95rem' }}
               >
                 See Features
@@ -307,9 +274,10 @@ export default function LandingPage() {
           </motion.div>
         </Container>
       </motion.div>
+      </Box>
 
       {/* ── Mockup preview ── */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.35 }}
@@ -324,17 +292,27 @@ export default function LandingPage() {
           <MockupBlock dark={dark} />
         </Box>
         </Container>
-      </motion.div>
+      </motion.div> */}
 
       <Divider sx={{ borderColor: dark ? '#30363d' : '#d0d7de' }} />
 
       {/* ── Features ── */}
-      <Container maxWidth="lg" id="features" sx={{ py: { xs: 8, md: 12 } }}>
+      <Box
+        id="features"
+        component="section"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
         <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 28, filter: 'blur(4px)' }}
+          whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           viewport={{ once: true, amount: 0.45 }}
-          transition={{ duration: 0.45 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography
@@ -356,10 +334,10 @@ export default function LandingPage() {
           {features.map((f, i) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={f.title}>
               <motion.div
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 22, filter: 'blur(3px)' }}
+                whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.35, delay: i * 0.04 }}
+                transition={{ duration: 0.5, delay: i * 0.06, ease: 'easeOut' }}
               >
                 <Paper
                   variant="outlined"
@@ -371,7 +349,7 @@ export default function LandingPage() {
                     transition: 'border-color 0.15s, transform 0.15s',
                     '&:hover': {
                       borderColor: '#6366f1',
-                      transform: 'translateY(-2px)',
+                      transform: 'translateY(-3px)',
                     },
                   }}
                 >
@@ -403,15 +381,27 @@ export default function LandingPage() {
           ))}
         </Grid>
       </Container>
+      </Box>
 
       <Divider sx={{ borderColor: dark ? '#30363d' : '#d0d7de' }} />
 
       {/* ── CTA banner ── */}
+      <Box
+        id="start"
+        component="section"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 28, filter: 'blur(4px)' }}
+        whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
         viewport={{ once: true, amount: 0.5 }}
-        transition={{ duration: 0.45 }}
+        transition={{ duration: 0.62, ease: 'easeOut' }}
+        style={{ width: '100%' }}
       >
         <Container maxWidth="md" sx={{ py: { xs: 8, md: 12 }, textAlign: 'center' }}>
         <Typography variant="h4" fontWeight={800} sx={{ mb: 2, letterSpacing: '-0.02em' }}>
@@ -431,12 +421,15 @@ export default function LandingPage() {
             px: 4,
             py: 1.25,
             fontSize: '0.95rem',
+            transition: 'transform 0.2s ease',
+            '&:active': { transform: 'scale(0.98)' },
           }}
         >
           Get Started
         </Button>
         </Container>
       </motion.div>
+      </Box>
 
       <Divider sx={{ borderColor: dark ? '#30363d' : '#d0d7de' }} />
 
@@ -459,8 +452,8 @@ export default function LandingPage() {
             gap: 2,
           }}
         >
-          <Typography variant="body2" color="text.disabled" fontWeight={700}>
-            Flux<span style={{ color: '#6366f1' }}>Send</span>
+          <Typography variant="body2" color="text.disabled" fontWeight='bolder'>
+            FLUX<span style={{ color: '#6366f1' }}>SEND</span>
           </Typography>
           <Typography variant="caption" color="text.disabled">
             Self-hosted · Secure · Open source
@@ -468,7 +461,7 @@ export default function LandingPage() {
           <Button
             variant="text"
             size="small"
-            href="https://github.com"
+            href="https://github.com/tscrond/fluxsend-backend"
             target="_blank"
             startIcon={<Github size={14} />}
             sx={{ color: dark ? '#7d8590' : '#57606a', minWidth: 0 }}

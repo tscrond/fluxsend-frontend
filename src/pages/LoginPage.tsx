@@ -7,6 +7,7 @@ import { Shield, Share2, Cloud, Sun, Moon, Terminal } from 'lucide-react';
 export default function LoginPage() {
   const { isAuthenticated, isLoading, login } = useAuth();
   const { mode, toggleMode } = useThemeMode();
+  const dark = mode === 'dark';
 
   if (isLoading) {
     return (
@@ -29,13 +30,14 @@ export default function LoginPage() {
       >
         <div className="max-w-md w-full">
           <div className="flex flex-row items-center mb-10 gap-3">
-            {/* <img src="/fs.png" alt="FluxSend logo" className="h-32 w-auto opacity-90" /> */}
-            <span
-              className="sm:text-2xl text-xl font-extrabold tracking-widest uppercase"
-              style={{ fontFamily: 'monospace', color: '#7d8590', letterSpacing: '0.12em' }}
+            <img src="/fs.png" alt="FluxSend logo" className="h-8 sm:h-16 w-auto opacity-90" />
+            <Typography
+              variant="h4"
+              fontWeight={800}
+              sx={{ letterSpacing: '-0.02em', color: '#e6edf3' }}
             >
-              fluxsend
-            </span>
+              FLUX<span style={{ color: '#6366f1' }}>SEND</span>
+            </Typography>
           </div>
           <div
             className="text-xs font-mono mb-4 px-2 py-1 rounded inline-flex items-center gap-1.5"
