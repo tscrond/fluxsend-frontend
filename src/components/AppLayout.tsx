@@ -34,7 +34,7 @@ import {
   Moon,
 } from 'lucide-react';
 
-const DRAWER_WIDTH = 260;
+const DRAWER_WIDTH = 240;
 
 const navItems = [
   { to: '/files', label: 'My Files', icon: FolderOpen },
@@ -83,23 +83,26 @@ export default function AppLayout() {
 
   const drawerContent = (
     <div className="flex flex-col h-full">
-      <div className="flex flex-row items-center px-5 pt-5 pb-3">
-        <img src="/fs.png" alt="FluxSend logo" className="h-16 w-16" />
-        <Typography sx={{ fontSize: '1.5rem', fontWeight: 800, color: 'text.primary' }}>FluxSend</Typography>
+      <div className="flex flex-row items-center px-4 pt-4 pb-3 gap-2">
+        <img src="/fs.png" alt="FluxSend logo" className="h-8 w-8" />
+        <Typography sx={{ fontSize: '0.95rem', fontWeight: 800, color: 'text.primary', letterSpacing: '0.04em', fontFamily: 'monospace' }}>fluxsend</Typography>
       </div>
-      <List className="flex-1 px-3">
+      <List className="flex-1 px-2">
         {navItems.map((item) => (
           <NavLink key={item.to} to={item.to} className="no-underline">
             {({ isActive }) => (
               <ListItemButton
                 selected={isActive}
                 sx={{
-                  borderRadius: 2,
-                  mb: 0.5,
+                  borderRadius: 1,
+                  mb: 0.25,
+                  pl: isActive ? 1.5 : 2,
+                  borderLeft: isActive ? '3px solid' : '3px solid transparent',
+                  borderColor: isActive ? 'primary.main' : 'transparent',
                   '&.Mui-selected': {
-                    bgcolor: 'primary.50',
+                    bgcolor: 'action.selected',
                     color: 'primary.main',
-                    '&:hover': { bgcolor: 'primary.100' },
+                    '&:hover': { bgcolor: 'action.selected' },
                   },
                 }}
               >
@@ -122,15 +125,18 @@ export default function AppLayout() {
         ))}
       </List>
       <Divider />
-      <List className="px-3 pb-3">
+      <List className="px-2 pb-2">
         <NavLink to="/settings" className="no-underline">
           {({ isActive }) => (
             <ListItemButton
               selected={isActive}
               sx={{
-                borderRadius: 2,
+                borderRadius: 1,
+                pl: isActive ? 1.5 : 2,
+                borderLeft: isActive ? '3px solid' : '3px solid transparent',
+                borderColor: isActive ? 'primary.main' : 'transparent',
                 '&.Mui-selected': {
-                  bgcolor: 'primary.50',
+                  bgcolor: 'action.selected',
                   color: 'primary.main',
                 },
               }}
@@ -158,7 +164,7 @@ export default function AppLayout() {
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
           ModalProps={{ keepMounted: true }}
-          sx={{ '& .MuiDrawer-paper': { width: DRAWER_WIDTH } }}
+          sx={{ '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box' } }}
         >
           {drawerContent}
         </Drawer>
@@ -224,7 +230,7 @@ export default function AppLayout() {
           </Toolbar>
         </AppBar>
 
-        <main className="mx-auto w-full max-w-6xl min-w-0 flex-1 p-8 max-md:p-4">
+        <main className="mx-auto w-full max-w-5xl min-w-0 flex-1 p-6 max-md:p-4">
           <Outlet />
         </main>
       </div>

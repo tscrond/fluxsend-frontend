@@ -366,6 +366,7 @@ export default function FilesPage() {
       </Breadcrumbs>
 
       {totalItems > 0 && (
+        <div className="mb-4">
         <TextField
           size="small"
           placeholder="Search in this folder..."
@@ -384,6 +385,7 @@ export default function FilesPage() {
             },
           }}
         />
+        </div>
       )}
 
       {totalItems === 0 ? (
@@ -463,7 +465,8 @@ export default function FilesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-lg shrink-0">{getFileIcon(file.file_type)}</span>
+                      {/* <span className="text-lg shrink-0">{}</span> */}
+                      {getFileIcon(file.file_type)}
                       <span className="truncate font-medium text-sm">{file.name.split('/').pop()}</span>
                       <Chip
                         label={file.file_type?.split('/')[1]?.toUpperCase() ?? file.file_type ?? 'FILE'}

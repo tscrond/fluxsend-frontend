@@ -12,31 +12,99 @@ import UploadPage from '@/pages/UploadPage';
 import SharedPage from '@/pages/SharedPage';
 import ReceivedPage from '@/pages/ReceivedPage';
 import SettingsPage from '@/pages/SettingsPage';
+import LandingPage from '@/pages/LandingPage';
 
 function buildTheme(mode: 'light' | 'dark') {
+  const isDark = mode === 'dark';
   return createTheme({
     palette: {
       mode,
       primary: { main: '#6366f1', light: '#818cf8', dark: '#4f46e5' },
-      error: { main: '#ef4444' },
-      success: { main: '#22c55e' },
-      warning: { main: '#f59e0b' },
-      ...(mode === 'light'
-        ? { background: { default: '#f8fafc', paper: '#ffffff' } }
-        : { background: { default: '#0f172a', paper: '#1e293b' } }),
+      error: { main: '#f85149' },
+      success: { main: '#3fb950' },
+      warning: { main: '#d29922' },
+      divider: isDark ? '#30363d' : '#d0d7de',
+      text: {
+        primary: isDark ? '#e6edf3' : '#1f2328',
+        secondary: isDark ? '#7d8590' : '#57606a',
+        disabled: isDark ? '#484f58' : '#8c959f',
+      },
+      background: isDark
+        ? { default: '#0d1117', paper: '#161b22' }
+        : { default: '#f6f8fa', paper: '#ffffff' },
+      action: {
+        hover: isDark ? 'rgba(177,186,196,0.07)' : 'rgba(31,35,40,0.05)',
+        selected: isDark ? 'rgba(99,102,241,0.15)' : 'rgba(99,102,241,0.08)',
+      },
     },
     typography: {
-      fontFamily: "'Iosevka Charon', system-ui, -apple-system, sans-serif",
+      fontFamily: "'Datatype', system-ui, -apple-system, sans-serif",
       allVariants: { fontWeight: 700 },
       fontWeightRegular: 700,
       fontWeightMedium: 700,
       fontWeightBold: 800,
     },
-    shape: { borderRadius: 10 },
+    shape: { borderRadius: 6 },
     components: {
       MuiButton: {
         styleOverrides: {
-          root: { textTransform: 'none', fontWeight: 700 },
+          root: { textTransform: 'none', fontWeight: 700, letterSpacing: '0.01em' },
+          outlined: {
+            borderColor: isDark ? '#30363d' : '#d0d7de',
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          outlined: {
+            borderColor: isDark ? '#30363d' : '#d0d7de',
+          },
+        },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          notchedOutline: {
+            borderColor: isDark ? '#30363d' : '#d0d7de',
+          },
+        },
+      },
+      MuiDivider: {
+        styleOverrides: {
+          root: { borderColor: isDark ? '#30363d' : '#d0d7de' },
+        },
+      },
+      MuiTableCell: {
+        styleOverrides: {
+          root: { borderColor: isDark ? '#21262d' : '#eaecef' },
+          head: {
+            backgroundColor: isDark ? '#161b22' : '#f6f8fa',
+            color: isDark ? '#7d8590' : '#57606a',
+            fontWeight: 700,
+            fontSize: '0.75rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+          },
+        },
+      },
+      MuiChip: {
+        styleOverrides: {
+          root: { fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.04em' },
+        },
+      },
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            backgroundColor: isDark ? '#0d1117' : '#f6f8fa',
+            borderColor: isDark ? '#30363d' : '#d0d7de',
+          },
+        },
+      },
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            backgroundColor: isDark ? '#0d1117' : '#f6f8fa',
+            borderColor: isDark ? '#30363d' : '#d0d7de',
+          },
         },
       },
     },
@@ -44,6 +112,10 @@ function buildTheme(mode: 'light' | 'dark') {
 }
 
 const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <LandingPage />,
+  },
   {
     path: '/login',
     element: <LoginPage />,
@@ -54,7 +126,6 @@ const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { index: true, element: <Navigate to="/files" replace /> },
           { path: 'files', element: <FilesPage /> },
           { path: 'upload', element: <UploadPage /> },
           { path: 'shared', element: <SharedPage /> },
@@ -66,7 +137,7 @@ const router = createBrowserRouter([
   },
   {
     path: '*',
-    element: <Navigate to="/files" replace />,
+    element: <Navigate to="/" replace />,
   },
 ]);
 
