@@ -1,3 +1,16 @@
+import { createElement, type ReactNode } from 'react';
+import {
+  Image,
+  Film,
+  Music,
+  FileText,
+  FileArchive,
+  FileSpreadsheet,
+  Presentation,
+  Paperclip,
+  type LucideIcon,
+} from 'lucide-react';
+
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -38,17 +51,25 @@ export function formatDateFull(dateStr: string): string {
   });
 }
 
-export function getFileIcon(contentType: string): string {
-  if (contentType.startsWith('image/')) return '🖼️';
-  if (contentType.startsWith('video/')) return '🎬';
-  if (contentType.startsWith('audio/')) return '🎵';
-  if (contentType.includes('pdf')) return '📄';
-  if (contentType.includes('zip') || contentType.includes('archive') || contentType.includes('compressed')) return '📦';
-  if (contentType.includes('text')) return '📝';
-  if (contentType.includes('spreadsheet') || contentType.includes('excel')) return '📊';
-  if (contentType.includes('presentation') || contentType.includes('powerpoint')) return '📰';
-  if (contentType.includes('document') || contentType.includes('word')) return '📃';
-  return '📎';
+export function getFileIcon(contentType: string): ReactNode {
+  const type = contentType.toLowerCase();
+  const iconNode = (Icon: LucideIcon) => createElement(Icon, { className: 'w-5 h-5' });
+
+  if (type.startsWith('image/')) return iconNode(Image);
+  if (type.startsWith('video/')) return iconNode(Film);
+  if (type.startsWith('audio/')) return iconNode(Music);
+  if (type.includes('pdf')) return iconNode(FileText);
+
+  if (type.includes('zip') || type.includes('archive') || type.includes('compressed')) {
+    return iconNode(FileArchive);
+  }
+
+  if (type.includes('text')) return iconNode(FileText);
+  if (type.includes('spreadsheet') || type.includes('excel')) return iconNode(FileSpreadsheet);
+  if (type.includes('presentation') || type.includes('powerpoint')) return iconNode(Presentation);
+  if (type.includes('document') || type.includes('word')) return iconNode(FileText);
+
+  return iconNode(Paperclip);
 }
 
 export function isExpired(dateStr: string): boolean {
