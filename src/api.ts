@@ -85,8 +85,8 @@ export interface AuthStatus {
   };
 }
 
-export function getLoginUrl(): string {
-  return `${API_BASE}/auth/oauth`;
+export function getLoginUrl(provider: string): string {
+  return `${API_BASE}/auth/${provider}/login`;
 }
 
 export async function checkAuth(): Promise<AuthStatus> {
@@ -112,6 +112,7 @@ export interface UserData {
   family_name: string;
   picture: string;
   locale: string;
+  provider: string;
 }
 
 export interface UserDataResponse {
