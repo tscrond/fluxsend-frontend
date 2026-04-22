@@ -68,7 +68,9 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between py-3 border-b border-slate-100">
           <div>
             <Typography variant="body2" fontWeight={500}>Authentication</Typography>
-            <Typography variant="caption" color="text.secondary">Signed in via Google OAuth</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Signed in via {user?.provider ? `${user.provider.charAt(0).toUpperCase()}${user.provider.slice(1)} OAuth` : 'OAuth'}
+            </Typography>
           </div>
           <Chip label="Active" size="small" color="success" />
         </div>

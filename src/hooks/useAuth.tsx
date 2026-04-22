@@ -5,7 +5,7 @@ interface AuthContextValue {
   user: UserData | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: () => void;
+  login: (provider: string) => void;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -36,8 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const login = useCallback(() => {
-    window.location.href = getLoginUrl();
+  const login = useCallback((provider: string) => {
+    window.location.href = getLoginUrl(provider);
   }, []);
 
   const logout = useCallback(async () => {
