@@ -85,7 +85,14 @@ export default function AppLayout() {
     <div className="flex flex-col h-full">
       <div className="flex flex-row items-center px-4 pt-4 pb-3 gap-2">
         <img src="/fs.png" alt="FluxSend logo" className="h-8 w-8" />
-        <Typography sx={{ fontSize: '0.95rem', fontWeight: 800, color: 'text.primary', letterSpacing: '0.04em', fontFamily: 'monospace' }}>fluxsend</Typography>
+        {/* <Typography sx={{ fontSize: '0.95rem', fontWeight: 800, color: 'text.primary', letterSpacing: '0.04em', fontFamily: 'monospace' }}>fluxsend</Typography> */}
+        <Typography
+          variant="h6"
+          fontWeight={800}
+          sx={{ letterSpacing: '-0.02em' }}
+        >
+          FLUX<span style={{ color: '#6366f1' }}>SEND</span>
+        </Typography>
       </div>
       <List className="flex-1 px-2">
         {navItems.map((item) => (

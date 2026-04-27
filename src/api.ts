@@ -246,6 +246,7 @@ export interface SharedFile {
   created_at: string;
   expires_at: string;
   seen: boolean;
+  password_protected?: boolean;
 }
 
 export function getReceivedFiles(): Promise<{ files: SharedFile[] | null }> {
