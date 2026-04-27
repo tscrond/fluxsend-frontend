@@ -177,8 +177,8 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
       const url = `${window.location.origin}/d/${res.sharing_token}`;
       setQuickShareUrl(url);
       toast('success', 'Public link created');
-    } catch {
-      toast('error', 'Failed to create quick share link');
+    } catch (err) {
+      toast('error', err instanceof Error ? err.message : 'Failed to create quick share link');
     } finally {
       setQuickShareLoading(false);
     }

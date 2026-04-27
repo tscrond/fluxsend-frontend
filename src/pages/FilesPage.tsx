@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import {
   Download, Trash2, Share2, Search, FileQuestion, MoreVertical,
-  Folder, FolderOpen, MoveRight, AlertTriangle,
+  Folder, FolderOpen, MoveRight, AlertTriangle, X,
   Eye,
 } from 'lucide-react';
 
@@ -463,17 +463,17 @@ export default function FilesPage() {
                       onChange={() => toggleFileSelection(file.name)}
                     />
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2 min-w-0">
-                      {/* <span className="text-lg shrink-0">{}</span> */}
+                  <TableCell sx={{ maxWidth: { xs: '45vw', sm: 'none' } }}>
+                    <div className="flex items-center gap-2 min-w-0 flex-wrap">
                       {getFileIcon(file.file_type)}
-                      <span className="truncate font-medium text-sm">{file.name.split('/').pop()}</span>
+                      <span className="font-medium text-sm" style={{ wordBreak: 'break-word' }}>{file.name.split('/').pop()}</span>
                       <Chip
                         label={file.file_type?.split('/')[1]?.toUpperCase() ?? file.file_type ?? 'FILE'}
                         size="small"
                         color="primary"
                         variant="outlined"
                         className="shrink-0"
+                        sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                       />
                     </div>
                   </TableCell>
@@ -483,13 +483,13 @@ export default function FilesPage() {
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, color: 'text.secondary', fontSize: '0.8125rem' }}>—</TableCell>
                   <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-0.5">
-                      <IconButton size="small" onClick={() => setPreviewFile(file)} title="Preview">
+                      <IconButton size="small" onClick={() => setPreviewFile(file)} title="Preview" sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
                         <Eye size={16} />
                       </IconButton>
-                      <IconButton size="small" onClick={() => handleDownload(file)} title="Download">
+                      <IconButton size="small" onClick={() => handleDownload(file)} title="Download" sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
                         <Download size={16} />
                       </IconButton>
-                      <IconButton size="small" onClick={() => setShareTarget([treeEntryToFileLike(file)])} title="Share">
+                      <IconButton size="small" onClick={() => setShareTarget([treeEntryToFileLike(file)])} title="Share" sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
                         <Share2 size={16} />
                       </IconButton>
                       <IconButton
@@ -518,6 +518,14 @@ export default function FilesPage() {
         <MenuItem onClick={() => { setMenuAnchor(null); if (menuFile) setPreviewFile(menuFile); setMenuFile(null); }}>
           <ListItemIcon><Eye size={16} /></ListItemIcon>
           <ListItemText>Preview / Note</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { setMenuAnchor(null); if (menuFile) handleDownload(menuFile); setMenuFile(null); }}>
+          <ListItemIcon><Download size={16} /></ListItemIcon>
+          <ListItemText>Download</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { setMenuAnchor(null); if (menuFile) setShareTarget([treeEntryToFileLike(menuFile)]); setMenuFile(null); }}>
+          <ListItemIcon><Share2 size={16} /></ListItemIcon>
+          <ListItemText>Share</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => { if (menuFile) openMoveDialog(menuFile.name, false); }}>
           <ListItemIcon><MoveRight size={16} /></ListItemIcon>
@@ -643,26 +651,65 @@ export default function FilesPage() {
         <Toolbar
           sx={{
             position: 'fixed',
-            bottom: 24,
+            bottom: { xs: 16, sm: 24 },
             left: '50%',
             transform: 'translateX(-50%)',
             bgcolor: 'background.paper',
             boxShadow: 4,
             borderRadius: 2,
-            gap: 2,
-            px: 3,
+            gap: { xs: 0.75, sm: 2 },
+            px: { xs: 1.5, sm: 3 },
+            minHeight: { xs: 44, sm: 56 },
             zIndex: 1200,
             border: 1,
             borderColor: 'divider',
+            width: { xs: 'auto', sm: 'auto' },
           }}
         >
-          <Typography variant="body2" fontWeight={600}>
-            {selectedFiles.size} file{selectedFiles.size !== 1 ? 's' : ''} selected
+          <Typography variant="body2" fontWeight={600} sx={{ whiteSpace: 'nowrap' }}>
+            {selectedFiles.size} selected
           </Typography>
+
+          {/* Mobile: icon-only buttons */}
+          <IconButton
+            size="small"
+            color="primary"
+            title="Share selected"
+            sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+            onClick={() => {
+              const targets = filteredFiles
+                .filter((f) => selectedFiles.has(f.name))
+                .map(treeEntryToFileLike);
+              setShareTarget(targets);
+            }}
+          >
+            <Share2 size={18} />
+          </IconButton>
+          <IconButton
+            size="small"
+            color="error"
+            title="Delete selected"
+            disabled={batchDeleting}
+            sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+            onClick={handleBatchDelete}
+          >
+            {batchDeleting ? <CircularProgress size={16} color="inherit" /> : <Trash2 size={18} />}
+          </IconButton>
+          <IconButton
+            size="small"
+            title="Clear selection"
+            sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+            onClick={() => setSelectedFiles(new Set())}
+          >
+            <X size={18} />
+          </IconButton>
+
+          {/* Desktop: text buttons */}
           <Button
             variant="contained"
             size="small"
             startIcon={<Share2 size={14} />}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
             onClick={() => {
               const targets = filteredFiles
                 .filter((f) => selectedFiles.has(f.name))
@@ -679,10 +726,15 @@ export default function FilesPage() {
             startIcon={batchDeleting ? <CircularProgress size={14} color="inherit" /> : <Trash2 size={14} />}
             onClick={handleBatchDelete}
             disabled={batchDeleting}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           >
             {batchDeleting ? 'Deleting...' : 'Delete Selected'}
           </Button>
-          <Button size="small" onClick={() => setSelectedFiles(new Set())}>
+          <Button
+            size="small"
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+            onClick={() => setSelectedFiles(new Set())}
+          >
             Clear
           </Button>
         </Toolbar>

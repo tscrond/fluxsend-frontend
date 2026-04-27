@@ -9,6 +9,17 @@ interface ApiEnvelope {
 function getApiErrorMessage(status: number, body: string): string {
   try {
     const json = JSON.parse(body) as Partial<ApiEnvelope>;
+    // Prefer the human-readable message nested inside the response object
+    // (used by plan-limit errors: { msg: "exceeded_plan_limits", response: { msg: "...", ... } })
+    if (
+      typeof json.response === 'object' &&
+      json.response !== null &&
+      'msg' in (json.response as object) &&
+      typeof (json.response as Record<string, unknown>).msg === 'string'
+    ) {
+      const inner = ((json.response as Record<string, unknown>).msg as string).trim();
+      if (inner !== '') return inner;
+    }
     if (typeof json.msg === 'string' && json.msg.trim() !== '') {
       return json.msg;
     }
