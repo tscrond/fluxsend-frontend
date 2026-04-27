@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  Box, Typography, Button, Container, Grid, Paper, Divider,
+  Box, Typography, Button, Container, Grid, Paper, Divider, Chip,
 } from '@mui/material';
 import {
   Upload, Share2, Inbox, FolderOpen, Link, FileText, Shield, Zap, Eye,
-  Github, ArrowRight,
+  Github, ArrowRight, Check, Mail,
 } from 'lucide-react';
 import { useThemeMode } from '@/hooks/useThemeMode';
 import { motion } from 'motion/react';
@@ -59,13 +59,84 @@ const features = [
   },
 ];
 
+const plans = [
+  {
+    name: 'Free',
+    badge: null,
+    highlight: false,
+    storage: '5 GB',
+    maxFileSize: '250 MB / file',
+    maxFiles: '20 files',
+    uploadsPerDay: '5 uploads / day',
+    sharesPerDay: '10 shares / day',
+    features: [
+      'File upload & storage',
+      'Targeted sharing',
+      'Quick share links',
+      'Inline file preview',
+      'Private downloads',
+    ],
+  },
+  {
+    name: 'Developer',
+    badge: 'Recommended',
+    highlight: true,
+    storage: '50 GB',
+    maxFileSize: '2 GB / file',
+    maxFiles: '500 files',
+    uploadsPerDay: '100 uploads / day',
+    sharesPerDay: '500 shares / day',
+    features: [
+      'Everything in Free',
+      'Large file transfers',
+      'High daily upload limit',
+      'High daily share limit',
+      'File notes & metadata',
+    ],
+  },
+  {
+    name: 'Enterprise',
+    badge: null,
+    highlight: false,
+    storage: '1 TB',
+    maxFileSize: '10 GB / file',
+    maxFiles: 'Unlimited',
+    uploadsPerDay: 'Unlimited uploads',
+    sharesPerDay: 'Unlimited shares',
+    features: [
+      'Everything in Developer',
+      'Maximum storage quota',
+      'No upload restrictions',
+      'No share restrictions',
+      'Full platform access',
+    ],
+  },
+  {
+    name: 'Custom',
+    badge: null,
+    highlight: false,
+    storage: 'Tailored',
+    maxFileSize: null,
+    maxFiles: null,
+    uploadsPerDay: null,
+    sharesPerDay: null,
+    features: [
+      'Custom storage quota',
+      'Negotiated limits',
+      'Dedicated support',
+      'Priority onboarding',
+      'White glove setup',
+    ],
+  },
+];
+
 export default function LandingPage() {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { mode } = useThemeMode();
   const dark = mode === 'dark';
 
-  const scrollToSection = (id: 'home' | 'features' | 'start') => {
+  const scrollToSection = (id: 'home' | 'features' | 'plans' | 'start') => {
     const section = document.getElementById(id);
     if (!section) return;
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -149,6 +220,14 @@ export default function LandingPage() {
             sx={{ color: dark ? '#7d8590' : '#57606a', display: { xs: 'none', md: 'inline-flex' } }}
           >
             Features
+          </Button>
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => scrollToSection('plans')}
+            sx={{ color: dark ? '#7d8590' : '#57606a', display: { xs: 'none', md: 'inline-flex' } }}
+          >
+            Plans
           </Button>
           <Button
             variant="text"
@@ -381,6 +460,228 @@ export default function LandingPage() {
           ))}
         </Grid>
       </Container>
+      </Box>
+
+      <Divider sx={{ borderColor: dark ? '#30363d' : '#d0d7de' }} />
+
+      {/* ── Plans ── */}
+      <Box
+        id="plans"
+        component="section"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
+          <motion.div
+            initial={{ opacity: 0, y: 28, filter: 'blur(4px)' }}
+            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            viewport={{ once: true, amount: 0.35 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          >
+            <Box sx={{ textAlign: 'center', mb: 8 }}>
+              <Typography
+                variant="overline"
+                sx={{ color: '#6366f1', letterSpacing: '0.12em', fontSize: '0.75rem', fontWeight: 700 }}
+              >
+                Plans
+              </Typography>
+              <Typography variant="h4" fontWeight={800} sx={{ mt: 1, letterSpacing: '-0.02em' }}>
+                Plan tiers
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mt: 1.5, maxWidth: 480, mx: 'auto', lineHeight: 1.7 }}>
+                Plans are assigned by your instance administrator. Each tier unlocks higher limits and capacity.
+              </Typography>
+            </Box>
+          </motion.div>
+
+          <Grid container spacing={3} alignItems="stretch" justifyContent="center">
+            {plans.map((plan, i) => (
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={plan.name}>
+                <motion.div
+                  initial={{ opacity: 0, y: 22, filter: 'blur(3px)' }}
+                  whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}
+                  style={{ height: '100%' }}
+                >
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 3.5,
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      position: 'relative',
+                      borderColor: plan.highlight ? '#6366f1' : dark ? '#30363d' : '#d0d7de',
+                      borderWidth: plan.highlight ? 2 : 1,
+                      backgroundColor: plan.highlight
+                        ? dark ? 'rgba(99,102,241,0.06)' : 'rgba(99,102,241,0.03)'
+                        : dark ? '#161b22' : '#ffffff',
+                      transition: 'transform 0.15s, border-color 0.15s',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        borderColor: '#6366f1',
+                      },
+                    }}
+                  >
+                    {plan.badge && (
+                      <Chip
+                        label={plan.badge}
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: -12,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          backgroundColor: '#6366f1',
+                          color: '#fff',
+                          fontWeight: 700,
+                          fontSize: '0.7rem',
+                          letterSpacing: '0.05em',
+                        }}
+                      />
+                    )}
+
+                    {/* Plan name */}
+                    <Typography
+                      variant="h6"
+                      fontWeight={800}
+                      sx={{ mb: 0.5, textTransform: 'capitalize', letterSpacing: '-0.01em' }}
+                    >
+                      {plan.name}
+                    </Typography>
+
+                    {/* Storage headline */}
+                    <Typography
+                      variant="h4"
+                      fontWeight={800}
+                      sx={{ color: '#6366f1', letterSpacing: '-0.03em', mb: 0.5 }}
+                    >
+                      {plan.storage}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ mb: 3 }}>
+                      {plan.maxFileSize === null ? 'limits negotiated with admin' : 'total storage'}
+                    </Typography>
+
+                    <Divider sx={{ mb: 2.5, borderColor: dark ? '#30363d' : '#e8ecf0' }} />
+
+                    {plan.maxFileSize !== null ? (
+                      <>
+                        {/* Limits */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 3 }}>
+                          {[
+                            { label: 'Max file size', value: plan.maxFileSize },
+                            { label: 'Max files', value: plan.maxFiles },
+                            { label: 'Uploads', value: plan.uploadsPerDay },
+                            { label: 'Shares', value: plan.sharesPerDay },
+                          ].map(({ label, value }) => (
+                            <Box
+                              key={label}
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                px: 1.5,
+                                py: 0.75,
+                                borderRadius: 1,
+                                backgroundColor: dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                              }}
+                            >
+                              <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                                {label}
+                              </Typography>
+                              <Typography variant="caption" fontWeight={700}>
+                                {value}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+
+                        {/* Features */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, mt: 'auto' }}>
+                          {plan.features.map((feat) => (
+                            <Box key={feat} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box
+                                sx={{
+                                  width: 18,
+                                  height: 18,
+                                  borderRadius: '50%',
+                                  backgroundColor: 'rgba(99,102,241,0.15)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#6366f1',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <Check size={11} strokeWidth={3} />
+                              </Box>
+                              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5 }}>
+                                {feat}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </>
+                    ) : (
+                      <>
+                        {/* Custom plan features */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, mb: 3 }}>
+                          {plan.features.map((feat) => (
+                            <Box key={feat} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box
+                                sx={{
+                                  width: 18,
+                                  height: 18,
+                                  borderRadius: '50%',
+                                  backgroundColor: 'rgba(99,102,241,0.15)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: '#6366f1',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <Check size={11} strokeWidth={3} />
+                              </Box>
+                              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5 }}>
+                                {feat}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+
+                        {/* Contact CTA */}
+                        <Box sx={{ mt: 'auto' }}>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            startIcon={<Mail size={14} />}
+                            href="mailto:admin@fluxsend.local"
+                            sx={{
+                              borderColor: dark ? '#30363d' : '#d0d7de',
+                              color: dark ? '#e6edf3' : '#1f2328',
+                              '&:hover': { borderColor: '#6366f1', color: '#6366f1' },
+                              fontWeight: 600,
+                              fontSize: '0.8rem',
+                            }}
+                          >
+                            Contact administrator
+                          </Button>
+                        </Box>
+                      </>
+                    )}
+                  </Paper>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
       </Box>
 
       <Divider sx={{ borderColor: dark ? '#30363d' : '#d0d7de' }} />

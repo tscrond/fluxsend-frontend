@@ -53,8 +53,8 @@ export default function ShareModal({ files, onClose }: Props) {
         );
         toast('success', isSingle ? 'File shared successfully' : `${res.sharing_info.length} files shared successfully`);
       }
-    } catch {
-      toast('error', 'Failed to share file(s)');
+    } catch (err) {
+      toast('error', err instanceof Error ? err.message : 'Failed to share file(s)');
     } finally {
       setLoading(false);
     }
