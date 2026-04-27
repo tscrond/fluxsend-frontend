@@ -13,6 +13,7 @@ import SharedPage from '@/pages/SharedPage';
 import ReceivedPage from '@/pages/ReceivedPage';
 import SettingsPage from '@/pages/SettingsPage';
 import LandingPage from '@/pages/LandingPage';
+import SharePage from '@/pages/SharePage';
 
 function buildTheme(mode: 'light' | 'dark') {
   const isDark = mode === 'dark';
@@ -119,6 +120,10 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/share/:token',
+    element: <SharePage />,
   },
   {
     element: <ProtectedRoute />,

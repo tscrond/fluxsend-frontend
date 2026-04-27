@@ -15,7 +15,7 @@ import {
   MenuItem,
   InputAdornment,
 } from '@mui/material';
-import { X, Eye, Image as ImageIcon, Music2, Video, FileText, ExternalLink, Save, Link2, Copy, Check } from 'lucide-react';
+import { X, Eye, EyeOff, Image as ImageIcon, Music2, Video, FileText, ExternalLink, Save, Lock, Link2, Copy, Check } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -81,6 +81,8 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
   const [noteSaving, setNoteSaving] = useState(false);
 
   const [quickShareDuration, setQuickShareDuration] = useState('24h');
+  const [quickSharePassword, setQuickSharePassword] = useState('');
+  const [quickShareShowPassword, setQuickShareShowPassword] = useState(false);
   const [quickShareLoading, setQuickShareLoading] = useState(false);
   const [quickShareUrl, setQuickShareUrl] = useState<string | null>(null);
   const [quickShareCopied, setQuickShareCopied] = useState(false);
@@ -103,6 +105,7 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
       setQuickShareUrl(null);
       setQuickShareCopied(false);
       setQuickShareLoading(false);
+      setQuickSharePassword('');
       return;
     }
 
@@ -173,10 +176,10 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
 
     setQuickShareLoading(true);
     try {
-      const res = await quickShare(file.name, quickShareDuration);
-      const url = `${window.location.origin}/d/${res.sharing_token}`;
+      const res = await quickShare(file.name, quickShareDuration, quickSharePassword || undefined);
+      const url = `${window.location.origin}/share/${res.sharing_token}`;
       setQuickShareUrl(url);
-      toast('success', 'Public link created');
+      toast('success', quickSharePassword ? 'Password-protected link created' : 'Public link created');
     } catch (err) {
       toast('error', err instanceof Error ? err.message : 'Failed to create quick share link');
     } finally {
@@ -373,19 +376,43 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
                 onClick={(e) => (e.target as HTMLInputElement).select?.()}
               />
             ) : (
-              <Box className="flex items-center gap-2">
-                <TextField
-                  select
-                  size="small"
-                  label="Expires in"
-                  value={quickShareDuration}
-                  onChange={(e) => setQuickShareDuration(e.target.value)}
-                  sx={{ minWidth: 150 }}
-                >
-                  {durationOptions.map((opt) => (
-                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                  ))}
-                </TextField>
+              <Box className="flex flex-col gap-2">
+                <Box className="flex items-center gap-2">
+                  <TextField
+                    select
+                    size="small"
+                    label="Expires in"
+                    value={quickShareDuration}
+                    onChange={(e) => setQuickShareDuration(e.target.value)}
+                    sx={{ minWidth: 150 }}
+                  >
+                    {durationOptions.map((opt) => (
+                      <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    size="small"
+                    label="Password (optional)"
+                    type={quickShareShowPassword ? 'text' : 'password'}
+                    value={quickSharePassword}
+                    onChange={(e) => setQuickSharePassword(e.target.value)}
+                    sx={{ flex: 1 }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start"><Lock size={14} /></InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton size="small" onClick={() => setQuickShareShowPassword((v) => !v)} edge="end">
+                              {quickShareShowPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                </Box>
                 <Button
                   variant="contained"
                   size="small"

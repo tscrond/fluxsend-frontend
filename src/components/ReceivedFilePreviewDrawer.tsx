@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
-import { getSharedDownloadUrl, type SharedFile } from '@/api';
+import { useMemo, useState, useEffect } from 'react';
+import { getSharedDownloadUrl, resolvePublicShare, type SharedFile } from '@/api';
+import { ApiError } from '@/api';
 import { formatBytes, formatDateFull, isExpired } from '@/lib/utils';
 import {
   Drawer,
@@ -11,8 +12,11 @@ import {
   Chip,
   Button,
   CircularProgress,
+  TextField,
+  InputAdornment,
+  Alert,
 } from '@mui/material';
-import { X, Eye, Image as ImageIcon, Music2, Video, FileText, ExternalLink, Download } from 'lucide-react';
+import { X, Eye, Image as ImageIcon, Music2, Video, FileText, ExternalLink, Download, Lock, EyeOff } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -60,10 +64,61 @@ export default function ReceivedFilePreviewDrawer({ open, file, onClose }: Props
     [file],
   );
 
+  // Unlock state (for password-protected shares)
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [resolvedInlineUrl, setResolvedInlineUrl] = useState<string | null>(null);
+  const [resolvedDownloadUrl, setResolvedDownloadUrl] = useState<string | null>(null);
+
+  // Reset unlock state whenever a different file is opened
+  useEffect(() => {
+    setPassword('');
+    setShowPassword(false);
+    setUnlocking(false);
+    setUnlockError(null);
+    setResolvedInlineUrl(null);
+    setResolvedDownloadUrl(null);
+  }, [file?.sharing_token]);
+
   const fileName = file?.file_name.split('/').pop() || file?.file_name || '';
-  const previewUrl = file ? getSharedDownloadUrl(file.sharing_token, 'inline') : null;
-  const downloadUrl = file ? getSharedDownloadUrl(file.sharing_token, 'download') : null;
   const expired = file ? isExpired(file.expires_at) : false;
+  const isPasswordProtected = Boolean(file?.password_protected);
+  const isUnlocked = Boolean(resolvedInlineUrl || resolvedDownloadUrl);
+
+  // For non-protected files, use direct download URLs; for unlocked files, use resolved URLs
+  const previewUrl = isPasswordProtected ? resolvedInlineUrl : (file ? getSharedDownloadUrl(file.sharing_token, 'inline') : null);
+  const downloadUrl = isPasswordProtected ? resolvedDownloadUrl : (file ? getSharedDownloadUrl(file.sharing_token, 'download') : null);
+
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file || !password.trim()) return;
+    setUnlocking(true);
+    setUnlockError(null);
+    try {
+      const [inlineRes, downloadRes] = await Promise.all([
+        resolvePublicShare(file.sharing_token, 'inline', password),
+        resolvePublicShare(file.sharing_token, 'download', password),
+      ]);
+      setResolvedInlineUrl(inlineRes.url);
+      setResolvedDownloadUrl(downloadRes.url);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 403) {
+          setUnlockError('Wrong password. Please try again.');
+        } else if (err.status === 429 || err.body?.includes('share_blocked')) {
+          setUnlockError('Too many failed attempts — this share has been blocked.');
+        } else {
+          setUnlockError('Failed to unlock. Please try again.');
+        }
+      } else {
+        setUnlockError('Failed to unlock. Please try again.');
+      }
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   const renderPreview = () => {
     if (!file) {
@@ -167,30 +222,80 @@ export default function ReceivedFilePreviewDrawer({ open, file, onClose }: Props
         <Divider />
 
         <Box sx={{ p: 2.5, display: 'grid', gap: 2, overflow: 'auto' }}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Box className="flex items-center justify-between" sx={{ mb: 1.25 }}>
-              <Typography variant="subtitle2" fontWeight={700}>Preview</Typography>
-              <Box className="flex items-center gap-1">
-                <Chip
-                  size="small"
-                  icon={mediaKindIcon(kind)}
-                  label={mediaKindLabel(kind)}
-                  variant="outlined"
-                />
-                {!expired && previewUrl && (
-                  <Button
-                    size="small"
-                    variant="text"
-                    startIcon={<ExternalLink size={14} />}
-                    onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}
-                  >
-                    Open
-                  </Button>
-                )}
+          {isPasswordProtected && !isUnlocked && !expired && (
+            <Paper variant="outlined" sx={{ p: 2.5 }}>
+              <Box className="flex items-center gap-2" sx={{ mb: 1.5 }}>
+                <Lock size={18} />
+                <Typography variant="subtitle2" fontWeight={700}>Password Required</Typography>
               </Box>
-            </Box>
-            {renderPreview()}
-          </Paper>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                This file is password-protected. Enter the password to view or download it.
+              </Typography>
+              <form onSubmit={handleUnlock}>
+                <Box className="flex flex-col gap-2">
+                  {unlockError && (
+                    <Alert severity="error" sx={{ mb: 0.5 }}>{unlockError}</Alert>
+                  )}
+                  <TextField
+                    label="Password"
+                    size="small"
+                    fullWidth
+                    autoFocus
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={unlocking}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton size="small" onClick={() => setShowPassword((v) => !v)} edge="end">
+                              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={unlocking || !password.trim()}
+                    startIcon={unlocking ? <CircularProgress size={14} color="inherit" /> : <Lock size={14} />}
+                  >
+                    {unlocking ? 'Unlocking…' : 'Unlock'}
+                  </Button>
+                </Box>
+              </form>
+            </Paper>
+          )}
+
+          {(!isPasswordProtected || isUnlocked) && (
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Box className="flex items-center justify-between" sx={{ mb: 1.25 }}>
+                <Typography variant="subtitle2" fontWeight={700}>Preview</Typography>
+                <Box className="flex items-center gap-1">
+                  <Chip
+                    size="small"
+                    icon={mediaKindIcon(kind)}
+                    label={mediaKindLabel(kind)}
+                    variant="outlined"
+                  />
+                  {!expired && previewUrl && (
+                    <Button
+                      size="small"
+                      variant="text"
+                      startIcon={<ExternalLink size={14} />}
+                      onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}
+                    >
+                      Open
+                    </Button>
+                  )}
+                </Box>
+              </Box>
+              {renderPreview()}
+            </Paper>
+          )}
 
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.25 }}>

@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/useToast';
 import { formatBytes, formatDateFull, isExpired, getFileIcon } from '@/lib/utils';
 import ReceivedFilePreviewDrawer from '@/components/ReceivedFilePreviewDrawer';
 import { Paper, Typography, Chip, Button, CircularProgress, Box } from '@mui/material';
-import { Inbox, Download, Clock, Eye } from 'lucide-react';
+import { Inbox, Download, Clock, Eye, Lock } from 'lucide-react';
 
 export default function ReceivedPage() {
   const [files, setFiles] = useState<SharedFile[]>([]);
@@ -95,27 +95,44 @@ export default function ReceivedPage() {
                 </div>
                 {!expired && (
                   <div className="flex items-center gap-2 mt-2">
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => {
-                        setPreviewFile(file);
-                        markSeen(file.sharing_token);
-                      }}
-                      startIcon={<Eye size={14} />}
-                    >
-                      Preview
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      href={getSharedDownloadUrl(file.sharing_token)}
-                      target="_blank"
-                      onClick={() => markSeen(file.sharing_token)}
-                      startIcon={<Download size={14} />}
-                    >
-                      Download
-                    </Button>
+                    {file.password_protected ? (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="warning"
+                        onClick={() => {
+                          setPreviewFile(file);
+                          markSeen(file.sharing_token);
+                        }}
+                        startIcon={<Lock size={14} />}
+                      >
+                        Unlock
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            setPreviewFile(file);
+                            markSeen(file.sharing_token);
+                          }}
+                          startIcon={<Eye size={14} />}
+                        >
+                          Preview
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          href={getSharedDownloadUrl(file.sharing_token)}
+                          target="_blank"
+                          onClick={() => markSeen(file.sharing_token)}
+                          startIcon={<Download size={14} />}
+                        >
+                          Download
+                        </Button>
+                      </>
+                    )}
                   </div>
                 )}
               </Paper>

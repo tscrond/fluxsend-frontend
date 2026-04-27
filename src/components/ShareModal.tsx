@@ -5,7 +5,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, IconButton,
   MenuItem, FormControlLabel, Checkbox, Typography, CircularProgress, InputAdornment, Stack,
 } from '@mui/material';
-import { X, Send, Copy, Check } from 'lucide-react';
+import { X, Send, Copy, Check, Eye, EyeOff } from 'lucide-react';
 
 interface ShareFile {
   name: string;
@@ -26,6 +26,8 @@ export default function ShareModal({ files, onClose }: Props) {
   const [email, setEmail] = useState('');
   const [duration, setDuration] = useState('24h');
   const [sendEmail, setSendEmail] = useState(true);
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [shareLinks, setShareLinks] = useState<ShareLink[] | null>(null);
   const { toast } = useToast();
@@ -42,12 +44,13 @@ export default function ShareModal({ files, onClose }: Props) {
         objects: files.map((f) => f.name),
         duration,
         send_email: sendEmail,
+        password: password || undefined,
       });
       if (res.sharing_info?.length > 0) {
         setShareLinks(
           res.sharing_info.map((info, i) => ({
             fileName: info.file_name ?? files[i]?.name ?? '',
-            url: `${window.location.origin}/d/${info.sharing_token}`,
+            url: `${window.location.origin}/share/${info.sharing_token}`,
             copied: false,
           })),
         );
@@ -175,6 +178,26 @@ export default function ShareModal({ files, onClose }: Props) {
                 <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
               ))}
             </TextField>
+            <TextField
+              label="Password (optional)"
+              placeholder="Leave blank for no password"
+              size="small"
+              fullWidth
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setShowPassword((v) => !v)} edge="end">
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
             <FormControlLabel
               control={<Checkbox checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} />}
               label="Send email notification"

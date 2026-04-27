@@ -213,6 +213,7 @@ export interface ShareRequest {
   objects: string[];
   duration: string;
   send_email: boolean;
+  password?: string;
 }
 
 export interface SharingInfo {
@@ -245,6 +246,7 @@ export interface SharedFile {
   created_at: string;
   expires_at: string;
   seen: boolean;
+  password_protected?: boolean;
 }
 
 export function getReceivedFiles(): Promise<{ files: SharedFile[] | null }> {
@@ -259,6 +261,10 @@ export function getSharedDownloadUrl(token: string, mode: 'inline' | 'download' 
   return `${API_BASE}/d/${token}?mode=${mode}`;
 }
 
+export function revokeShare(token: string): Promise<void> {
+  return request<void>(`/share/revoke/${token}`, { method: 'POST' });
+}
+
 // ─── Quick Share ────────────────────────────────────────────────────────────
 
 export interface QuickShareResponse {
@@ -267,15 +273,46 @@ export interface QuickShareResponse {
   sharing_link: string;
 }
 
-export function quickShare(object: string, duration: string): Promise<QuickShareResponse> {
+export function quickShare(object: string, duration: string, password?: string): Promise<QuickShareResponse> {
   return request<QuickShareResponse>('/files/quick_share', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ object, duration }),
+    body: JSON.stringify({ object, duration, password: password ?? '' }),
   });
 }
 
 // ─── Received / Unseen ─────────────────────────────────────────────────────
+
+// ─── Public Share ───────────────────────────────────────────────────────────
+
+export interface ShareInfoResponse {
+  file_name: string;
+  expires_at: string;
+  password_protected: boolean;
+}
+
+export interface ResolveShareResponse {
+  url: string;
+  file_name: string;
+}
+
+export async function getShareInfo(token: string): Promise<ShareInfoResponse> {
+  return request<ShareInfoResponse>(`/share/info/${encodeURIComponent(token)}`);
+}
+
+export async function resolvePublicShare(
+  token: string,
+  mode: 'inline' | 'download',
+  password: string,
+): Promise<ResolveShareResponse> {
+  return request<ResolveShareResponse>(`/share/resolve/${encodeURIComponent(token)}?mode=${mode}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+}
+
+// ─── Received / Unseen ──────────────────────────────────────────────────────
 
 export function getUnseenReceivedCount(): Promise<{ count: number }> {
   return request<{ count: number }>('/files/received/unseen_count');
