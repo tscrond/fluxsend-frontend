@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { getSharedByUser, getSharedDownloadUrl, type SharedFile } from '@/api';
+import { getSharedByUser, revokeShare, type SharedFile } from '@/api';
 import { useToast } from '@/hooks/useToast';
 import { formatBytes, formatDateFull, isExpired, getFileIcon } from '@/lib/utils';
 import { Paper, Typography, Chip, Button, CircularProgress, Box } from '@mui/material';
-import { Share2, ExternalLink, Clock } from 'lucide-react';
+import { Share2, ExternalLink, Clock, Trash2 } from 'lucide-react';
 
 export default function SharedPage() {
   const [files, setFiles] = useState<SharedFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [revoking, setRevoking] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -23,6 +24,19 @@ export default function SharedPage() {
     }
     load();
   }, [toast]);
+
+  const handleRevoke = async (token: string) => {
+    setRevoking(token);
+    try {
+      await revokeShare(token);
+      setFiles((prev) => prev.filter((f) => f.sharing_token !== token));
+      toast('success', 'Share revoked');
+    } catch {
+      toast('error', 'Failed to revoke share');
+    } finally {
+      setRevoking(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -51,6 +65,7 @@ export default function SharedPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {files.map((file, idx) => {
             const expired = isExpired(file.expires_at);
+            const isRevoking = revoking === file.sharing_token;
             return (
               <Paper key={`${file.sharing_token}-${idx}`} variant="outlined" className="p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-3">
@@ -73,18 +88,29 @@ export default function SharedPage() {
                   <Clock size={12} />
                   <span>Expires: {formatDateFull(file.expires_at)}</span>
                 </div>
-                {!expired && (
+                <div className="flex items-center gap-2 mt-2">
+                  {!expired && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      href={`${window.location.origin}/share/${file.sharing_token}`}
+                      target="_blank"
+                      startIcon={<ExternalLink size={14} />}
+                    >
+                      Open Link
+                    </Button>
+                  )}
                   <Button
                     size="small"
                     variant="outlined"
-                    href={getSharedDownloadUrl(file.sharing_token)}
-                    target="_blank"
-                    startIcon={<ExternalLink size={14} />}
-                    sx={{ mt: 2 }}
+                    color="error"
+                    disabled={isRevoking}
+                    startIcon={isRevoking ? <CircularProgress size={12} color="inherit" /> : <Trash2 size={14} />}
+                    onClick={() => handleRevoke(file.sharing_token)}
                   >
-                    Open Link
+                    Revoke
                   </Button>
-                )}
+                </div>
               </Paper>
             );
           })}
