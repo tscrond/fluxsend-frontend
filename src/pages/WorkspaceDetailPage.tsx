@@ -70,23 +70,28 @@ export default function WorkspaceDetailPage() {
 
   useEffect(() => {
     if (!workspaceId) return;
+    const isAdminOrOwner = workspace?.role === 'owner' || workspace?.role === 'admin';
     async function load() {
       setLoadingMembers(true);
       try {
-        const [m, i] = await Promise.all([
-          getWorkspaceMembers(workspaceId!),
-          getWorkspaceInvites(workspaceId!),
-        ]);
+        const m = await getWorkspaceMembers(workspaceId!);
         setMembers(m ?? []);
-        setInvites(i ?? []);
       } catch {
-        toast('error', 'Failed to load workspace data');
+        toast('error', 'Failed to load workspace members');
       } finally {
         setLoadingMembers(false);
       }
+      if (isAdminOrOwner) {
+        try {
+          const i = await getWorkspaceInvites(workspaceId!);
+          setInvites(i ?? []);
+        } catch {
+          // non-fatal — invites simply won't show
+        }
+      }
     }
     load();
-  }, [workspaceId, toast]);
+  }, [workspaceId, workspace?.role, toast]);
 
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +117,7 @@ export default function WorkspaceDetailPage() {
   const handleDeleteInvite = async (invite: WorkspaceInvite) => {
     setRemovingInvite(invite.id);
     try {
-      await deleteWorkspaceInvite(invite.id);
+      await deleteWorkspaceInvite(invite.id, invite.workspace_id);
       setInvites((prev) => prev.filter((i) => i.id !== invite.id));
       toast('success', 'Invite removed');
     } catch {

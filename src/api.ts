@@ -487,8 +487,8 @@ export function createWorkspaceInvite(workspaceId: string, email: string, role: 
   });
 }
 
-export function deleteWorkspaceInvite(inviteId: string): Promise<unknown> {
-  return request(`/workspaces/invites/delete?invite_id=${encodeURIComponent(inviteId)}`, {
+export function deleteWorkspaceInvite(inviteId: string, workspaceId: string): Promise<unknown> {
+  return request(`/workspaces/invites/delete?invite_id=${encodeURIComponent(inviteId)}&workspace_id=${encodeURIComponent(workspaceId)}`, {
     method: 'DELETE',
   });
 }
