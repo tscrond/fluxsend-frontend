@@ -19,6 +19,8 @@ export default defineConfig({
       '/folders/': { target: 'http://localhost:3000', changeOrigin: true },
       '/user/': { target: 'http://localhost:3000', changeOrigin: true },
       '/d/': { target: 'http://localhost:3000', changeOrigin: true },
+      '/workspaces/': { target: 'http://localhost:3000', changeOrigin: true },
+      '/share/': { target: 'http://localhost:3000', changeOrigin: true },
     },
   },
 })

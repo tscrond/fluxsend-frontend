@@ -14,6 +14,9 @@ import ReceivedPage from '@/pages/ReceivedPage';
 import SettingsPage from '@/pages/SettingsPage';
 import LandingPage from '@/pages/LandingPage';
 import SharePage from '@/pages/SharePage';
+import WorkspacesPage from '@/pages/WorkspacesPage';
+import WorkspaceCreatePage from '@/pages/WorkspaceCreatePage';
+import WorkspaceDetailPage from '@/pages/WorkspaceDetailPage';
 
 function buildTheme(mode: 'light' | 'dark') {
   const isDark = mode === 'dark';
@@ -136,6 +139,9 @@ const router = createBrowserRouter([
           { path: 'shared', element: <SharedPage /> },
           { path: 'received', element: <ReceivedPage /> },
           { path: 'settings', element: <SettingsPage /> },
+          { path: 'workspaces', element: <WorkspacesPage /> },
+          { path: 'workspaces/create', element: <WorkspaceCreatePage /> },
+          { path: 'workspaces/:workspaceId', element: <WorkspaceDetailPage /> },
         ],
       },
     ],
