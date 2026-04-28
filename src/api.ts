@@ -401,3 +401,113 @@ export function moveFolder(source: string, destination: string): Promise<{ sourc
     body: JSON.stringify({ source, destination }),
   });
 }
+
+// ─── Workspaces ──────────────────────────────────────────────────────────────
+
+export interface Workspace {
+  workspace_id: string;
+  name: string;
+  slug: string;
+  owner_id: string;
+  created_at: string;
+  role: string;
+}
+
+export interface WorkspaceMember {
+  user_id: string;
+  email: string;
+  role: 'owner' | 'admin' | 'editor' | 'viewer';
+  joined_at: string;
+}
+
+export interface WorkspaceInvite {
+  id: string;
+  workspace_id: string;
+  email: string;
+  role: 'admin' | 'editor' | 'viewer';
+  expires_at: string;
+}
+
+export interface UserInvite {
+  id: string;
+  workspace_id: string;
+  workspace_name: string;
+  workspace_slug: string;
+  email: string;
+  token: string;
+  role: 'admin' | 'editor' | 'viewer';
+  expires_at: string;
+}
+
+export function listWorkspaces(): Promise<Workspace[]> {
+  return request<Workspace[]>('/workspaces/list');
+}
+
+export function createWorkspace(name: string, slug: string): Promise<unknown> {
+  return request('/workspaces/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, slug }),
+  });
+}
+
+export function deleteWorkspace(workspaceId: string): Promise<unknown> {
+  return request(`/workspaces/delete?workspace_id=${encodeURIComponent(workspaceId)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function renameWorkspace(workspaceId: string, name: string): Promise<Workspace> {
+  return request<Workspace>('/workspaces/rename', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ workspace_id: workspaceId, name }),
+  });
+}
+
+export function getWorkspaceMembers(workspaceId: string): Promise<WorkspaceMember[]> {
+  return request<WorkspaceMember[]>(`/workspaces/members?workspace_id=${encodeURIComponent(workspaceId)}`);
+}
+
+export function removeWorkspaceMember(workspaceId: string, userId: string): Promise<unknown> {
+  return request(`/workspaces/members/remove?workspace_id=${encodeURIComponent(workspaceId)}&user_id=${encodeURIComponent(userId)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function getWorkspaceInvites(workspaceId: string): Promise<WorkspaceInvite[]> {
+  return request<WorkspaceInvite[]>(`/workspaces/invites?workspace_id=${encodeURIComponent(workspaceId)}`);
+}
+
+export function createWorkspaceInvite(workspaceId: string, email: string, role: 'admin' | 'editor' | 'viewer'): Promise<WorkspaceInvite> {
+  return request<WorkspaceInvite>('/workspaces/invites/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ workspace_id: workspaceId, email, role }),
+  });
+}
+
+export function deleteWorkspaceInvite(inviteId: string): Promise<unknown> {
+  return request(`/workspaces/invites/delete?invite_id=${encodeURIComponent(inviteId)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function getMyInvites(): Promise<UserInvite[]> {
+  return request<UserInvite[]>('/workspaces/invites/mine');
+}
+
+export function acceptInvite(token: string): Promise<unknown> {
+  return request('/workspaces/invites/accept', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+}
+
+export function rejectInvite(token: string): Promise<unknown> {
+  return request(`/workspaces/invites/reject?token=${encodeURIComponent(token)}`, {
+    method: 'DELETE',
+  });
+}
+

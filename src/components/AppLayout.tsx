@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useThemeMode } from '@/hooks/useThemeMode';
-import { getUnseenReceivedCount } from '@/api';
+import { getUnseenReceivedCount, getMyInvites } from '@/api';
 import {
   Drawer,
   AppBar,
@@ -32,6 +32,7 @@ import {
   Menu as MenuIcon,
   Sun,
   Moon,
+  LayoutGrid,
 } from 'lucide-react';
 
 const DRAWER_WIDTH = 240;
@@ -41,6 +42,7 @@ const navItems = [
   { to: '/upload', label: 'Upload', icon: Upload },
   { to: '/shared', label: 'Shared by Me', icon: Share2 },
   { to: '/received', label: 'Received', icon: Inbox },
+  { to: '/workspaces', label: 'Workspaces', icon: LayoutGrid },
 ];
 
 export default function AppLayout() {
@@ -49,6 +51,7 @@ export default function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [unseenCount, setUnseenCount] = useState(0);
+  const [pendingInviteCount, setPendingInviteCount] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
@@ -62,24 +65,42 @@ export default function AppLayout() {
     }
   }, []);
 
+  const fetchPendingInviteCount = useCallback(async () => {
+    try {
+      const invites = await getMyInvites();
+      setPendingInviteCount(invites.length);
+    } catch {
+      // silently ignore
+    }
+  }, []);
+
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  // Fetch unseen count on mount and on window focus
+  // Fetch counts on mount, window focus, and invite-changed events
   useEffect(() => {
     fetchUnseenCount();
-    const onFocus = () => fetchUnseenCount();
+    fetchPendingInviteCount();
+    const onFocus = () => { fetchUnseenCount(); fetchPendingInviteCount(); };
+    const onInvitesChanged = () => fetchPendingInviteCount();
     window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [fetchUnseenCount]);
+    window.addEventListener('invites-changed', onInvitesChanged);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('invites-changed', onInvitesChanged);
+    };
+  }, [fetchUnseenCount, fetchPendingInviteCount]);
 
-  // Re-fetch when navigating away from received page (user may have previewed files)
+  // Re-fetch when navigating away from received/workspaces pages
   useEffect(() => {
     if (location.pathname !== '/received') {
       fetchUnseenCount();
     }
-  }, [location.pathname, fetchUnseenCount]);
+    if (location.pathname !== '/workspaces') {
+      fetchPendingInviteCount();
+    }
+  }, [location.pathname, fetchUnseenCount, fetchPendingInviteCount]);
 
   const drawerContent = (
     <div className="flex flex-col h-full">
@@ -116,6 +137,10 @@ export default function AppLayout() {
                 <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
                   {item.to === '/received' && unseenCount > 0 ? (
                     <Badge badgeContent={unseenCount} color="error" max={99}>
+                      <item.icon size={18} />
+                    </Badge>
+                  ) : item.to === '/workspaces' && pendingInviteCount > 0 ? (
+                    <Badge badgeContent={pendingInviteCount} color="warning" max={99}>
                       <item.icon size={18} />
                     </Badge>
                   ) : (
