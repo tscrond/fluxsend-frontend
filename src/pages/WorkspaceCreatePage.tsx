@@ -18,7 +18,7 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
-    .slice(0, 64);
+    .slice(0, 48);
 }
 
 export default function WorkspaceCreatePage() {
@@ -44,13 +44,21 @@ export default function WorkspaceCreatePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !slug.trim()) return;
+    if (name.length > 64 || slug.length > 48) return;
     setSubmitting(true);
     try {
       await createWorkspace(name.trim(), slug.trim());
       toast('success', `Workspace "${name}" created`);
       navigate('/workspaces');
-    } catch {
-      toast('error', 'Failed to create workspace');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('name_too_long')) {
+        toast('error', 'Name must be 64 characters or fewer');
+      } else if (msg.includes('slug_too_long')) {
+        toast('error', 'Slug must be 48 characters or fewer');
+      } else {
+        toast('error', 'Failed to create workspace');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -83,7 +91,13 @@ export default function WorkspaceCreatePage() {
             fullWidth
             autoFocus
             placeholder="My Team"
-            inputProps={{ maxLength: 128 }}
+            inputProps={{ maxLength: 64 }}
+            error={name.length > 64}
+            helperText={
+              name.length > 64
+                ? `Name too long (${name.length}/64)`
+                : `${name.length}/64`
+            }
           />
           <TextField
             label="Slug"
@@ -92,13 +106,18 @@ export default function WorkspaceCreatePage() {
             required
             fullWidth
             placeholder="my-team"
-            helperText="Used in URLs. Lowercase letters, numbers, and hyphens only."
-            inputProps={{ maxLength: 64, pattern: '[a-z0-9-]+' }}
+            error={slug.length > 48}
+            helperText={
+              slug.length > 48
+                ? `Slug too long (${slug.length}/48)`
+                : `Lowercase letters, numbers, and hyphens only. ${slug.length}/48`
+            }
+            inputProps={{ maxLength: 48, pattern: '[a-z0-9-]+' }}
           />
           <Button
             type="submit"
             variant="contained"
-            disabled={submitting || !name.trim() || !slug.trim()}
+            disabled={submitting || !name.trim() || !slug.trim() || name.length > 64 || slug.length > 48}
             sx={{ alignSelf: 'flex-start', mt: 1 }}
           >
             {submitting ? 'Creating…' : 'Create Workspace'}

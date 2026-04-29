@@ -457,11 +457,11 @@ export function deleteWorkspace(workspaceId: string): Promise<unknown> {
   });
 }
 
-export function renameWorkspace(workspaceId: string, name: string): Promise<Workspace> {
+export function renameWorkspace(workspaceId: string, name: string, slug?: string): Promise<Workspace> {
   return request<Workspace>('/workspaces/rename', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ workspace_id: workspaceId, name }),
+    body: JSON.stringify({ workspace_id: workspaceId, name, ...(slug ? { slug } : {}) }),
   });
 }
 
@@ -472,6 +472,14 @@ export function getWorkspaceMembers(workspaceId: string): Promise<WorkspaceMembe
 export function removeWorkspaceMember(workspaceId: string, userId: string): Promise<unknown> {
   return request(`/workspaces/members/remove?workspace_id=${encodeURIComponent(workspaceId)}&user_id=${encodeURIComponent(userId)}`, {
     method: 'DELETE',
+  });
+}
+
+export function changeMemberRole(workspaceId: string, userId: string, role: 'owner' | 'admin' | 'editor' | 'viewer'): Promise<unknown> {
+  return request('/workspaces/members/role', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ workspace_id: workspaceId, user_id: userId, role }),
   });
 }
 

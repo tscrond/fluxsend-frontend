@@ -6,6 +6,8 @@ import {
   createWorkspaceInvite,
   deleteWorkspaceInvite,
   removeWorkspaceMember,
+  renameWorkspace,
+  changeMemberRole,
   type Workspace,
   type WorkspaceMember,
   type WorkspaceInvite,
@@ -36,7 +38,16 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { ArrowLeft, Users, Trash2, Mail, FolderOpen, KeyRound, Settings } from 'lucide-react';
+import { ArrowLeft, Users, Trash2, Mail, FolderOpen, KeyRound, Settings, Pencil } from 'lucide-react';
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
 
 const ROLE_COLORS: Record<string, 'default' | 'primary' | 'secondary' | 'warning' | 'error'> = {
   owner: 'primary',
@@ -68,6 +79,15 @@ export default function WorkspaceDetailPage() {
   const [inviting, setInviting] = useState(false);
   const [removingInvite, setRemovingInvite] = useState<string | null>(null);
   const [removingMember, setRemovingMember] = useState<string | null>(null);
+  const [updatingRole, setUpdatingRole] = useState<string | null>(null);
+
+  // Rename state
+  const [localName, setLocalName] = useState<string>(workspace?.name ?? '');
+  const [localSlug, setLocalSlug] = useState<string>(workspace?.slug ?? '');
+  const [renameName, setRenameName] = useState<string>(workspace?.name ?? '');
+  const [renameSlug, setRenameSlug] = useState<string>(workspace?.slug ?? '');
+  const [renameSlugTouched, setRenameSlugTouched] = useState(false);
+  const [renaming, setRenaming] = useState(false);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -144,6 +164,52 @@ export default function WorkspaceDetailPage() {
 
   const isExpired = (expiresAt: string) => new Date(expiresAt) < new Date();
 
+  const handleChangeRole = async (member: WorkspaceMember, newRole: 'owner' | 'admin' | 'editor' | 'viewer') => {
+    if (!workspaceId) return;
+    setUpdatingRole(member.user_id);
+    try {
+      await changeMemberRole(workspaceId, member.user_id, newRole);
+      setMembers((prev) =>
+        prev.map((m) => (m.user_id === member.user_id ? { ...m, role: newRole } : m)),
+      );
+      toast('success', `${member.email}'s role changed to ${newRole}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('only_owner_can_assign_owner_role')) {
+        toast('error', 'Only the owner can assign the owner role');
+      } else if (msg.includes('cannot_change_owner_role')) {
+        toast('error', "Cannot change the owner's role");
+      } else {
+        toast('error', 'Failed to change role');
+      }
+    } finally {
+      setUpdatingRole(null);
+    }
+  };
+
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!workspaceId || !renameName.trim()) return;
+    setRenaming(true);
+    try {
+      const slugToSend = renameSlug.trim() !== localSlug ? renameSlug.trim() : undefined;
+      await renameWorkspace(workspaceId, renameName.trim(), slugToSend);
+      setLocalName(renameName.trim());
+      if (slugToSend) setLocalSlug(slugToSend);
+      setRenameSlugTouched(false);
+      toast('success', 'Workspace updated');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('duplicate') || msg.includes('unique')) {
+        toast('error', 'That slug is already taken');
+      } else {
+        toast('error', 'Failed to update workspace');
+      }
+    } finally {
+      setRenaming(false);
+    }
+  };
+
   return (
     <div>
       {/* Header */}
@@ -158,10 +224,10 @@ export default function WorkspaceDetailPage() {
         </Button>
         <Box className="flex items-center gap-3 flex-wrap">
           <Typography variant="h5" fontWeight={700}>
-            {workspace?.name ?? 'Workspace'}
+            {localName || workspace?.name || 'Workspace'}
           </Typography>
           {workspace?.slug && (
-            <Chip label={`/${workspace.slug}`} size="small" variant="outlined" />
+            <Chip label={`/${localSlug || workspace.slug}`} size="small" variant="outlined" />
           )}
           {workspace?.role && (
             <Chip
@@ -243,6 +309,69 @@ export default function WorkspaceDetailPage() {
       {/* Administration tab */}
       {tab === 'administration' && (workspace?.role === 'owner' || workspace?.role === 'admin') && (
         <Box className="flex flex-col gap-6">
+          {/* Rename workspace */}
+          <div>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
+              Rename workspace
+            </Typography>
+            <Paper variant="outlined" sx={{ p: 2.5 }}>
+              <Box component="form" onSubmit={handleRename} className="flex items-end gap-3 flex-wrap">
+                <TextField
+                  label="Workspace name"
+                  value={renameName}
+                  onChange={(e) => {
+                    setRenameName(e.target.value);
+                    if (!renameSlugTouched) setRenameSlug(slugify(e.target.value));
+                  }}
+                  size="small"
+                  required
+                  sx={{ flex: '1 1 200px' }}
+                  inputProps={{ maxLength: 64 }}
+                  error={renameName.length > 64}
+                  helperText={
+                    renameName.length > 64
+                      ? `Name too long (${renameName.length}/64)`
+                      : `${renameName.length}/64`
+                  }
+                />
+                <TextField
+                  label="Slug"
+                  value={renameSlug}
+                  onChange={(e) => {
+                    setRenameSlugTouched(true);
+                    setRenameSlug(slugify(e.target.value));
+                  }}
+                  size="small"
+                  required
+                  sx={{ flex: '1 1 160px' }}
+                  inputProps={{ maxLength: 48 }}
+                  error={renameSlug.length > 48}
+                  helperText={
+                    renameSlug.length > 48
+                      ? `Slug too long (${renameSlug.length}/48)`
+                      : `${renameSlug.length}/48`
+                  }
+                  slotProps={{ input: { startAdornment: <Typography variant="caption" sx={{ mr: 0.5, color: 'text.secondary' }}>/</Typography> } }}
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={
+                    renaming ||
+                    !renameName.trim() ||
+                    !renameSlug.trim() ||
+                    renameName.length > 64 ||
+                    renameSlug.length > 48 ||
+                    (renameName.trim() === localName && renameSlug.trim() === localSlug)
+                  }
+                  startIcon={<Pencil size={15} />}
+                >
+                  {renaming ? 'Saving…' : 'Save'}
+                </Button>
+              </Box>
+            </Paper>
+          </div>
+
           {/* Manage members */}
           <div>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
@@ -263,7 +392,15 @@ export default function WorkspaceDetailPage() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {members.map((m) => (
+                    {members.map((m) => {
+                      const canChangeRole =
+                        m.email !== user?.email &&
+                        !(workspace?.role === 'admin' && m.role === 'owner');
+                      const roleOptions: Array<'owner' | 'admin' | 'editor' | 'viewer'> =
+                        workspace?.role === 'owner'
+                          ? ['owner', 'admin', 'editor', 'viewer']
+                          : ['admin', 'editor', 'viewer'];
+                      return (
                       <TableRow key={m.user_id} hover>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -273,8 +410,26 @@ export default function WorkspaceDetailPage() {
                             )}
                           </Box>
                         </TableCell>
-                        <TableCell>
-                          <Chip label={m.role} size="small" color={ROLE_COLORS[m.role] ?? 'default'} />
+                        <TableCell sx={{ minWidth: 130 }}>
+                          {canChangeRole ? (
+                            <Select
+                              value={m.role}
+                              size="small"
+                              disabled={updatingRole === m.user_id}
+                              onChange={(e) =>
+                                handleChangeRole(m, e.target.value as 'owner' | 'admin' | 'editor' | 'viewer')
+                              }
+                              sx={{ fontSize: '0.8rem' }}
+                            >
+                              {roleOptions.map((r) => (
+                                <MenuItem key={r} value={r} sx={{ fontSize: '0.8rem' }}>
+                                  {r}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          ) : (
+                            <Chip label={m.role} size="small" color={ROLE_COLORS[m.role] ?? 'default'} />
+                          )}
                         </TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>
                           <Typography variant="caption" color="text.secondary">
@@ -296,7 +451,8 @@ export default function WorkspaceDetailPage() {
                           )}
                         </TableCell>
                       </TableRow>
-                    ))}
+                      );
+                    })}
                   </TableBody>
                 </Table>
                 </TableContainer>
