@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import {
   listWorkspaces,
   deleteWorkspace,
+  renameWorkspace,
   getMyInvites,
   acceptInvite,
   rejectInvite,
@@ -25,8 +26,9 @@ import {
   DialogActions,
   IconButton,
   Tooltip,
+  TextField,
 } from '@mui/material';
-import { LayoutGrid, Plus, Trash2, ArrowRight, Check, X } from 'lucide-react';
+import { LayoutGrid, Plus, Trash2, ArrowRight, Check, X, Pencil } from 'lucide-react';
 
 const ROLE_COLORS: Record<string, 'default' | 'primary' | 'secondary' | 'warning' | 'error'> = {
   owner: 'primary',
@@ -40,6 +42,9 @@ export default function WorkspacesPage() {
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<Workspace | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<Workspace | null>(null);
+  const [renameName, setRenameName] = useState('');
+  const [renaming, setRenaming] = useState(false);
   const [invites, setInvites] = useState<UserInvite[]>([]);
   const [actingOnInvite, setActingOnInvite] = useState<string | null>(null);
   const { toast } = useToast();
@@ -102,6 +107,25 @@ export default function WorkspacesPage() {
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
+    }
+  };
+
+  const handleRename = async () => {
+    if (!renameTarget || !renameName.trim()) return;
+    setRenaming(true);
+    try {
+      await renameWorkspace(renameTarget.workspace_id, renameName.trim());
+      setWorkspaces((prev) =>
+        prev.map((w) =>
+          w.workspace_id === renameTarget.workspace_id ? { ...w, name: renameName.trim() } : w,
+        ),
+      );
+      toast('success', `Workspace renamed to "${renameName.trim()}"`);
+      setRenameTarget(null);
+    } catch {
+      toast('error', 'Failed to rename workspace');
+    } finally {
+      setRenaming(false);
     }
   };
 
@@ -225,16 +249,32 @@ export default function WorkspacesPage() {
               </Typography>
 
               <Box className="flex items-center justify-between" sx={{ mt: 'auto', pt: 1 }}>
-                <Tooltip title="Delete workspace">
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => setDeleteTarget(ws)}
-                    disabled={ws.role !== 'owner'}
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  <Tooltip title={ws.role === 'owner' || ws.role === 'admin' ? 'Rename workspace' : 'Admin or owner only'}>
+                    <span>
+                      <IconButton
+                        size="small"
+                        onClick={() => { setRenameTarget(ws); setRenameName(ws.name); }}
+                        disabled={ws.role !== 'owner' && ws.role !== 'admin'}
+                      >
+                        <Pencil size={16} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip title={ws.role === 'owner' ? 'Delete workspace' : 'Only the owner can delete'}
                   >
-                    <Trash2 size={16} />
-                  </IconButton>
-                </Tooltip>
+                    <span>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => setDeleteTarget(ws)}
+                        disabled={ws.role !== 'owner'}
+                      >
+                        <Trash2 size={16} />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </Box>
                 <Button
                   size="small"
                   variant="outlined"
@@ -248,6 +288,47 @@ export default function WorkspacesPage() {
           ))}
         </div>
       )}
+
+      {/* Rename dialog */}
+      <Dialog
+        open={!!renameTarget}
+        onClose={() => !renaming && setRenameTarget(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Rename workspace</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Workspace name"
+            value={renameName}
+            onChange={(e) => setRenameName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !renaming && renameName.trim() && renameName.length <= 64) handleRename(); }}
+            size="small"
+            sx={{ mt: 1 }}
+            inputProps={{ maxLength: 64 }}
+            error={renameName.length > 64}
+            helperText={
+              renameName.length > 64
+                ? `Name too long (${renameName.length}/64)`
+                : `${renameName.length}/64`
+            }
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRenameTarget(null)} disabled={renaming}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRename}
+            variant="contained"
+            disabled={renaming || !renameName.trim() || renameName.length > 64}
+          >
+            {renaming ? 'Saving…' : 'Rename'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Delete confirmation dialog */}
       <Dialog
