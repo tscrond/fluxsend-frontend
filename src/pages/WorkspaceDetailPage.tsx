@@ -23,6 +23,7 @@ import {
   Tabs,
   Tab,
   Table,
+  TableContainer,
   TableHead,
   TableRow,
   TableCell,
@@ -177,6 +178,9 @@ export default function WorkspaceDetailPage() {
         value={tab}
         onChange={(_, v) => setTab(v as TabValue)}
         sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
       >
         <Tab value="members" label="Members" icon={<Users size={15} />} iconPosition="start" />
         <Tab value="files" label="Files" icon={<FolderOpen size={15} />} iconPosition="start" disabled />
@@ -199,37 +203,39 @@ export default function WorkspaceDetailPage() {
               <Typography variant="body2" color="text.secondary">No members yet</Typography>
             </Box>
           ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Joined</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {members.map((m) => (
-                  <TableRow key={m.user_id} hover>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {m.email}
-                        {m.email === user?.email && (
-                          <Chip label="You" size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 18 }} />
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={m.role} size="small" color={ROLE_COLORS[m.role] ?? 'default'} />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatDateFull(m.joined_at)}
-                      </Typography>
-                    </TableCell>
+            <TableContainer>
+              <Table size="small" sx={{ minWidth: 480 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Joined</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {members.map((m) => (
+                    <TableRow key={m.user_id} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {m.email}
+                          {m.email === user?.email && (
+                            <Chip label="You" size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 18 }} />
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip label={m.role} size="small" color={ROLE_COLORS[m.role] ?? 'default'} />
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDateFull(m.joined_at)}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </Paper>
       )}
@@ -246,7 +252,8 @@ export default function WorkspaceDetailPage() {
               <Box className="flex justify-center py-8"><CircularProgress /></Box>
             ) : (
               <Paper variant="outlined">
-                <Table size="small">
+                <TableContainer>
+                <Table size="small" sx={{ minWidth: 480 }}>
                   <TableHead>
                     <TableRow>
                       <TableCell>Email</TableCell>
@@ -269,7 +276,7 @@ export default function WorkspaceDetailPage() {
                         <TableCell>
                           <Chip label={m.role} size="small" color={ROLE_COLORS[m.role] ?? 'default'} />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
                           <Typography variant="caption" color="text.secondary">
                             {formatDateFull(m.joined_at)}
                           </Typography>
@@ -292,6 +299,7 @@ export default function WorkspaceDetailPage() {
                     ))}
                   </TableBody>
                 </Table>
+                </TableContainer>
               </Paper>
             )}
           </div>
@@ -356,7 +364,8 @@ export default function WorkspaceDetailPage() {
               </Paper>
             ) : (
               <Paper variant="outlined">
-                <Table size="small">
+                <TableContainer>
+                <Table size="small" sx={{ minWidth: 420 }}>
                   <TableHead>
                     <TableRow>
                       <TableCell>Email</TableCell>
@@ -372,7 +381,7 @@ export default function WorkspaceDetailPage() {
                         <TableCell>
                           <Chip label={inv.role} size="small" color={ROLE_COLORS[inv.role] ?? 'default'} />
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
                           <Typography
                             variant="caption"
                             color={isExpired(inv.expires_at) ? 'error' : 'text.secondary'}
@@ -396,6 +405,7 @@ export default function WorkspaceDetailPage() {
                     ))}
                   </TableBody>
                 </Table>
+                </TableContainer>
               </Paper>
             )}
           </div>
