@@ -34,6 +34,7 @@ import {
   Moon,
   LayoutGrid,
 } from 'lucide-react';
+import GlobalDragUpload from '@/components/GlobalDragUpload';
 
 const DRAWER_WIDTH = 240;
 
@@ -263,6 +264,7 @@ export default function AppLayout() {
         </AppBar>
 
         <main className="mx-auto w-full max-w-5xl min-w-0 flex-1 p-6 max-md:p-4">
+          <GlobalDragUpload />
           <Outlet />
         </main>
       </div>

@@ -238,8 +238,8 @@ export default function FilesPage() {
     setBatchDeleting(true);
     try {
       const { files_deleted, files_failed } = await deleteFilesBatch(pendingDelete.files);
-      const succeeded = files_deleted.length;
-      const failed = files_failed.length;
+      const succeeded = (files_deleted ?? []).length;
+      const failed = (files_failed ?? []).length;
       if (succeeded > 0) toast('success', `${succeeded} file${succeeded !== 1 ? 's' : ''} deleted`);
       if (failed > 0) toast('error', `${failed} file${failed !== 1 ? 's' : ''} could not be deleted`);
       setSelectedFiles(new Set());

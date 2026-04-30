@@ -91,6 +91,34 @@ export default function ReceivedFilePreviewDrawer({ open, file, onClose }: Props
   const previewUrl = isPasswordProtected ? resolvedInlineUrl : (file ? getSharedDownloadUrl(file.sharing_token, 'inline') : null);
   const downloadUrl = isPasswordProtected ? resolvedDownloadUrl : (file ? getSharedDownloadUrl(file.sharing_token, 'download') : null);
 
+  const handleDownload = async () => {
+    if (!file || expired || !downloadUrl) return;
+
+    if (!isPasswordProtected) {
+      // Route through the same-origin backend endpoint which correctly sets Content-Disposition: attachment.
+      // The browser stays on the current page when the response is a file download.
+      window.location.href = getSharedDownloadUrl(file.sharing_token, 'download');
+      return;
+    }
+
+    // Password-protected: use fetch+blob on the resolved URL, fall back to window.open.
+    try {
+      const resp = await fetch(downloadUrl);
+      if (!resp.ok) throw new Error();
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = file.file_name.split('/').pop() || file.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    } catch {
+      window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !password.trim()) return;
@@ -337,8 +365,7 @@ export default function ReceivedFilePreviewDrawer({ open, file, onClose }: Props
           {!expired && downloadUrl && (
             <Button
               variant="contained"
-              href={downloadUrl}
-              target="_blank"
+              onClick={handleDownload}
               startIcon={<Download size={16} />}
               fullWidth
             >
