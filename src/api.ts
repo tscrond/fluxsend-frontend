@@ -533,7 +533,7 @@ export interface WorkspaceQuota {
   folder_count: number;
   member_count: number;
   max_files_workspace: number;
-  max_total_storage_bytes: number;
+  max_total_storage_bytes_workspace: number;
   max_users_workspace: number;
   max_workspace_folders: number;
 }

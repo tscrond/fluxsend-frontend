@@ -354,7 +354,7 @@ export default function WorkspaceDetailPage() {
                     {
                       label: 'Storage',
                       used: quota.total_bytes,
-                      max: quota.max_total_storage_bytes,
+                      max: quota.max_total_storage_bytes_workspace,
                       format: formatBytes,
                     },
                     {
