@@ -5,7 +5,7 @@ import {
   InputAdornment, IconButton, Alert,
 } from '@mui/material';
 import { Lock, Eye, EyeOff, Download, ExternalLink, ShieldOff, Clock, FileQuestion } from 'lucide-react';
-import { getShareInfo, resolvePublicShare, ApiError, type ShareInfoResponse } from '@/api';
+import { getShareInfo, getSharedDownloadUrl, resolvePublicShare, ApiError, type ShareInfoResponse } from '@/api';
 import { useThemeMode } from '@/hooks/useThemeMode';
 
 const MAX_ATTEMPTS = 5;
@@ -29,6 +29,27 @@ export default function SharePage() {
   const [submitting, setSubmitting] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [attemptsLeft, setAttemptsLeft] = useState(MAX_ATTEMPTS);
+
+  // Fetch file bytes and trigger a browser download — avoids the "preview in new tab" issue
+  // that occurs when the resolved URL is a CloudFront URL without Content-Disposition: attachment.
+  // Falls back to window.open if CORS blocks the fetch.
+  const triggerFetchDownload = async (url: string, fileName: string) => {
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('Download failed');
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName.split('/').pop() || fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    } catch {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   useEffect(() => {
     if (!token) {
@@ -56,6 +77,22 @@ export default function SharePage() {
     setSubmitting(true);
     setPasswordError('');
     try {
+      if (targetMode === 'download') {
+        if (!state.info.password_protected) {
+          // Route directly through the backend download endpoint which correctly sets
+          // Content-Disposition: attachment (via proxy for CloudFront, or via signed URL params for S3).
+          // Using window.location.href keeps the user on the current page when the browser
+          // triggers the file download.
+          window.location.href = getSharedDownloadUrl(token, 'download');
+          setSubmitting(false);
+          return;
+        }
+        // Password-protected: verify password then use fetch+blob to force download
+        const result = await resolvePublicShare(token, 'download', password);
+        await triggerFetchDownload(result.url, result.file_name);
+        setSubmitting(false);
+        return;
+      }
       const result = await resolvePublicShare(token, targetMode, password);
       window.open(result.url, '_blank', 'noopener,noreferrer');
     } catch (err: unknown) {

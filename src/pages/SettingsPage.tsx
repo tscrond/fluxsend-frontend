@@ -6,7 +6,7 @@ import {
   Paper, Typography, Avatar, Button, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, Checkbox, FormControlLabel, Alert, Chip, CircularProgress,
 } from '@mui/material';
-import { User, Shield, Trash2, AlertTriangle } from 'lucide-react';
+import { User, Shield, Trash2, AlertTriangle, CreditCard } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -57,6 +57,33 @@ export default function SettingsPage() {
             <Typography variant="body2" color="text.secondary">{user?.email}</Typography>
           </div>
         </div>
+      </Paper>
+
+      {/* Plan & Billing */}
+      <Paper variant="outlined" className="p-6 mb-4">
+        <div className="flex items-center gap-2 mb-4">
+          <CreditCard size={18} className="text-slate-500" />
+          <Typography variant="subtitle1" fontWeight={600}>Plan &amp; Billing</Typography>
+        </div>
+        <div className="flex items-center justify-between py-3 border-b border-slate-100">
+          <div>
+            <Typography variant="body2" fontWeight={500}>Current plan</Typography>
+            <Typography variant="caption" color="text.secondary">Your active subscription tier</Typography>
+          </div>
+          <Chip label={user?.plan_name ?? 'Free'} size="small" color="default" variant="outlined" />
+        </div>
+        <div className="flex items-center justify-between py-3">
+          <div>
+            <Typography variant="body2" fontWeight={500}>Manage billing</Typography>
+            <Typography variant="caption" color="text.secondary">Upgrade, downgrade, or view invoices</Typography>
+          </div>
+          <Button size="small" variant="outlined" disabled title="Coming soon">
+            Manage
+          </Button>
+        </div>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+          Billing management is coming soon.
+        </Typography>
       </Paper>
 
       {/* Security */}

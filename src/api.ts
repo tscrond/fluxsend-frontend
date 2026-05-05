@@ -124,6 +124,14 @@ export interface UserData {
   picture: string;
   locale: string;
   provider: string;
+  // Plan fields (from AuthorizedUserWithPlan)
+  plan_id?: string;
+  plan_name?: string;
+  max_file_size_bytes?: number;
+  max_total_storage_bytes?: number;
+  max_files?: number;
+  max_files_sent_per_day?: number;
+  max_shares_per_day?: number;
 }
 
 export interface UserDataResponse {
@@ -180,8 +188,8 @@ export function deleteFile(fileName: string): Promise<{ file_deleted: string }> 
 }
 
 export interface BatchDeleteFilesResponse {
-  files_deleted: string[];
-  files_failed: string[];
+  files_deleted: string[] | null;
+  files_failed: string[] | null;
 }
 
 export function deleteFilesBatch(files: string[]): Promise<BatchDeleteFilesResponse> {
@@ -517,5 +525,110 @@ export function rejectInvite(token: string): Promise<unknown> {
   return request(`/workspaces/invites/reject?token=${encodeURIComponent(token)}`, {
     method: 'DELETE',
   });
+}
+
+export interface WorkspaceQuota {
+  file_count: number;
+  total_bytes: number;
+  folder_count: number;
+  member_count: number;
+  max_files_workspace: number;
+  max_total_storage_bytes_workspace: number;
+  max_users_workspace: number;
+  max_workspace_folders: number;
+}
+
+export function getWorkspaceQuota(workspaceId: string): Promise<WorkspaceQuota> {
+  return request<WorkspaceQuota>(`/workspaces/${encodeURIComponent(workspaceId)}/quota`);
+}
+
+// ─── Workspace Files ─────────────────────────────────────────────────────────
+
+export interface WorkspaceFileEntry {
+  id: string;
+  name: string;
+  file_type: string;
+  size: number;
+  md5_checksum: string;
+  uploaded_by: string;
+  uploaded_by_email: string;
+  created_at: string;
+}
+
+export interface WorkspaceFolderEntry {
+  name: string;
+  size: number;
+  created_by_email?: string;
+  created_at?: string;
+}
+
+export interface WorkspaceFilesTree {
+  path: string;
+  files: WorkspaceFileEntry[] | null;
+  folders: WorkspaceFolderEntry[] | null;
+}
+
+export interface WorkspaceFolderResult {
+  id: string;
+  workspace_id: string;
+  name: string;
+  path: string;
+  created_by: string;
+  created_at: string;
+}
+
+export function getWorkspaceFilesTree(workspaceId: string, path?: string): Promise<WorkspaceFilesTree> {
+  const qs = path && path !== '/' ? `?path=${encodeURIComponent(path)}` : '';
+  return request<WorkspaceFilesTree>(`/workspaces/${encodeURIComponent(workspaceId)}/files/tree${qs}`);
+}
+
+export function uploadWorkspaceFile(workspaceId: string, file: File, folder?: string): Promise<unknown> {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (folder && folder !== '/') formData.append('folder', folder);
+  return request(`/workspaces/${encodeURIComponent(workspaceId)}/files/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+}
+
+export function mkdirWorkspace(workspaceId: string, folderName: string, parentPath: string): Promise<WorkspaceFolderResult> {
+  return request<WorkspaceFolderResult>(`/workspaces/${encodeURIComponent(workspaceId)}/files/mkdir`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folder_name: folderName, parent_path: parentPath }),
+  });
+}
+
+export function deleteWorkspaceFile(workspaceId: string, fileId: string): Promise<unknown> {
+  return request(`/workspaces/${encodeURIComponent(workspaceId)}/files/delete?file_id=${encodeURIComponent(fileId)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function deleteWorkspaceFolder(workspaceId: string, folderPath: string): Promise<unknown> {
+  return request(`/workspaces/${encodeURIComponent(workspaceId)}/files/folder/delete?path=${encodeURIComponent(folderPath)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function moveWorkspaceFile(workspaceId: string, fileId: string, destination: string): Promise<unknown> {
+  return request(`/workspaces/${encodeURIComponent(workspaceId)}/files/move`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file_id: fileId, destination }),
+  });
+}
+
+export function moveWorkspaceFolder(workspaceId: string, source: string, destination: string): Promise<unknown> {
+  return request(`/workspaces/${encodeURIComponent(workspaceId)}/files/folder/move`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source, destination }),
+  });
+}
+
+export function getWorkspaceFileDownloadUrl(workspaceId: string, fileId: string, mode: 'inline' | 'download' = 'download'): string {
+  return `${API_BASE}/workspaces/${encodeURIComponent(workspaceId)}/files/download?file_id=${encodeURIComponent(fileId)}&mode=${mode}`;
 }
 

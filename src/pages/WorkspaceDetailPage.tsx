@@ -8,13 +8,15 @@ import {
   removeWorkspaceMember,
   renameWorkspace,
   changeMemberRole,
+  getWorkspaceQuota,
   type Workspace,
   type WorkspaceMember,
   type WorkspaceInvite,
+  type WorkspaceQuota,
 } from '@/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { formatDateFull } from '@/lib/utils';
+import { formatDateFull, formatBytes } from '@/lib/utils';
 import {
   Box,
   Paper,
@@ -37,8 +39,10 @@ import {
   InputLabel,
   IconButton,
   Tooltip,
+  LinearProgress,
 } from '@mui/material';
-import { ArrowLeft, Users, Trash2, Mail, FolderOpen, KeyRound, Settings, Pencil } from 'lucide-react';
+import { ArrowLeft, Users, Trash2, Mail, Pencil } from 'lucide-react';
+import WorkspaceFilesBrowser from '@/components/WorkspaceFilesBrowser';
 
 function slugify(value: string): string {
   return value
@@ -81,6 +85,10 @@ export default function WorkspaceDetailPage() {
   const [removingMember, setRemovingMember] = useState<string | null>(null);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
 
+  // Quota state
+  const [quota, setQuota] = useState<WorkspaceQuota | null>(null);
+  const [loadingQuota, setLoadingQuota] = useState(false);
+
   // Rename state
   const [localName, setLocalName] = useState<string>(workspace?.name ?? '');
   const [localSlug, setLocalSlug] = useState<string>(workspace?.slug ?? '');
@@ -88,6 +96,18 @@ export default function WorkspaceDetailPage() {
   const [renameSlug, setRenameSlug] = useState<string>(workspace?.slug ?? '');
   const [renameSlugTouched, setRenameSlugTouched] = useState(false);
   const [renaming, setRenaming] = useState(false);
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    const isAdminOrOwner = workspace?.role === 'owner' || workspace?.role === 'admin';
+    if (isAdminOrOwner) {
+      setLoadingQuota(true);
+      getWorkspaceQuota(workspaceId)
+        .then(setQuota)
+        .catch(() => {/* non-fatal */})
+        .finally(() => setLoadingQuota(false));
+    }
+  }, [workspaceId, workspace?.role]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -243,16 +263,16 @@ export default function WorkspaceDetailPage() {
       <Tabs
         value={tab}
         onChange={(_, v) => setTab(v as TabValue)}
-        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider', '& .MuiTabs-scrollButtons.Mui-disabled': { opacity: 0.3 } }}
         variant="scrollable"
         scrollButtons="auto"
         allowScrollButtonsMobile
       >
-        <Tab value="members" label="Members" icon={<Users size={15} />} iconPosition="start" />
-        <Tab value="files" label="Files" icon={<FolderOpen size={15} />} iconPosition="start" disabled />
-        <Tab value="api-keys" label="API Keys" icon={<KeyRound size={15} />} iconPosition="start" disabled />
+        <Tab value="members" label="Members" />
+        <Tab value="files" label="Files" />
+        <Tab value="api-keys" label="API Keys" disabled />
         {(workspace?.role === 'owner' || workspace?.role === 'admin') && (
-          <Tab value="administration" label="Administration" icon={<Settings size={15} />} iconPosition="start" />
+          <Tab value="administration" label="Administration" />
         )}
       </Tabs>
 
@@ -306,9 +326,76 @@ export default function WorkspaceDetailPage() {
         </Paper>
       )}
 
+      {/* Files tab */}
+      {tab === 'files' && workspaceId && workspace?.role && (
+        <WorkspaceFilesBrowser workspaceId={workspaceId} role={workspace.role} />
+      )}
+
       {/* Administration tab */}
       {tab === 'administration' && (workspace?.role === 'owner' || workspace?.role === 'admin') && (
         <Box className="flex flex-col gap-6">
+          {/* Plan limits */}
+          <div>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
+              Plan limits
+            </Typography>
+            <Paper variant="outlined" sx={{ p: 2.5 }}>
+              {loadingQuota ? (
+                <Box className="flex justify-center py-6"><CircularProgress size={24} /></Box>
+              ) : quota ? (
+                <Box className="flex flex-col gap-4">
+                  {[
+                    {
+                      label: 'Files',
+                      used: quota.file_count,
+                      max: quota.max_files_workspace,
+                      format: (n: number) => n.toLocaleString(),
+                    },
+                    {
+                      label: 'Storage',
+                      used: quota.total_bytes,
+                      max: quota.max_total_storage_bytes_workspace,
+                      format: formatBytes,
+                    },
+                    {
+                      label: 'Folders',
+                      used: quota.folder_count,
+                      max: quota.max_workspace_folders,
+                      format: (n: number) => n.toLocaleString(),
+                    },
+                    {
+                      label: 'Members',
+                      used: quota.member_count,
+                      max: quota.max_users_workspace,
+                      format: (n: number) => n.toLocaleString(),
+                    },
+                  ].map(({ label, used, max, format }) => {
+                    const pct = max > 0 ? Math.min((used / max) * 100, 100) : 0;
+                    const color = pct >= 100 ? 'error' : pct >= 80 ? 'warning' : 'primary';
+                    return (
+                      <Box key={label}>
+                        <Box className="flex justify-between items-baseline mb-1">
+                          <Typography variant="body2" fontWeight={500}>{label}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {format(used)} / {format(max)}
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={pct}
+                          color={color}
+                          sx={{ height: 6, borderRadius: 3 }}
+                        />
+                      </Box>
+                    );
+                  })}
+                </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary">Could not load quota information.</Typography>
+              )}
+            </Paper>
+          </div>
+
           {/* Rename workspace */}
           <div>
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
