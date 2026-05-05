@@ -555,10 +555,17 @@ export interface WorkspaceFileEntry {
   created_at: string;
 }
 
+export interface WorkspaceFolderEntry {
+  name: string;
+  size: number;
+  created_by_email?: string;
+  created_at?: string;
+}
+
 export interface WorkspaceFilesTree {
   path: string;
   files: WorkspaceFileEntry[] | null;
-  folders: string[] | null;
+  folders: WorkspaceFolderEntry[] | null;
 }
 
 export interface WorkspaceFolderResult {

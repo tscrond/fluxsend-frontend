@@ -135,7 +135,7 @@ export default function GlobalDragUpload() {
     const p = isWs ? (folderPath || '/') : (folderPath || undefined);
     const fetch =
       isWs && selectedWs
-        ? getWorkspaceFilesTree(selectedWs.workspace_id, p as string).then(r => r.folders ?? [])
+        ? getWorkspaceFilesTree(selectedWs.workspace_id, p as string).then(r => (r.folders ?? []).map(f => f.name))
         : getFolders(p as string | undefined).then(r => r.folders ?? []);
     fetch
       .then(f => setFolders(f))

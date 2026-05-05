@@ -10,6 +10,7 @@ import {
   getWorkspaceFileDownloadUrl,
   ApiError,
   type WorkspaceFileEntry,
+  type WorkspaceFolderEntry,
   type WorkspaceFilesTree,
 } from '@/api';
 import WorkspaceFilePreviewDrawer from '@/components/WorkspaceFilePreviewDrawer';
@@ -238,10 +239,10 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
     setPreviewDrawerOpen(true);
   };
 
-  const folders = treeData?.folders ?? [];
+  const folders: WorkspaceFolderEntry[] = treeData?.folders ?? [];
   const files = treeData?.files ?? [];
   const lowerSearch = search.toLowerCase();
-  const filteredFolders = folders.filter((f) => f.toLowerCase().includes(lowerSearch));
+  const filteredFolders = folders.filter((f) => f.name.toLowerCase().includes(lowerSearch));
   const filteredFiles = files.filter((f) => f.name.toLowerCase().includes(lowerSearch));
   const totalItems = folders.length + files.length;
   const deleteDialogBusy = deleting;
@@ -397,20 +398,26 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
             </TableHead>
             <TableBody>
               {/* Folders */}
-              {filteredFolders.map((folderName) => {
-                const folderPath = currentPath === '/' ? `/${folderName}` : `${currentPath}/${folderName}`;
+              {filteredFolders.map((folder) => {
+                const folderPath = currentPath === '/' ? `/${folder.name}` : `${currentPath}/${folder.name}`;
                 return (
-                  <TableRow key={`folder:${folderName}`} hover sx={{ cursor: 'pointer' }}>
+                  <TableRow key={`folder:${folder.name}`} hover sx={{ cursor: 'pointer' }}>
                     <TableCell padding="checkbox" />
                     <TableCell onClick={() => navigateTo(folderPath)}>
                       <div className="flex items-center gap-2">
                         <Folder size={18} className="text-yellow-500 shrink-0" />
-                        <span className="font-medium text-sm">{folderName}</span>
+                        <span className="font-medium text-sm">{folder.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }} onClick={() => navigateTo(folderPath)}>—</TableCell>
-                    <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' }, color: 'text.secondary', fontSize: '0.8125rem' }} onClick={() => navigateTo(folderPath)}>—</TableCell>
-                    <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }} onClick={() => navigateTo(folderPath)}>—</TableCell>
+                    <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, color: 'text.secondary', fontSize: '0.8125rem' }} onClick={() => navigateTo(folderPath)}>
+                      {folder.size != null ? formatBytes(folder.size) : '—'}
+                    </TableCell>
+                    <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' }, color: 'text.secondary', fontSize: '0.8125rem' }} onClick={() => navigateTo(folderPath)}>
+                      {folder.created_by_email || '—'}
+                    </TableCell>
+                    <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, color: 'text.secondary', fontSize: '0.8125rem' }} onClick={() => navigateTo(folderPath)}>
+                      {folder.created_at ? new Date(folder.created_at).toLocaleDateString() : '—'}
+                    </TableCell>
                     <TableCell align="right">
                       {writeAllowed && (
                         <IconButton
