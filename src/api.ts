@@ -132,6 +132,11 @@ export interface UserData {
   max_files?: number;
   max_files_sent_per_day?: number;
   max_shares_per_day?: number;
+  max_user_workspaces?: number;
+  max_files_workspace?: number;
+  max_total_storage_bytes_workspace?: number;
+  max_users_workspace?: number;
+  max_workspace_folders?: number;
 }
 
 export interface UserDataResponse {
@@ -140,6 +145,33 @@ export interface UserDataResponse {
 
 export function getUserData(): Promise<UserDataResponse> {
   return request<UserDataResponse>('/user/data');
+}
+
+export interface DailyActivity {
+  day: string;
+  uploads?: number;
+  shares?: number;
+}
+
+export interface UserStats {
+  total_files: number;
+  total_bytes: number;
+  files_today: number;
+  files_last_7d: number;
+  files_last_30d: number;
+  total_shares_sent: number;
+  shares_today: number;
+  targeted_shares: number;
+  public_shares: number;
+  active_shares: number;
+  total_received: number;
+  owned_workspaces: number;
+  daily_uploads: DailyActivity[];
+  daily_shares: DailyActivity[];
+}
+
+export function getUserStats(): Promise<UserStats> {
+  return request<UserStats>('/user/stats');
 }
 
 // ─── Bucket / Files ─────────────────────────────────────────────────────────
