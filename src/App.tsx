@@ -17,6 +17,7 @@ import SharePage from '@/pages/SharePage';
 import WorkspacesPage from '@/pages/WorkspacesPage';
 import WorkspaceCreatePage from '@/pages/WorkspaceCreatePage';
 import WorkspaceDetailPage from '@/pages/WorkspaceDetailPage';
+import AnalyticsPage from '@/pages/AnalyticsPage';
 
 function buildTheme(mode: 'light' | 'dark') {
   const isDark = mode === 'dark';
@@ -142,6 +143,7 @@ const router = createBrowserRouter([
           { path: 'workspaces', element: <WorkspacesPage /> },
           { path: 'workspaces/create', element: <WorkspaceCreatePage /> },
           { path: 'workspaces/:workspaceId', element: <WorkspaceDetailPage /> },
+          { path: 'analytics', element: <AnalyticsPage /> },
         ],
       },
     ],

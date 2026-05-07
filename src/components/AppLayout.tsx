@@ -33,6 +33,7 @@ import {
   Sun,
   Moon,
   LayoutGrid,
+  BarChart2,
 } from 'lucide-react';
 import GlobalDragUpload from '@/components/GlobalDragUpload';
 
@@ -44,6 +45,7 @@ const navItems = [
   { to: '/shared', label: 'Shared by Me', icon: Share2 },
   { to: '/received', label: 'Received', icon: Inbox },
   { to: '/workspaces', label: 'Workspaces', icon: LayoutGrid },
+  { to: '/analytics', label: 'Analytics', icon: BarChart2 },
 ];
 
 export default function AppLayout() {
