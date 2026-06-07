@@ -17,6 +17,7 @@ import {
   Typography,
   Box,
   List,
+  ListSubheader,
   ListItemButton,
   Badge,
   useMediaQuery,
@@ -34,17 +35,25 @@ import {
   Moon,
   LayoutGrid,
   BarChart2,
+  KeyRound,
 } from 'lucide-react';
 import GlobalDragUpload from '@/components/GlobalDragUpload';
 
 const DRAWER_WIDTH = 240;
 
-const navItems = [
+const personalNavItems = [
   { to: '/files', label: 'My Files', icon: FolderOpen },
   { to: '/upload', label: 'Upload', icon: Upload },
   { to: '/shared', label: 'Shared by Me', icon: Share2 },
   { to: '/received', label: 'Received', icon: Inbox },
+];
+
+const workspaceNavItems = [
   { to: '/workspaces', label: 'Workspaces', icon: LayoutGrid },
+];
+
+const otherNavItems = [
+  { to: '/api-keys', label: 'API Keys', icon: KeyRound },
   { to: '/analytics', label: 'Analytics', icon: BarChart2 },
 ];
 
@@ -105,6 +114,46 @@ export default function AppLayout() {
     }
   }, [location.pathname, fetchUnseenCount, fetchPendingInviteCount]);
 
+  const renderNavItem = (item: { to: string; label: string; icon: typeof FolderOpen }) => (
+    <NavLink key={item.to} to={item.to} className="no-underline">
+      {({ isActive }) => (
+        <ListItemButton
+          selected={isActive}
+          sx={{
+            borderRadius: 1,
+            mb: 0.25,
+            pl: isActive ? 1.5 : 2,
+            borderLeft: isActive ? '3px solid' : '3px solid transparent',
+            borderColor: isActive ? 'primary.main' : 'transparent',
+            '&.Mui-selected': {
+              bgcolor: 'action.selected',
+              color: 'primary.main',
+              '&:hover': { bgcolor: 'action.selected' },
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+            {item.to === '/received' && unseenCount > 0 ? (
+              <Badge badgeContent={unseenCount} color="error" max={99}>
+                <item.icon size={18} />
+              </Badge>
+            ) : item.to === '/workspaces' && pendingInviteCount > 0 ? (
+              <Badge badgeContent={pendingInviteCount} color="warning" max={99}>
+                <item.icon size={18} />
+              </Badge>
+            ) : (
+              <item.icon size={18} />
+            )}
+          </ListItemIcon>
+          <ListItemText
+            primary={item.label}
+            primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 700 }}
+          />
+        </ListItemButton>
+      )}
+    </NavLink>
+  );
+
   const drawerContent = (
     <div className="flex flex-col h-full">
       <div className="flex flex-row items-center px-4 pt-4 pb-3 gap-2">
@@ -118,47 +167,47 @@ export default function AppLayout() {
           FLUX<span style={{ color: '#6366f1' }}>SEND</span>
         </Typography>
       </div>
-      <List className="flex-1 px-2">
-        {navItems.map((item) => (
-          <NavLink key={item.to} to={item.to} className="no-underline">
-            {({ isActive }) => (
-              <ListItemButton
-                selected={isActive}
-                sx={{
-                  borderRadius: 1,
-                  mb: 0.25,
-                  pl: isActive ? 1.5 : 2,
-                  borderLeft: isActive ? '3px solid' : '3px solid transparent',
-                  borderColor: isActive ? 'primary.main' : 'transparent',
-                  '&.Mui-selected': {
-                    bgcolor: 'action.selected',
-                    color: 'primary.main',
-                    '&:hover': { bgcolor: 'action.selected' },
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                  {item.to === '/received' && unseenCount > 0 ? (
-                    <Badge badgeContent={unseenCount} color="error" max={99}>
-                      <item.icon size={18} />
-                    </Badge>
-                  ) : item.to === '/workspaces' && pendingInviteCount > 0 ? (
-                    <Badge badgeContent={pendingInviteCount} color="warning" max={99}>
-                      <item.icon size={18} />
-                    </Badge>
-                  ) : (
-                    <item.icon size={18} />
-                  )}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 700 }}
-                />
-              </ListItemButton>
-            )}
-          </NavLink>
-        ))}
-      </List>
+      <Box className="flex-1 overflow-y-auto pb-2">
+        <List
+          className="px-2"
+          subheader={(
+            <ListSubheader
+              disableSticky
+              sx={{ bgcolor: 'transparent', color: 'text.secondary', lineHeight: 2.5, px: 2, fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+            >
+              Personal
+            </ListSubheader>
+          )}
+        >
+          {personalNavItems.map(renderNavItem)}
+        </List>
+        <List
+          className="px-2"
+          subheader={(
+            <ListSubheader
+              disableSticky
+              sx={{ bgcolor: 'transparent', color: 'text.secondary', lineHeight: 2.5, px: 2, fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+            >
+              Workspace
+            </ListSubheader>
+          )}
+        >
+          {workspaceNavItems.map(renderNavItem)}
+        </List>
+        <List
+          className="px-2"
+          subheader={(
+            <ListSubheader
+              disableSticky
+              sx={{ bgcolor: 'transparent', color: 'text.secondary', lineHeight: 2.5, px: 2, fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}
+            >
+              Other
+            </ListSubheader>
+          )}
+        >
+          {otherNavItems.map(renderNavItem)}
+        </List>
+      </Box>
       <Divider />
       <List className="px-2 pb-2">
         <NavLink to="/settings" className="no-underline">

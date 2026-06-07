@@ -14,6 +14,8 @@ export default defineConfig({
   server: {
     port: 8000,
     proxy: {
+      '/api_keys/': { target: 'http://localhost:3000', changeOrigin: true },
+      '/api': { target: 'http://localhost:8091', changeOrigin: true },
       '/auth/': { target: 'http://localhost:3000', changeOrigin: true },
       '/files/': { target: 'http://localhost:3000', changeOrigin: true },
       '/folders/': { target: 'http://localhost:3000', changeOrigin: true },

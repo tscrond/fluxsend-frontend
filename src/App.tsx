@@ -18,6 +18,7 @@ import WorkspacesPage from '@/pages/WorkspacesPage';
 import WorkspaceCreatePage from '@/pages/WorkspaceCreatePage';
 import WorkspaceDetailPage from '@/pages/WorkspaceDetailPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
+import PrivateAPIKeysPage from '@/pages/PrivateAPIKeysPage';
 
 function buildTheme(mode: 'light' | 'dark') {
   const isDark = mode === 'dark';
@@ -140,6 +141,7 @@ const router = createBrowserRouter([
           { path: 'shared', element: <SharedPage /> },
           { path: 'received', element: <ReceivedPage /> },
           { path: 'settings', element: <SettingsPage /> },
+          { path: 'api-keys', element: <PrivateAPIKeysPage /> },
           { path: 'workspaces', element: <WorkspacesPage /> },
           { path: 'workspaces/create', element: <WorkspaceCreatePage /> },
           { path: 'workspaces/:workspaceId', element: <WorkspaceDetailPage /> },

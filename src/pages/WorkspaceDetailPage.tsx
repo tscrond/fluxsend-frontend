@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { formatDateFull, formatBytes } from '@/lib/utils';
+import WorkspaceAPIKeysPanel from '@/components/WorkspaceAPIKeysPanel';
 import {
   Box,
   Paper,
@@ -97,21 +98,21 @@ export default function WorkspaceDetailPage() {
   const [renameSlugTouched, setRenameSlugTouched] = useState(false);
   const [renaming, setRenaming] = useState(false);
 
+  const canManageWorkspace = workspace?.role === 'owner' || workspace?.role === 'admin';
+
   useEffect(() => {
     if (!workspaceId) return;
-    const isAdminOrOwner = workspace?.role === 'owner' || workspace?.role === 'admin';
-    if (isAdminOrOwner) {
+    if (canManageWorkspace) {
       setLoadingQuota(true);
       getWorkspaceQuota(workspaceId)
         .then(setQuota)
         .catch(() => {/* non-fatal */})
         .finally(() => setLoadingQuota(false));
     }
-  }, [workspaceId, workspace?.role]);
+  }, [workspaceId, canManageWorkspace]);
 
   useEffect(() => {
     if (!workspaceId) return;
-    const isAdminOrOwner = workspace?.role === 'owner' || workspace?.role === 'admin';
     async function load() {
       setLoadingMembers(true);
       try {
@@ -122,7 +123,7 @@ export default function WorkspaceDetailPage() {
       } finally {
         setLoadingMembers(false);
       }
-      if (isAdminOrOwner) {
+      if (canManageWorkspace) {
         try {
           const i = await getWorkspaceInvites(workspaceId!);
           setInvites(i ?? []);
@@ -132,7 +133,7 @@ export default function WorkspaceDetailPage() {
       }
     }
     load();
-  }, [workspaceId, workspace?.role, toast]);
+  }, [workspaceId, canManageWorkspace, toast]);
 
   const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,8 +271,8 @@ export default function WorkspaceDetailPage() {
       >
         <Tab value="members" label="Members" />
         <Tab value="files" label="Files" />
-        <Tab value="api-keys" label="API Keys" disabled />
-        {(workspace?.role === 'owner' || workspace?.role === 'admin') && (
+        {canManageWorkspace && <Tab value="api-keys" label="API Keys" />}
+        {canManageWorkspace && (
           <Tab value="administration" label="Administration" />
         )}
       </Tabs>
@@ -331,8 +332,12 @@ export default function WorkspaceDetailPage() {
         <WorkspaceFilesBrowser workspaceId={workspaceId} role={workspace.role} />
       )}
 
+      {tab === 'api-keys' && workspaceId && canManageWorkspace && (
+        <WorkspaceAPIKeysPanel workspaceId={workspaceId} />
+      )}
+
       {/* Administration tab */}
-      {tab === 'administration' && (workspace?.role === 'owner' || workspace?.role === 'admin') && (
+      {tab === 'administration' && canManageWorkspace && (
         <Box className="flex flex-col gap-6">
           {/* Plan limits */}
           <div>
@@ -367,6 +372,12 @@ export default function WorkspaceDetailPage() {
                       label: 'Members',
                       used: quota.member_count,
                       max: quota.max_users_workspace,
+                      format: (n: number) => n.toLocaleString(),
+                    },
+                    {
+                      label: 'API Keys',
+                      used: quota.api_key_count,
+                      max: quota.max_workspace_api_keys,
                       format: (n: number) => n.toLocaleString(),
                     },
                   ].map(({ label, used, max, format }) => {

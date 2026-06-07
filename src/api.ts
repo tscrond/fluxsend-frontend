@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE ?? '';
+const API_BASE = (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '');
 
 interface ApiEnvelope {
   status: number;
@@ -168,6 +168,7 @@ export interface UserStats {
   owned_workspaces: number;
   daily_uploads: DailyActivity[];
   daily_shares: DailyActivity[];
+  workspace_api_keys: number;
 }
 
 export function getUserStats(): Promise<UserStats> {
@@ -564,14 +565,96 @@ export interface WorkspaceQuota {
   total_bytes: number;
   folder_count: number;
   member_count: number;
+  api_key_count: number;
   max_files_workspace: number;
   max_total_storage_bytes_workspace: number;
   max_users_workspace: number;
   max_workspace_folders: number;
+  max_workspace_api_keys: number;
 }
 
 export function getWorkspaceQuota(workspaceId: string): Promise<WorkspaceQuota> {
   return request<WorkspaceQuota>(`/workspaces/${encodeURIComponent(workspaceId)}/quota`);
+}
+
+export interface WorkspaceAPIKey {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  scopes: string[];
+  created_by: string;
+  created_at: string;
+  last_used_at?: string | null;
+}
+
+export interface CreatedWorkspaceAPIKey {
+  id: string;
+  name: string;
+  description: string;
+  key: string;
+  scopes: string[];
+  workspace_id: string;
+  created_by: string;
+  created_at: string;
+}
+
+export type PrivateAPIKey = WorkspaceAPIKey;
+
+export interface CreatedPrivateAPIKey {
+  id: string;
+  name: string;
+  description: string;
+  key: string;
+  scopes: string[];
+  user_id: string;
+  created_by: string;
+  created_at: string;
+}
+
+export function listWorkspaceAPIKeys(workspaceId: string): Promise<{ api_keys: WorkspaceAPIKey[] }> {
+  return request<{ api_keys: WorkspaceAPIKey[] }>(`/api_keys/${encodeURIComponent(workspaceId)}/list`);
+}
+
+export function createWorkspaceAPIKey(
+  workspaceId: string,
+  payload: { name: string; description: string; scopes: string[] },
+): Promise<{ api_key: CreatedWorkspaceAPIKey }> {
+  return request<{ api_key: CreatedWorkspaceAPIKey }>(`/api_keys/${encodeURIComponent(workspaceId)}/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteWorkspaceAPIKey(workspaceId: string, apiKeyId: string): Promise<void> {
+  return request<void>(`/api_keys/${encodeURIComponent(workspaceId)}/delete`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key_id: apiKeyId }),
+  });
+}
+
+export function listPrivateAPIKeys(): Promise<{ api_keys: PrivateAPIKey[] }> {
+  return request<{ api_keys: PrivateAPIKey[] }>('/api_keys/private/list');
+}
+
+export function createPrivateAPIKey(
+  payload: { name: string; description: string; scopes: string[] },
+): Promise<{ api_key: CreatedPrivateAPIKey }> {
+  return request<{ api_key: CreatedPrivateAPIKey }>('/api_keys/private/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deletePrivateAPIKey(apiKeyId: string): Promise<void> {
+  return request<void>('/api_keys/private/delete', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key_id: apiKeyId }),
+  });
 }
 
 // ─── Workspace Files ─────────────────────────────────────────────────────────
