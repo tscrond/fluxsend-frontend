@@ -140,6 +140,11 @@ function WorkspaceQuotaCard({ workspace, quota }: WorkspaceQuotaCardProps) {
         used={quota.folder_count}
         max={quota.max_workspace_folders}
       />
+      <QuotaBar
+        label="API Keys"
+        used={quota.api_key_count}
+        max={quota.max_workspace_api_keys}
+      />
     </Paper>
   );
 }
