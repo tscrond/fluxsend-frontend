@@ -314,7 +314,7 @@ export default function AppLayout() {
           </Toolbar>
         </AppBar>
 
-        <main className="mx-auto w-full max-w-5xl min-w-0 flex-1 p-6 max-md:p-4">
+        <main className="mx-auto w-full max-w-7xl min-w-0 flex-1 p-6 max-md:p-4">
           <GlobalDragUpload />
           <Outlet />
         </main>

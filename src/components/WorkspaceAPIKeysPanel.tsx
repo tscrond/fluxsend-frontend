@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   Box,
   Button,
   Checkbox,
@@ -228,10 +227,6 @@ export default function WorkspaceAPIKeysPanel({ workspaceId }: Props) {
 
   return (
     <Box className="flex flex-col gap-6">
-      <Alert severity="info">
-        Plaintext API key values are only returned when the key is created. This page can reveal and copy keys created in the current browser session; older keys remain manageable, but their plaintext cannot be recovered from the current backend.
-      </Alert>
-
       <Paper variant="outlined" sx={{ p: 2.5 }}>
         <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
           Create workspace API key
