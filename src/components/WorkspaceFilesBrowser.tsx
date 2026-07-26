@@ -14,8 +14,9 @@ import {
   type WorkspaceFilesTree,
 } from '@/api';
 import WorkspaceFilePreviewDrawer from '@/components/WorkspaceFilePreviewDrawer';
+import { emitDataRefresh, onDataRefresh } from '@/lib/dataRefresh';
 import { useToast } from '@/hooks/useToast';
-import { formatBytes, getFileIcon } from '@/lib/utils';
+import { formatBytes, getFileIcon, runWithConcurrency } from '@/lib/utils';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, TextField, InputAdornment, IconButton, Menu, MenuItem,
@@ -26,7 +27,7 @@ import {
 import {
   Download, Trash2, Search, FileQuestion, MoreVertical,
   Folder, FolderOpen, MoveRight, AlertTriangle, X, Eye,
-  Upload, FolderPlus,
+  Upload, FolderPlus, RefreshCw,
 } from 'lucide-react';
 import type { } from 'react'; // keep React in scope
 
@@ -42,6 +43,8 @@ type PendingDeleteAction =
 function canWrite(role: string) {
   return role === 'owner' || role === 'admin' || role === 'editor';
 }
+
+const WORKSPACE_FILE_UPLOAD_CONCURRENCY = 3;
 
 export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
   const [currentPath, setCurrentPath] = useState<string>('/');
@@ -98,6 +101,13 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
     fetchTree(currentPath);
     setSelectedFiles(new Set());
   }, [fetchTree, currentPath]);
+
+  useEffect(() => {
+    return onDataRefresh((detail) => {
+      if (!detail.workspaceFiles || detail.workspaceId !== workspaceId) return;
+      fetchTree(currentPath);
+    });
+  }, [workspaceId, fetchTree, currentPath]);
 
   const navigateTo = (path: string) => {
     setCurrentPath(path);
@@ -192,7 +202,10 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
     let success = 0;
     let failed = 0;
     let quotaHit = false;
-    for (const file of files) {
+
+    await runWithConcurrency(files, WORKSPACE_FILE_UPLOAD_CONCURRENCY, async (file) => {
+      if (quotaHit) return;
+
       try {
         await uploadWorkspaceFile(workspaceId, file, currentPath);
         success++;
@@ -200,16 +213,20 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
         if (err instanceof ApiError && err.status === 429) {
           quotaHit = true;
           toast('error', err.message);
-          break;
+          return;
         }
         failed++;
       }
-    }
+    });
+
     if (success > 0) toast('success', `${success} file${success !== 1 ? 's' : ''} uploaded`);
     if (failed > 0 && !quotaHit) toast('error', `${failed} file${failed !== 1 ? 's' : ''} failed to upload`);
     setUploading(false);
     if (uploadRef.current) uploadRef.current.value = '';
     fetchTree(currentPath);
+    if (success > 0) {
+      emitDataRefresh({ analytics: true, workspaceId, workspaceFiles: true, workspaceQuota: true });
+    }
   };
 
   // ── Mkdir ───────────────────────────────────────────────────────────────────
@@ -277,6 +294,13 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Tooltip title="Refresh files">
+            <span>
+              <IconButton size="small" onClick={() => fetchTree(currentPath)} disabled={loading || uploading}>
+                <RefreshCw size={16} />
+              </IconButton>
+            </span>
+          </Tooltip>
           {writeAllowed && (
             <>
               <input

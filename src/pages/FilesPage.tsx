@@ -5,6 +5,7 @@ import {
   getUserBucket,
   type TreeEntry, type TreeResponse, type ObjectMetadata,
 } from '@/api';
+import { onDataRefresh } from '@/lib/dataRefresh';
 import { useToast } from '@/hooks/useToast';
 import { formatBytes, getFileIcon } from '@/lib/utils';
 import ShareModal from '@/components/ShareModal';
@@ -19,7 +20,7 @@ import {
 import {
   Download, Trash2, Share2, Search, FileQuestion, MoreVertical,
   Folder, FolderOpen, MoveRight, AlertTriangle, X,
-  Eye,
+  Eye, RefreshCw,
 } from 'lucide-react';
 
 // ObjectMetadata-compatible shim so ShareModal / NoteModal still work
@@ -159,6 +160,13 @@ export default function FilesPage() {
   }, [toast]);
 
   useEffect(() => { fetchTree(currentPath); setSelectedFiles(new Set()); }, [fetchTree, currentPath]);
+
+  useEffect(() => {
+    return onDataRefresh((detail) => {
+      if (!detail.personalFiles) return;
+      fetchTree(currentPath);
+    });
+  }, [fetchTree, currentPath]);
 
   const breadcrumbs = currentPath ? currentPath.split('/') : [];
 
@@ -328,12 +336,17 @@ export default function FilesPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <Typography variant="h5" fontWeight={700}>My Files</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          {totalItems} item{totalItems !== 1 ? 's' : ''} in this folder
-        </Typography>
-      </div>
+      <Box className="mb-6 flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <Typography variant="h5" fontWeight={700}>My Files</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {totalItems} item{totalItems !== 1 ? 's' : ''} in this folder
+          </Typography>
+        </div>
+        <IconButton size="small" onClick={() => fetchTree(currentPath)} disabled={loading}>
+          <RefreshCw size={16} />
+        </IconButton>
+      </Box>
 
       {/* Breadcrumbs */}
       <Breadcrumbs sx={{ mb: 2 }}>

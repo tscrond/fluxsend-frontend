@@ -19,6 +19,28 @@ export function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
+export async function runWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<void>,
+): Promise<void> {
+  if (items.length === 0) return;
+
+  const limit = Math.max(1, Math.min(Math.floor(concurrency), items.length));
+  let nextIndex = 0;
+
+  const workers = Array.from({ length: limit }, async () => {
+    while (true) {
+      const currentIndex = nextIndex;
+      if (currentIndex >= items.length) return;
+      nextIndex += 1;
+      await worker(items[currentIndex]);
+    }
+  });
+
+  await Promise.all(workers);
+}
+
 export function formatDate(dateStr: string): string {
   if (!dateStr) return '—';
   const date = new Date(dateStr);
