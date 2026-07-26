@@ -1,17 +1,18 @@
 import { useAuth } from '@/hooks/useAuth';
-import { useThemeMode } from '@/hooks/useThemeMode';
 import { Navigate } from 'react-router';
-import { Button, CircularProgress, Typography, Box, IconButton } from '@mui/material';
-import { Shield, Share2, Cloud, Sun, Moon, Terminal } from 'lucide-react';
+import { Button, CircularProgress, Typography, Box } from '@mui/material';
+import { Shield, Share2, Cloud, Terminal } from 'lucide-react';
 
 export default function LoginPage() {
   const { isAuthenticated, isLoading, login } = useAuth();
-  const { mode, toggleMode } = useThemeMode();
 
   if (isLoading) {
     return (
-      <Box className="flex items-center justify-center h-screen">
-        <CircularProgress />
+      <Box
+        className="flex items-center justify-center h-screen"
+        sx={{ bgcolor: '#0d1117' }}
+      >
+        <CircularProgress sx={{ color: '#818cf8' }} />
       </Box>
     );
   }
@@ -74,19 +75,24 @@ export default function LoginPage() {
       </div>
 
       {/* Right login */}
-      <Box className="flex-1 flex items-center justify-center p-12 max-md:p-8 relative" sx={{ bgcolor: 'background.default' }}>
-        <IconButton
-          onClick={toggleMode}
-          size="small"
-          sx={{ position: 'absolute', top: 16, right: 16, color: 'text.secondary' }}
-        >
-          {mode === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </IconButton>
+      <Box
+        className="flex-1 flex items-center justify-center p-12 max-md:p-8 relative"
+        sx={{
+          bgcolor: '#0b1220',
+          background: 'linear-gradient(180deg, #0b1220 0%, #111827 100%)',
+          borderLeft: '1px solid rgba(129, 140, 248, 0.12)',
+        }}
+      >
         <div className="max-w-sm w-full">
-          <Typography variant="h6" fontWeight={800} gutterBottom sx={{ letterSpacing: '-0.01em' }}>
+          <Typography
+            variant="h6"
+            fontWeight={800}
+            gutterBottom
+            sx={{ letterSpacing: '-0.01em', color: '#e5e7eb' }}
+          >
             Sign in
           </Typography>
-          <Typography color="text.secondary" variant="body2" sx={{ mb: 4, lineHeight: 1.6 }}>
+          <Typography variant="body2" sx={{ mb: 4, lineHeight: 1.6, color: '#94a3b8' }}>
             Access your personal FluxSend workspace
           </Typography>
 
@@ -100,9 +106,10 @@ export default function LoginPage() {
               fontSize: '0.875rem',
               fontWeight: 700,
               letterSpacing: '0.02em',
-              borderColor: 'divider',
-              color: 'text.primary',
-              '&:hover': { bgcolor: 'action.hover', borderColor: 'divider' },
+              borderColor: '#334155',
+              color: '#e5e7eb',
+              backgroundColor: 'rgba(15, 23, 42, 0.45)',
+              '&:hover': { bgcolor: 'rgba(30, 41, 59, 0.9)', borderColor: '#475569' },
             }}
             startIcon={
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -127,9 +134,10 @@ export default function LoginPage() {
               fontSize: '0.875rem',
               fontWeight: 700,
               letterSpacing: '0.02em',
-              borderColor: 'divider',
-              color: 'text.primary',
-              '&:hover': { bgcolor: 'action.hover', borderColor: 'divider' },
+              borderColor: '#334155',
+              color: '#e5e7eb',
+              backgroundColor: 'rgba(15, 23, 42, 0.45)',
+              '&:hover': { bgcolor: 'rgba(30, 41, 59, 0.9)', borderColor: '#475569' },
             }}
             startIcon={
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -140,7 +148,7 @@ export default function LoginPage() {
             Continue with GitHub
           </Button>
 
-          <Typography variant="caption" color="text.disabled" sx={{ mt: 3, display: 'block' }}>
+          <Typography variant="caption" sx={{ mt: 3, display: 'block', color: '#64748b' }}>
             By signing in, you agree to our terms and privacy policy.
           </Typography>
         </div>

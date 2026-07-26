@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import {
   Upload, Share2, Inbox, Link, Shield, Zap, Eye,
-  Github, ArrowRight, Check, Mail, KeyRound, Boxes, ChevronLeft, ChevronRight, PlayCircle, X, Sun, Moon,
+  Github, ArrowRight, ArrowUpRight, Check, Mail, KeyRound, Boxes, ChevronLeft, ChevronRight, PlayCircle, X, Sun, Moon, Menu,
 } from 'lucide-react';
 import { useThemeMode } from '@/hooks/useThemeMode';
 import { AnimatePresence, motion } from 'motion/react';
@@ -163,6 +163,8 @@ const plans = [
   },
 ];
 
+type LandingSectionId = 'home' | 'features' | 'demos' | 'plans' | 'start';
+
 export default function LandingPage() {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -172,15 +174,33 @@ export default function LandingPage() {
   const demoCardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [activeDemo, setActiveDemo] = useState(0);
   const [playingDemoIndex, setPlayingDemoIndex] = useState<number | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [pendingSectionId, setPendingSectionId] = useState<LandingSectionId | null>(null);
 
   const planTrackRef = useRef<HTMLDivElement | null>(null);
   const [activePlan, setActivePlan] = useState(0);
 
-  const scrollToSection = (id: 'home' | 'features' | 'demos' | 'plans' | 'start') => {
+  const scrollToSection = (id: LandingSectionId) => {
     const section = document.getElementById(id);
     if (!section) return;
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  const handleMobileSectionNav = (id: LandingSectionId) => {
+    setPendingSectionId(id);
+    setMobileNavOpen(false);
+  };
+
+  useEffect(() => {
+    if (mobileNavOpen || pendingSectionId === null) return;
+
+    const timeoutId = window.setTimeout(() => {
+      scrollToSection(pendingSectionId);
+      setPendingSectionId(null);
+    }, 180);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [mobileNavOpen, pendingSectionId]);
 
   const scrollToDemo = (index: number) => {
     const total = demoVideos.length;
@@ -346,35 +366,234 @@ export default function LandingPage() {
         component="nav"
         sx={{
           borderBottom: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
-          px: { xs: 3, md: 6 },
-          py: 1.5,
+          px: { xs: 2, sm: 3, md: 6 },
+          py: { xs: 1.25, md: 1.5 },
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: { xs: 'stretch', md: 'center' },
           justifyContent: 'space-between',
+          gap: 0,
           position: 'sticky',
           top: 0,
           zIndex: 100,
           backgroundColor: dark ? '#0d1117' : '#f6f8fa',
         }}
       >
-        <div className="flex items-center align-left gap-2">
-        <img src="/fs.png" alt="FluxSend logo" className="h-6 sm:h-8 w-auto opacity-90" />
-        <Typography
-          variant="h6"
-          fontWeight={800}
-          sx={{ letterSpacing: '-0.02em', color: dark ? '#e6edf3' : '#1f2328' }}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: { xs: '100%', md: 'auto' },
+            gap: 1.5,
+          }}
         >
-          FLUX<span style={{ color: '#6366f1' }}>SEND</span>
-        </Typography>
-        </div>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.25 } }}>
+            <img src="/fs.png" alt="FluxSend logo" className="h-5 sm:h-6 md:h-8 w-auto opacity-90" />
+            <Typography
+              variant="h6"
+              fontWeight={800}
+              sx={{
+                fontSize: { xs: '1rem', md: '1.25rem' },
+                letterSpacing: '-0.02em',
+                color: dark ? '#e6edf3' : '#1f2328',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              FLUX<span style={{ color: '#6366f1' }}>SEND</span>
+            </Typography>
+          </Box>
 
-        <div className="flex items-center align-left gap-2">
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1, alignItems: 'center' }}>
+            <IconButton
+              onClick={toggleMode}
+              size="small"
+              sx={{ color: dark ? '#7d8590' : '#57606a' }}
+            >
+              {mode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </IconButton>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => navigate('/login')}
+              sx={{ fontWeight: 700, minWidth: 0, px: 1.5, whiteSpace: 'nowrap' }}
+            >
+              Sign in
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setMobileNavOpen((open) => !open)}
+              endIcon={mobileNavOpen ? <X size={16} /> : <Menu size={16} />}
+              aria-expanded={mobileNavOpen}
+              aria-controls="landing-mobile-nav"
+              sx={{
+                fontWeight: 700,
+                minWidth: 0,
+                px: 1.5,
+                whiteSpace: 'nowrap',
+                borderColor: dark ? '#30363d' : '#d0d7de',
+                color: dark ? '#e6edf3' : '#1f2328',
+              }}
+            >
+              Menu
+            </Button>
+          </Box>
+        </Box>
+
+        <AnimatePresence initial={false}>
+          {mobileNavOpen && (
+            <Box
+              component={motion.div}
+              initial={{ opacity: 0, height: 0, y: -8 }}
+              animate={{ opacity: 1, height: 'auto', y: 0 }}
+              exit={{ opacity: 0, height: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              id="landing-mobile-nav"
+              sx={{
+                display: { xs: 'block', md: 'none' },
+                overflow: 'hidden',
+              }}
+            >
+              <Box
+                sx={{
+                  mt: 1.25,
+                  p: 1,
+                  border: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
+                  borderRadius: 3,
+                  backgroundColor: dark ? 'rgba(22,27,34,0.94)' : 'rgba(255,255,255,0.96)',
+                  backdropFilter: 'blur(10px)',
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: 1,
+                  }}
+                >
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={() => handleMobileSectionNav('home')}
+                    sx={{
+                      color: dark ? '#7d8590' : '#57606a',
+                      border: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
+                      borderRadius: 999,
+                      minWidth: 0,
+                      px: 1.25,
+                      py: 0.95,
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Home
+                  </Button>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={() => handleMobileSectionNav('features')}
+                    sx={{
+                      color: dark ? '#7d8590' : '#57606a',
+                      border: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
+                      borderRadius: 999,
+                      minWidth: 0,
+                      px: 1.25,
+                      py: 0.95,
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Features
+                  </Button>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={() => handleMobileSectionNav('demos')}
+                    sx={{
+                      color: dark ? '#7d8590' : '#57606a',
+                      border: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
+                      borderRadius: 999,
+                      minWidth: 0,
+                      px: 1.25,
+                      py: 0.95,
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Demos
+                  </Button>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={() => handleMobileSectionNav('plans')}
+                    sx={{
+                      color: dark ? '#7d8590' : '#57606a',
+                      border: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
+                      borderRadius: 999,
+                      minWidth: 0,
+                      px: 1.25,
+                      py: 0.95,
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Plans
+                  </Button>
+                  <Button
+                    variant="text"
+                    size="small"
+                    href="https://docs.fluxsend.win"
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setMobileNavOpen(false)}
+                    endIcon={<ArrowUpRight size={14} />}
+                    sx={{
+                      color: dark ? '#7d8590' : '#57606a',
+                      border: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
+                      borderRadius: 999,
+                      minWidth: 0,
+                      px: 1.25,
+                      py: 0.95,
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Docs
+                  </Button>
+                  <Button
+                    variant="text"
+                    size="small"
+                    href="https://github.com/tscrond/fluxsend-backend"
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setMobileNavOpen(false)}
+                    endIcon={<ArrowUpRight size={14} />}
+                    sx={{
+                      color: dark ? '#7d8590' : '#57606a',
+                      border: `1px solid ${dark ? '#30363d' : '#d0d7de'}`,
+                      borderRadius: 999,
+                      minWidth: 0,
+                      px: 1.25,
+                      py: 0.95,
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    GitHub
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </AnimatePresence>
+
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1.5, alignItems: 'center', ml: 'auto' }}>
           <Button
             variant="text"
             size="small"
             onClick={() => scrollToSection('home')}
-            sx={{ color: dark ? '#7d8590' : '#57606a', display: { xs: 'none', md: 'inline-flex' } }}
+            sx={{ color: dark ? '#7d8590' : '#57606a' }}
           >
             Home
           </Button>
@@ -382,7 +601,7 @@ export default function LandingPage() {
             variant="text"
             size="small"
             onClick={() => scrollToSection('features')}
-            sx={{ color: dark ? '#7d8590' : '#57606a', display: { xs: 'none', md: 'inline-flex' } }}
+            sx={{ color: dark ? '#7d8590' : '#57606a' }}
           >
             Features
           </Button>
@@ -390,7 +609,7 @@ export default function LandingPage() {
             variant="text"
             size="small"
             onClick={() => scrollToSection('demos')}
-            sx={{ color: dark ? '#7d8590' : '#57606a', display: { xs: 'none', md: 'inline-flex' } }}
+            sx={{ color: dark ? '#7d8590' : '#57606a' }}
           >
             Demos
           </Button>
@@ -398,7 +617,7 @@ export default function LandingPage() {
             variant="text"
             size="small"
             onClick={() => scrollToSection('plans')}
-            sx={{ color: dark ? '#7d8590' : '#57606a', display: { xs: 'none', md: 'inline-flex' } }}
+            sx={{ color: dark ? '#7d8590' : '#57606a' }}
           >
             Plans
           </Button>
@@ -408,6 +627,7 @@ export default function LandingPage() {
             href="https://docs.fluxsend.win"
             target="_blank"
             rel="noreferrer"
+            endIcon={<ArrowUpRight size={14} />}
             sx={{ color: dark ? '#7d8590' : '#57606a' }}
           >
             Docs
@@ -417,7 +637,9 @@ export default function LandingPage() {
             size="small"
             href="https://github.com/tscrond/fluxsend-backend"
             target="_blank"
+            rel="noreferrer"
             startIcon={<Github size={15} />}
+            endIcon={<ArrowUpRight size={14} />}
             sx={{ color: dark ? '#7d8590' : '#57606a' }}
           >
             GitHub
@@ -438,9 +660,6 @@ export default function LandingPage() {
             Sign in
           </Button>
         </Box>
-        </div>
-
-
       </Box>
 
       {/* ── Hero ── */}
@@ -1351,7 +1570,9 @@ export default function LandingPage() {
             size="small"
             href="https://github.com/tscrond/fluxsend-backend"
             target="_blank"
+            rel="noreferrer"
             startIcon={<Github size={14} />}
+            endIcon={<ArrowUpRight size={13} />}
             sx={{ color: dark ? '#7d8590' : '#57606a', minWidth: 0 }}
           >
             GitHub
