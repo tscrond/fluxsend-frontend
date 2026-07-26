@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from 'react';
-import { uploadFile, type MultipartUploadProgress } from '@/api';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { UploadCancelledError, uploadFile, type MultipartUploadProgress } from '@/api';
 import { useToast } from '@/hooks/useToast';
 import { Box, Button, Paper, Typography, IconButton, LinearProgress, TextField } from '@mui/material';
 import { Upload, FileUp, CheckCircle, XCircle, X } from 'lucide-react';
@@ -21,8 +21,17 @@ export default function UploadPage() {
   const [queue, setQueue] = useState<QueuedFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [folder, setFolder] = useState('');
+  const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const controllersRef = useRef(new Map<number, AbortController>());
+  const cancelledIdsRef = useRef(new Set<number>());
+  const cancelAllRequestedRef = useRef(false);
   const { toast } = useToast();
+
+  useEffect(() => () => {
+    controllersRef.current.forEach((controller) => controller.abort());
+    controllersRef.current.clear();
+  }, []);
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const newItems: QueuedFile[] = Array.from(files).map((file) => ({
@@ -38,6 +47,41 @@ export default function UploadPage() {
     setQueue((prev) => prev.filter((f) => f.id !== id));
   }, []);
 
+  const markCancelled = useCallback((id: number) => {
+    setQueue((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, status: 'error' as const, error: 'Cancelled' }
+          : item,
+      ),
+    );
+  }, []);
+
+  const cancelUpload = useCallback((id: number) => {
+    cancelledIdsRef.current.add(id);
+    const controller = controllersRef.current.get(id);
+    if (controller) {
+      controller.abort();
+      return;
+    }
+    markCancelled(id);
+  }, [markCancelled]);
+
+  const cancelAllUploads = useCallback(() => {
+    cancelAllRequestedRef.current = true;
+    setQueue((prev) =>
+      prev.map((item) =>
+        item.status === 'pending' || item.status === 'uploading'
+          ? { ...item, status: 'error' as const, error: 'Cancelled' }
+          : item,
+      ),
+    );
+    controllersRef.current.forEach((controller, id) => {
+      cancelledIdsRef.current.add(id);
+      controller.abort();
+    });
+  }, []);
+
   const applyProgress = useCallback((id: number, progress: MultipartUploadProgress) => {
     setQueue((prev) =>
       prev.map((item) =>
@@ -49,26 +93,52 @@ export default function UploadPage() {
   }, []);
 
   const uploadAll = useCallback(async () => {
+    if (uploading) return;
+
     const pending = queue.filter((f) => f.status === 'pending' || f.status === 'error');
     if (pending.length === 0) return;
 
+    cancelAllRequestedRef.current = false;
+    cancelledIdsRef.current.clear();
+    setUploading(true);
+
     let successCount = 0;
     let errorCount = 0;
+    const cancelledIds = new Set<number>();
+
+    const markCancelledInRun = (id: number) => {
+      cancelledIds.add(id);
+      markCancelled(id);
+    };
 
     await runWithConcurrency(pending, FILE_UPLOAD_CONCURRENCY, async (item) => {
+      if (cancelAllRequestedRef.current || cancelledIdsRef.current.has(item.id)) {
+        markCancelledInRun(item.id);
+        return;
+      }
+
       setQueue((prev) =>
         prev.map((f) => (f.id === item.id ? { ...f, status: 'uploading' as const, progress: 0, error: undefined } : f)),
       );
 
+      const controller = new AbortController();
+      controllersRef.current.set(item.id, controller);
+
       try {
         await uploadFile(item.file, folder.trim() || undefined, {
           onProgress: (progress) => applyProgress(item.id, progress),
+          signal: controller.signal,
         });
         successCount++;
         setQueue((prev) =>
           prev.map((f) => (f.id === item.id ? { ...f, status: 'success' as const, progress: 100 } : f)),
         );
       } catch (err) {
+        if (err instanceof UploadCancelledError) {
+          markCancelledInRun(item.id);
+          return;
+        }
+
         errorCount++;
         const errorMsg = err instanceof Error ? err.message : 'Upload failed';
         setQueue((prev) =>
@@ -78,8 +148,12 @@ export default function UploadPage() {
               : f,
           ),
         );
+      } finally {
+        controllersRef.current.delete(item.id);
       }
     });
+
+    setUploading(false);
 
     // Show appropriate toast based on actual results
     if (successCount > 0) {
@@ -88,7 +162,10 @@ export default function UploadPage() {
     if (errorCount > 0) {
       toast('error', `Failed to upload ${errorCount} file${errorCount !== 1 ? 's' : ''}`);
     }
-  }, [applyProgress, queue, folder, toast]);
+    if (cancelledIds.size > 0) {
+      toast('info', `Cancelled ${cancelledIds.size} file${cancelledIds.size !== 1 ? 's' : ''}`);
+    }
+  }, [applyProgress, folder, markCancelled, queue, toast, uploading]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -103,7 +180,7 @@ export default function UploadPage() {
 
   const successCount = queue.filter((f) => f.status === 'success').length;
   const pendingCount = queue.filter((f) => f.status === 'pending' || f.status === 'error').length;
-  const isUploading = queue.some((f) => f.status === 'uploading');
+  const isUploading = uploading;
 
   return (
     <div>
@@ -169,15 +246,26 @@ export default function UploadPage() {
               <Button size="small" variant="outlined" onClick={() => setQueue([])} disabled={isUploading}>
                 Clear all
               </Button>
-              <Button
-                size="small"
-                variant="contained"
-                onClick={uploadAll}
-                disabled={isUploading || pendingCount === 0}
-                startIcon={isUploading ? undefined : <FileUp size={14} />}
-              >
-                {isUploading ? 'Uploading...' : `Upload ${pendingCount > 0 ? `(${pendingCount})` : 'all'}`}
-              </Button>
+              {isUploading ? (
+                <Button
+                  size="small"
+                  color="error"
+                  variant="contained"
+                  onClick={cancelAllUploads}
+                >
+                  Cancel all
+                </Button>
+              ) : (
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={uploadAll}
+                  disabled={pendingCount === 0}
+                  startIcon={<FileUp size={14} />}
+                >
+                  {`Upload ${pendingCount > 0 ? `(${pendingCount})` : 'all'}`}
+                </Button>
+              )}
             </div>
           </div>
 
@@ -204,8 +292,18 @@ export default function UploadPage() {
                     </Box>
                   </div>
                 </div>
-                {item.status !== 'uploading' && (
-                  <IconButton size="small" onClick={() => removeFromQueue(item.id)} className="shrink-0">
+                {item.status !== 'success' && (
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      if (isUploading) {
+                        cancelUpload(item.id);
+                        return;
+                      }
+                      removeFromQueue(item.id);
+                    }}
+                    className="shrink-0"
+                  >
                     <X size={14} />
                   </IconButton>
                 )}

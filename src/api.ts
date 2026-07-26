@@ -237,6 +237,14 @@ export interface MultipartUploadProgress {
 export interface UploadFileOptions {
   onProgress?: (progress: MultipartUploadProgress) => void;
   chunkConcurrency?: number;
+  signal?: AbortSignal;
+}
+
+export class UploadCancelledError extends Error {
+  constructor() {
+    super('Upload cancelled');
+    this.name = 'UploadCancelledError';
+  }
 }
 
 function normalizeChunkSize(rawChunkSize: number, fileSize: number): number {
@@ -249,6 +257,20 @@ function normalizeChunkSize(rawChunkSize: number, fileSize: number): number {
   }
 
   return DEFAULT_UPLOAD_CHUNK_SIZE;
+}
+
+function isAbortLikeError(error: unknown): boolean {
+  return error instanceof UploadCancelledError
+    || (error instanceof DOMException && error.name === 'AbortError')
+    || (error instanceof Error && error.message === 'Upload cancelled');
+}
+
+async function abortMultipartUpload(uploadId: string): Promise<void> {
+  try {
+    await request(`/files/uploads/${encodeURIComponent(uploadId)}`, { method: 'DELETE' });
+  } catch {
+    // Best-effort cleanup only.
+  }
 }
 
 function uploadChunkRequest<T>(
@@ -312,108 +334,156 @@ export async function uploadFile(
   folder?: string,
   options: UploadFileOptions = {},
 ): Promise<CompleteMultipartUploadResponse> {
+  const signal = options.signal;
+
   if (file.size <= 0) {
     throw new Error('Cannot upload an empty file');
   }
 
-  const initResponse = await request<CreateMultipartUploadResponse>('/files/uploads', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      filename: file.name,
-      size: file.size,
-      content_type: file.type || 'application/octet-stream',
-      folder: folder ?? '',
-    }),
-  });
+  if (signal?.aborted) {
+    throw new UploadCancelledError();
+  }
 
-  const chunkSize = normalizeChunkSize(initResponse.chunk_size, file.size);
-  const partCount = Math.max(1, Math.ceil(file.size / chunkSize));
-  const configuredConcurrency = options.chunkConcurrency ?? DEFAULT_UPLOAD_CHUNK_CONCURRENCY;
-  const chunkConcurrency = Math.max(1, Math.min(Math.floor(configuredConcurrency), partCount));
+  let uploadId: string | null = null;
+  let uploadCompleted = false;
 
   const activeAborts = new Set<() => void>();
   const activeProgress = new Map<number, number>();
 
-  let completedBytes = 0;
-  let nextPartNumber = 1;
-  let firstError: unknown = null;
-
-  const emitProgress = () => {
-    let uploadedBytes = completedBytes;
-    for (const value of activeProgress.values()) uploadedBytes += value;
-
-    options.onProgress?.({
-      uploadedBytes,
-      totalBytes: file.size,
-      fraction: file.size > 0 ? Math.min(uploadedBytes / file.size, 1) : 1,
-    });
+  const abortActiveRequests = () => {
+    for (const abort of activeAborts) abort();
   };
 
-  emitProgress();
-
-  const uploadPart = async (partNumber: number) => {
-    const start = (partNumber - 1) * chunkSize;
-    const end = Math.min(file.size, start + chunkSize);
-    const chunk = file.slice(start, end);
-
-    const requestHandle = uploadChunkRequest<UploadMultipartPartResponse>(
-      `/files/uploads/${encodeURIComponent(initResponse.upload_id)}/parts/${partNumber}`,
-      chunk,
-      (loaded) => {
-        activeProgress.set(partNumber, Math.min(loaded, chunk.size));
-        emitProgress();
-      },
-    );
-
-    activeAborts.add(requestHandle.abort);
-
-    try {
-      await requestHandle.promise;
-      completedBytes += chunk.size;
-      activeProgress.delete(partNumber);
-      emitProgress();
-    } finally {
-      activeAborts.delete(requestHandle.abort);
-    }
+  const handleSignalAbort = () => {
+    abortActiveRequests();
   };
 
-  const workers = Array.from({ length: chunkConcurrency }, async () => {
-    while (!firstError) {
-      const partNumber = nextPartNumber;
-      if (partNumber > partCount) return;
-      nextPartNumber += 1;
+  signal?.addEventListener('abort', handleSignalAbort);
 
-      try {
-        await uploadPart(partNumber);
-      } catch (error) {
-        if (!firstError) {
-          firstError = error;
-          for (const abort of activeAborts) abort();
-        }
-        throw error;
-      }
+  const throwIfAborted = () => {
+    if (signal?.aborted) {
+      throw new UploadCancelledError();
     }
-  });
+  };
 
   try {
-    await Promise.all(workers);
+    throwIfAborted();
+
+    const initResponse = await request<CreateMultipartUploadResponse>('/files/uploads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filename: file.name,
+        size: file.size,
+        content_type: file.type || 'application/octet-stream',
+        folder: folder ?? '',
+      }),
+      signal,
+    });
+    uploadId = initResponse.upload_id;
+
+    const chunkSize = normalizeChunkSize(initResponse.chunk_size, file.size);
+    const partCount = Math.max(1, Math.ceil(file.size / chunkSize));
+    const configuredConcurrency = options.chunkConcurrency ?? DEFAULT_UPLOAD_CHUNK_CONCURRENCY;
+    const chunkConcurrency = Math.max(1, Math.min(Math.floor(configuredConcurrency), partCount));
+
+    let completedBytes = 0;
+    let nextPartNumber = 1;
+    let firstError: unknown = null;
+
+    const emitProgress = () => {
+      let uploadedBytes = completedBytes;
+      for (const value of activeProgress.values()) uploadedBytes += value;
+
+      options.onProgress?.({
+        uploadedBytes,
+        totalBytes: file.size,
+        fraction: file.size > 0 ? Math.min(uploadedBytes / file.size, 1) : 1,
+      });
+    };
+
+    emitProgress();
+
+    const uploadPart = async (partNumber: number) => {
+      throwIfAborted();
+
+      const start = (partNumber - 1) * chunkSize;
+      const end = Math.min(file.size, start + chunkSize);
+      const chunk = file.slice(start, end);
+
+      const requestHandle = uploadChunkRequest<UploadMultipartPartResponse>(
+        `/files/uploads/${encodeURIComponent(initResponse.upload_id)}/parts/${partNumber}`,
+        chunk,
+        (loaded) => {
+          activeProgress.set(partNumber, Math.min(loaded, chunk.size));
+          emitProgress();
+        },
+      );
+
+      activeAborts.add(requestHandle.abort);
+
+      try {
+        await requestHandle.promise;
+        completedBytes += chunk.size;
+        activeProgress.delete(partNumber);
+        emitProgress();
+      } finally {
+        activeAborts.delete(requestHandle.abort);
+      }
+    };
+
+    const workers = Array.from({ length: chunkConcurrency }, async () => {
+      while (!firstError) {
+        throwIfAborted();
+
+        const partNumber = nextPartNumber;
+        if (partNumber > partCount) return;
+        nextPartNumber += 1;
+
+        try {
+          await uploadPart(partNumber);
+        } catch (error) {
+          if (!firstError) {
+            firstError = error;
+            abortActiveRequests();
+          }
+          throw error;
+        }
+      }
+    });
+
+    try {
+      await Promise.all(workers);
+    } catch (error) {
+      throw firstError instanceof Error ? firstError : error;
+    }
+
+    throwIfAborted();
+
+    const completeResponse = await request<CompleteMultipartUploadResponse>(
+      `/files/uploads/${encodeURIComponent(initResponse.upload_id)}/complete`,
+      { method: 'POST', signal },
+    );
+    uploadCompleted = true;
+
+    options.onProgress?.({
+      uploadedBytes: file.size,
+      totalBytes: file.size,
+      fraction: 1,
+    });
+
+    return completeResponse;
   } catch (error) {
-    throw firstError instanceof Error ? firstError : error;
+    if (isAbortLikeError(error) || signal?.aborted) {
+      if (uploadId !== null && !uploadCompleted) {
+        await abortMultipartUpload(uploadId);
+      }
+      throw new UploadCancelledError();
+    }
+    throw error;
+  } finally {
+    signal?.removeEventListener('abort', handleSignalAbort);
   }
-
-  const completeResponse = await request<CompleteMultipartUploadResponse>(
-    `/files/uploads/${encodeURIComponent(initResponse.upload_id)}/complete`,
-    { method: 'POST' },
-  );
-
-  options.onProgress?.({
-    uploadedBytes: file.size,
-    totalBytes: file.size,
-    fraction: 1,
-  });
-
-  return completeResponse;
 }
 
 export function deleteFile(fileName: string): Promise<{ file_deleted: string }> {
