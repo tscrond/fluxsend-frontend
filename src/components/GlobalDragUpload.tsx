@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography,
-  List, ListItemButton, ListItemIcon, ListItemText, TextField, CircularProgress,
+  List, ListItemButton, ListItemIcon, ListItemText, TextField, CircularProgress, LinearProgress,
   Paper, Breadcrumbs, Link, IconButton, Chip,
 } from '@mui/material';
 import {
@@ -12,8 +12,10 @@ import {
   uploadFile, uploadWorkspaceFile, getFolders, getWorkspaceFilesTree,
   listWorkspaces, mkdirWorkspace, type Workspace,
 } from '@/api';
-import { formatBytes } from '@/lib/utils';
+import { formatBytes, runWithConcurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
+
+const FILE_UPLOAD_CONCURRENCY = 3;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,6 +23,7 @@ interface QueueItem {
   id: number;
   file: File;
   status: 'pending' | 'uploading' | 'success' | 'error';
+  progress: number;
   error?: string;
 }
 
@@ -156,7 +159,7 @@ export default function GlobalDragUpload() {
     const files = Array.from(e.dataTransfer.files);
     if (files.length === 0) return;
     // Reset all state and open dialog
-    setQueue(files.map(f => ({ id: ++_qid, file: f, status: 'pending' })));
+    setQueue(files.map(f => ({ id: ++_qid, file: f, status: 'pending', progress: 0 })));
     setStep('destination');
     setDestType(null);
     setSelectedWs(null);
@@ -208,11 +211,15 @@ export default function GlobalDragUpload() {
     const pending = queue.filter(q => q.status === 'pending' || q.status === 'error');
     let ok = 0, fail = 0;
 
-    for (const item of pending) {
-      setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'uploading' } : q));
+    await runWithConcurrency(pending, FILE_UPLOAD_CONCURRENCY, async (item) => {
+      setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'uploading', progress: 0, error: undefined } : q));
       try {
         if (destType === 'personal') {
-          await uploadFile(item.file, folderPath || undefined);
+          await uploadFile(item.file, folderPath || undefined, {
+            onProgress: (progress) => {
+              setQueue(prev => prev.map(q => q.id === item.id ? { ...q, progress: Math.round(progress.fraction * 100) } : q));
+            },
+          });
         } else if (destType === 'workspace' && selectedWs) {
           await uploadWorkspaceFile(
             selectedWs.workspace_id,
@@ -221,7 +228,7 @@ export default function GlobalDragUpload() {
           );
         }
         ok++;
-        setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'success' } : q));
+        setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'success', progress: 100 } : q));
       } catch (err) {
         fail++;
         setQueue(prev =>
@@ -232,7 +239,7 @@ export default function GlobalDragUpload() {
           ),
         );
       }
-    }
+    });
 
     setUploading(false);
     if (ok > 0) toast('success', `Uploaded ${ok} file${ok !== 1 ? 's' : ''}`);
@@ -597,6 +604,13 @@ export default function GlobalDragUpload() {
                       <Typography variant="body2" noWrap fontWeight={500}>
                         {item.file.name}
                       </Typography>
+                      <Box sx={{ mt: 0.75 }}>
+                        <LinearProgress
+                          variant="determinate"
+                          value={item.progress}
+                          color={item.status === 'error' ? 'error' : item.status === 'success' ? 'success' : 'primary'}
+                        />
+                      </Box>
                       {item.status === 'error' && item.error && (
                         <Typography variant="caption" color="error">
                           {item.error}
@@ -606,7 +620,7 @@ export default function GlobalDragUpload() {
 
                     {/* Size */}
                     <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
-                      {formatBytes(item.file.size)}
+                      {item.progress}% · {formatBytes(item.file.size)}
                     </Typography>
                   </Box>
                 ))}

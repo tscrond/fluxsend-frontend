@@ -1,13 +1,17 @@
 import { useState, useCallback, useRef } from 'react';
-import { uploadFile } from '@/api';
+import { uploadFile, type MultipartUploadProgress } from '@/api';
 import { useToast } from '@/hooks/useToast';
-import { Button, Paper, Typography, IconButton, LinearProgress, TextField } from '@mui/material';
+import { Box, Button, Paper, Typography, IconButton, LinearProgress, TextField } from '@mui/material';
 import { Upload, FileUp, CheckCircle, XCircle, X } from 'lucide-react';
+import { runWithConcurrency } from '@/lib/utils';
+
+const FILE_UPLOAD_CONCURRENCY = 3;
 
 interface QueuedFile {
   id: number;
   file: File;
   status: 'pending' | 'uploading' | 'success' | 'error';
+  progress: number;
   error?: string;
 }
 
@@ -25,12 +29,23 @@ export default function UploadPage() {
       id: ++fileId,
       file,
       status: 'pending' as const,
+      progress: 0,
     }));
     setQueue((prev) => [...prev, ...newItems]);
   }, []);
 
   const removeFromQueue = useCallback((id: number) => {
     setQueue((prev) => prev.filter((f) => f.id !== id));
+  }, []);
+
+  const applyProgress = useCallback((id: number, progress: MultipartUploadProgress) => {
+    setQueue((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, progress: Math.round(progress.fraction * 100) }
+          : item,
+      ),
+    );
   }, []);
 
   const uploadAll = useCallback(async () => {
@@ -40,15 +55,18 @@ export default function UploadPage() {
     let successCount = 0;
     let errorCount = 0;
 
-    for (const item of pending) {
+    await runWithConcurrency(pending, FILE_UPLOAD_CONCURRENCY, async (item) => {
       setQueue((prev) =>
-        prev.map((f) => (f.id === item.id ? { ...f, status: 'uploading' as const } : f)),
+        prev.map((f) => (f.id === item.id ? { ...f, status: 'uploading' as const, progress: 0, error: undefined } : f)),
       );
+
       try {
-        await uploadFile(item.file, folder.trim() || undefined);
+        await uploadFile(item.file, folder.trim() || undefined, {
+          onProgress: (progress) => applyProgress(item.id, progress),
+        });
         successCount++;
         setQueue((prev) =>
-          prev.map((f) => (f.id === item.id ? { ...f, status: 'success' as const } : f)),
+          prev.map((f) => (f.id === item.id ? { ...f, status: 'success' as const, progress: 100 } : f)),
         );
       } catch (err) {
         errorCount++;
@@ -61,7 +79,7 @@ export default function UploadPage() {
           ),
         );
       }
-    }
+    });
 
     // Show appropriate toast based on actual results
     if (successCount > 0) {
@@ -70,7 +88,7 @@ export default function UploadPage() {
     if (errorCount > 0) {
       toast('error', `Failed to upload ${errorCount} file${errorCount !== 1 ? 's' : ''}`);
     }
-  }, [queue, folder, toast]);
+  }, [applyProgress, queue, folder, toast]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -169,14 +187,21 @@ export default function UploadPage() {
                 <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                   {item.status === 'success' && <CheckCircle size={16} className="text-green-500 shrink-0" />}
                   {item.status === 'error' && <XCircle size={16} className="text-red-500 shrink-0" />}
-                  {item.status === 'uploading' && <LinearProgress sx={{ width: 16, height: 16, borderRadius: '50%' }} />}
+                  {item.status === 'uploading' && <Upload size={16} className="text-indigo-500 shrink-0" />}
                   {item.status === 'pending' && <FileUp size={16} className="text-slate-400 shrink-0" />}
                   <div className="min-w-0 flex flex-col">
                     <span className="block max-w-full break-all text-sm font-medium sm:truncate sm:break-normal">{item.file.name}</span>
                     <span className="block break-all pr-1 text-xs text-slate-400">
-                      {(item.file.size / 1024).toFixed(1)} KB
+                      {(item.file.size / 1024).toFixed(1)} KB · {item.progress}%
                       {item.error && <span className="break-all text-red-500"> · {item.error}</span>}
                     </span>
+                    <Box sx={{ mt: 0.75 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={item.progress}
+                        color={item.status === 'error' ? 'error' : item.status === 'success' ? 'success' : 'primary'}
+                      />
+                    </Box>
                   </div>
                 </div>
                 {item.status !== 'uploading' && (

@@ -15,7 +15,7 @@ import {
 } from '@/api';
 import WorkspaceFilePreviewDrawer from '@/components/WorkspaceFilePreviewDrawer';
 import { useToast } from '@/hooks/useToast';
-import { formatBytes, getFileIcon } from '@/lib/utils';
+import { formatBytes, getFileIcon, runWithConcurrency } from '@/lib/utils';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, TextField, InputAdornment, IconButton, Menu, MenuItem,
@@ -42,6 +42,8 @@ type PendingDeleteAction =
 function canWrite(role: string) {
   return role === 'owner' || role === 'admin' || role === 'editor';
 }
+
+const WORKSPACE_FILE_UPLOAD_CONCURRENCY = 3;
 
 export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
   const [currentPath, setCurrentPath] = useState<string>('/');
@@ -192,7 +194,10 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
     let success = 0;
     let failed = 0;
     let quotaHit = false;
-    for (const file of files) {
+
+    await runWithConcurrency(files, WORKSPACE_FILE_UPLOAD_CONCURRENCY, async (file) => {
+      if (quotaHit) return;
+
       try {
         await uploadWorkspaceFile(workspaceId, file, currentPath);
         success++;
@@ -200,11 +205,12 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
         if (err instanceof ApiError && err.status === 429) {
           quotaHit = true;
           toast('error', err.message);
-          break;
+          return;
         }
         failed++;
       }
-    }
+    });
+
     if (success > 0) toast('success', `${success} file${success !== 1 ? 's' : ''} uploaded`);
     if (failed > 0 && !quotaHit) toast('error', `${failed} file${failed !== 1 ? 's' : ''} failed to upload`);
     setUploading(false);
