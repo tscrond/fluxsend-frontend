@@ -12,6 +12,7 @@ import {
   UploadCancelledError, uploadFile, uploadWorkspaceFile, getFolders, getWorkspaceFilesTree,
   listWorkspaces, mkdirWorkspace, type Workspace,
 } from '@/api';
+import { emitDataRefresh } from '@/lib/dataRefresh';
 import { formatBytes, runWithConcurrency } from '@/lib/utils';
 import { useToast } from '@/hooks/useToast';
 
@@ -320,6 +321,19 @@ export default function GlobalDragUpload() {
     if (ok > 0) toast('success', `Uploaded ${ok} file${ok !== 1 ? 's' : ''}`);
     if (fail > 0) toast('error', `${fail} file${fail !== 1 ? 's' : ''} failed to upload`);
     if (cancelledIds.size > 0) toast('info', `Cancelled ${cancelledIds.size} file${cancelledIds.size !== 1 ? 's' : ''}`);
+
+    if (ok > 0) {
+      if (destType === 'personal') {
+        emitDataRefresh({ personalFiles: true, analytics: true });
+      } else if (destType === 'workspace' && selectedWs) {
+        emitDataRefresh({
+          analytics: true,
+          workspaceId: selectedWs.workspace_id,
+          workspaceFiles: true,
+          workspaceQuota: true,
+        });
+      }
+    }
   }, [queue, destType, folderPath, selectedWs, toast, uploading, markCancelled]);
 
   // ── Close / reset ──────────────────────────────────────────────────────────

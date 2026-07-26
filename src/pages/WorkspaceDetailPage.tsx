@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router';
 import {
   getWorkspaceMembers,
@@ -14,6 +14,7 @@ import {
   type WorkspaceInvite,
   type WorkspaceQuota,
 } from '@/api';
+import { onDataRefresh } from '@/lib/dataRefresh';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { formatDateFull, formatBytes } from '@/lib/utils';
@@ -42,7 +43,7 @@ import {
   Tooltip,
   LinearProgress,
 } from '@mui/material';
-import { ArrowLeft, Users, Trash2, Mail, Pencil } from 'lucide-react';
+import { ArrowLeft, Users, Trash2, Mail, Pencil, RefreshCw } from 'lucide-react';
 import WorkspaceFilesBrowser from '@/components/WorkspaceFilesBrowser';
 
 function slugify(value: string): string {
@@ -100,16 +101,29 @@ export default function WorkspaceDetailPage() {
 
   const canManageWorkspace = workspace?.role === 'owner' || workspace?.role === 'admin';
 
-  useEffect(() => {
-    if (!workspaceId) return;
-    if (canManageWorkspace) {
-      setLoadingQuota(true);
-      getWorkspaceQuota(workspaceId)
-        .then(setQuota)
-        .catch(() => {/* non-fatal */})
-        .finally(() => setLoadingQuota(false));
+  const loadQuota = useCallback(async () => {
+    if (!workspaceId || !canManageWorkspace) return;
+    setLoadingQuota(true);
+    try {
+      const data = await getWorkspaceQuota(workspaceId);
+      setQuota(data);
+    } catch {
+      // non-fatal
+    } finally {
+      setLoadingQuota(false);
     }
   }, [workspaceId, canManageWorkspace]);
+
+  useEffect(() => {
+    loadQuota();
+  }, [loadQuota]);
+
+  useEffect(() => {
+    return onDataRefresh((detail) => {
+      if (!detail.workspaceQuota || detail.workspaceId !== workspaceId) return;
+      loadQuota();
+    });
+  }, [workspaceId, loadQuota]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -341,9 +355,18 @@ export default function WorkspaceDetailPage() {
         <Box className="flex flex-col gap-6">
           {/* Plan limits */}
           <div>
-            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
-              Plan limits
-            </Typography>
+            <Box className="flex items-center justify-between gap-2 mb-1.5">
+              <Typography variant="subtitle2" fontWeight={700}>
+                Plan limits
+              </Typography>
+              <Tooltip title="Refresh quota">
+                <span>
+                  <IconButton size="small" onClick={loadQuota} disabled={loadingQuota}>
+                    <RefreshCw size={16} />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
             <Paper variant="outlined" sx={{ p: 2.5 }}>
               {loadingQuota ? (
                 <Box className="flex justify-center py-6"><CircularProgress size={24} /></Box>

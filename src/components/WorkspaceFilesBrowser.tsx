@@ -14,6 +14,7 @@ import {
   type WorkspaceFilesTree,
 } from '@/api';
 import WorkspaceFilePreviewDrawer from '@/components/WorkspaceFilePreviewDrawer';
+import { emitDataRefresh, onDataRefresh } from '@/lib/dataRefresh';
 import { useToast } from '@/hooks/useToast';
 import { formatBytes, getFileIcon, runWithConcurrency } from '@/lib/utils';
 import {
@@ -26,7 +27,7 @@ import {
 import {
   Download, Trash2, Search, FileQuestion, MoreVertical,
   Folder, FolderOpen, MoveRight, AlertTriangle, X, Eye,
-  Upload, FolderPlus,
+  Upload, FolderPlus, RefreshCw,
 } from 'lucide-react';
 import type { } from 'react'; // keep React in scope
 
@@ -100,6 +101,13 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
     fetchTree(currentPath);
     setSelectedFiles(new Set());
   }, [fetchTree, currentPath]);
+
+  useEffect(() => {
+    return onDataRefresh((detail) => {
+      if (!detail.workspaceFiles || detail.workspaceId !== workspaceId) return;
+      fetchTree(currentPath);
+    });
+  }, [workspaceId, fetchTree, currentPath]);
 
   const navigateTo = (path: string) => {
     setCurrentPath(path);
@@ -216,6 +224,9 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
     setUploading(false);
     if (uploadRef.current) uploadRef.current.value = '';
     fetchTree(currentPath);
+    if (success > 0) {
+      emitDataRefresh({ analytics: true, workspaceId, workspaceFiles: true, workspaceQuota: true });
+    }
   };
 
   // ── Mkdir ───────────────────────────────────────────────────────────────────
@@ -283,6 +294,13 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Tooltip title="Refresh files">
+            <span>
+              <IconButton size="small" onClick={() => fetchTree(currentPath)} disabled={loading || uploading}>
+                <RefreshCw size={16} />
+              </IconButton>
+            </span>
+          </Tooltip>
           {writeAllowed && (
             <>
               <input

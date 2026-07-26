@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { getUserStats, listWorkspaces, getWorkspaceQuota, type UserStats, type Workspace, type WorkspaceQuota } from '@/api';
+import { onDataRefresh } from '@/lib/dataRefresh';
 import {
   Typography,
   Paper,
@@ -9,6 +10,9 @@ import {
   Chip,
   Divider,
   Alert,
+  Box,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   HardDrive,
@@ -18,6 +22,7 @@ import {
   LayoutGrid,
   TrendingUp,
   Activity,
+  RefreshCw,
 } from 'lucide-react';
 import {
   BarChart,
@@ -224,6 +229,13 @@ export default function AnalyticsPage() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    return onDataRefresh((detail) => {
+      if (!detail.analytics) return;
+      load();
+    });
+  }, [load]);
+
   const maxStorage = user?.max_total_storage_bytes ?? 0;
   const maxFiles = planCap(user?.max_files);
   const maxFilesSentPerDay = planCap(user?.max_files_sent_per_day);
@@ -251,12 +263,21 @@ export default function AnalyticsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6">
-        <Typography variant="h5" fontWeight={700}>Analytics</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Your storage and usage overview
-        </Typography>
-      </div>
+      <Box className="mb-6 flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <Typography variant="h5" fontWeight={700}>Analytics</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Your storage and usage overview
+          </Typography>
+        </div>
+        <Tooltip title="Refresh analytics">
+          <span>
+            <IconButton size="small" onClick={load} disabled={loading}>
+              <RefreshCw size={16} />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
 
       {/* Plan banner */}
       <div className="flex items-center gap-3 mb-5">

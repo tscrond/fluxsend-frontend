@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { UploadCancelledError, uploadFile, type MultipartUploadProgress } from '@/api';
+import { emitDataRefresh } from '@/lib/dataRefresh';
 import { useToast } from '@/hooks/useToast';
 import { Box, Button, Paper, Typography, IconButton, LinearProgress, TextField } from '@mui/material';
 import { Upload, FileUp, CheckCircle, XCircle, X } from 'lucide-react';
@@ -164,6 +165,10 @@ export default function UploadPage() {
     }
     if (cancelledIds.size > 0) {
       toast('info', `Cancelled ${cancelledIds.size} file${cancelledIds.size !== 1 ? 's' : ''}`);
+    }
+
+    if (successCount > 0) {
+      emitDataRefresh({ personalFiles: true, analytics: true });
     }
   }, [applyProgress, folder, markCancelled, queue, toast, uploading]);
 
