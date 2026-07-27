@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { AuthProvider } from '@/hooks/useAuth';
 import { ToastProvider } from '@/hooks/useToast';
 import { ThemeModeProvider, useThemeMode } from '@/hooks/useThemeMode';
+import { UploadManagerProvider } from '@/hooks/useUploadManager';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AppLayout from '@/components/AppLayout';
 import LoginPage from '@/pages/LoginPage';
@@ -165,7 +166,9 @@ function ThemedApp() {
       <CssBaseline />
       <AuthProvider>
         <ToastProvider>
-          <RouterProvider router={router} />
+          <UploadManagerProvider>
+            <RouterProvider router={router} />
+          </UploadManagerProvider>
         </ToastProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -1,34 +1,26 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography,
-  List, ListItemButton, ListItemIcon, ListItemText, TextField, CircularProgress, LinearProgress,
+  List, ListItemButton, ListItemIcon, ListItemText, TextField, CircularProgress,
   Paper, Breadcrumbs, Link, IconButton, Chip,
 } from '@mui/material';
 import {
-  HardDrive, LayoutGrid, Folder, ArrowLeft, CheckCircle, XCircle,
+  HardDrive, LayoutGrid, Folder, ArrowLeft,
   CloudUpload, ChevronRight, X,
 } from 'lucide-react';
 import {
-  UploadCancelledError, uploadFile, uploadWorkspaceFile, getFolders, getWorkspaceFilesTree,
+  getFolders, getWorkspaceFilesTree,
   listWorkspaces, mkdirWorkspace, type Workspace,
 } from '@/api';
-import { emitDataRefresh } from '@/lib/dataRefresh';
-import { formatBytes, runWithConcurrency } from '@/lib/utils';
-import { useToast } from '@/hooks/useToast';
+import { useUploadManager } from '@/hooks/useUploadManager';
+import { formatBytes } from '@/lib/utils';
 
-const FILE_UPLOAD_CONCURRENCY = 3;
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface QueueItem {
+interface PendingFile {
   id: number;
   file: File;
-  status: 'pending' | 'uploading' | 'success' | 'error';
-  progress: number;
-  error?: string;
 }
 
-type Step = 'destination' | 'folder' | 'upload';
+type Step = 'destination' | 'folder' | 'review';
 
 let _qid = 0;
 
@@ -78,13 +70,8 @@ export default function GlobalDragUpload() {
   const [pathCreating, setPathCreating] = useState(false);
 
   // ── Step 3: upload ─────────────────────────────────────────────────────────
-  const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const controllersRef = useRef(new Map<number, AbortController>());
-  const cancelledIdsRef = useRef(new Set<number>());
-  const cancelAllRequestedRef = useRef(false);
-
-  const { toast } = useToast();
+  const [queue, setQueue] = useState<PendingFile[]>([]);
+  const { enqueueUploads, openDrawer } = useUploadManager();
 
   const isWs = destType === 'workspace';
   const segments = getSegments(folderPath, isWs);
@@ -119,11 +106,6 @@ export default function GlobalDragUpload() {
       window.removeEventListener('dragover', onOver);
       window.removeEventListener('drop', onDrop);
     };
-  }, []);
-
-  useEffect(() => () => {
-    controllersRef.current.forEach((controller) => controller.abort());
-    controllersRef.current.clear();
   }, []);
 
   // ── Fetch workspaces when workspace type is selected ───────────────────────
@@ -168,7 +150,7 @@ export default function GlobalDragUpload() {
     const files = Array.from(e.dataTransfer.files);
     if (files.length === 0) return;
     // Reset all state and open dialog
-    setQueue(files.map(f => ({ id: ++_qid, file: f, status: 'pending', progress: 0 })));
+    setQueue(files.map(f => ({ id: ++_qid, file: f })));
     setStep('destination');
     setDestType(null);
     setSelectedWs(null);
@@ -187,43 +169,8 @@ export default function GlobalDragUpload() {
 
   const goBack = useCallback(() => {
     if (step === 'folder') setStep('destination');
-    else if (step === 'upload') setStep('folder');
+    else if (step === 'review') setStep('folder');
   }, [step]);
-
-  const markCancelled = useCallback((id: number) => {
-    setQueue((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, status: 'error', error: 'Cancelled' }
-          : item,
-      ),
-    );
-  }, []);
-
-  const cancelUpload = useCallback((id: number) => {
-    cancelledIdsRef.current.add(id);
-    const controller = controllersRef.current.get(id);
-    if (controller) {
-      controller.abort();
-      return;
-    }
-    markCancelled(id);
-  }, [markCancelled]);
-
-  const cancelAllUploads = useCallback(() => {
-    cancelAllRequestedRef.current = true;
-    setQueue((prev) =>
-      prev.map((item) =>
-        item.status === 'pending' || item.status === 'uploading'
-          ? { ...item, status: 'error', error: 'Cancelled' }
-          : item,
-      ),
-    );
-    controllersRef.current.forEach((controller, id) => {
-      cancelledIdsRef.current.add(id);
-      controller.abort();
-    });
-  }, []);
 
   const handlePathGo = async () => {
     let p = pathInput.trim();
@@ -250,95 +197,43 @@ export default function GlobalDragUpload() {
   };
 
   // ── Upload ─────────────────────────────────────────────────────────────────
-  const handleUpload = useCallback(async () => {
-    if (uploading) return;
+  const handleUpload = useCallback(() => {
+    if (queue.length === 0) return;
 
-    setUploading(true);
-    const pending = queue.filter(q => q.status === 'pending' || q.status === 'error');
-    let ok = 0, fail = 0;
-    const cancelledIds = new Set<number>();
-
-    cancelAllRequestedRef.current = false;
-    cancelledIdsRef.current.clear();
-
-    const markCancelledInRun = (id: number) => {
-      cancelledIds.add(id);
-      markCancelled(id);
-    };
-
-    await runWithConcurrency(pending, FILE_UPLOAD_CONCURRENCY, async (item) => {
-      if (destType === 'personal' && (cancelAllRequestedRef.current || cancelledIdsRef.current.has(item.id))) {
-        markCancelledInRun(item.id);
-        return;
-      }
-
-      setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'uploading', progress: 0, error: undefined } : q));
-
-      const controller = destType === 'personal' ? new AbortController() : null;
-      if (controller) {
-        controllersRef.current.set(item.id, controller);
-      }
-
-      try {
-        if (destType === 'personal') {
-          await uploadFile(item.file, folderPath || undefined, {
-            onProgress: (progress) => {
-              setQueue(prev => prev.map(q => q.id === item.id ? { ...q, progress: Math.round(progress.fraction * 100) } : q));
-            },
-            signal: controller?.signal,
-          });
-        } else if (destType === 'workspace' && selectedWs) {
-          await uploadWorkspaceFile(
-            selectedWs.workspace_id,
-            item.file,
-            folderPath === '/' ? undefined : folderPath,
-          );
-        }
-        ok++;
-        setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'success', progress: 100 } : q));
-      } catch (err) {
-		if (err instanceof UploadCancelledError) {
-			markCancelledInRun(item.id);
-			return;
-		}
-
-        fail++;
-        setQueue(prev =>
-          prev.map(q =>
-            q.id === item.id
-              ? { ...q, status: 'error', error: err instanceof Error ? err.message : 'Upload failed' }
-              : q,
-          ),
-        );
-	  } finally {
-		if (controller) {
-			controllersRef.current.delete(item.id);
-		}
-      }
-    });
-
-    setUploading(false);
-    if (ok > 0) toast('success', `Uploaded ${ok} file${ok !== 1 ? 's' : ''}`);
-    if (fail > 0) toast('error', `${fail} file${fail !== 1 ? 's' : ''} failed to upload`);
-    if (cancelledIds.size > 0) toast('info', `Cancelled ${cancelledIds.size} file${cancelledIds.size !== 1 ? 's' : ''}`);
-
-    if (ok > 0) {
-      if (destType === 'personal') {
-        emitDataRefresh({ personalFiles: true, analytics: true });
-      } else if (destType === 'workspace' && selectedWs) {
-        emitDataRefresh({
-          analytics: true,
+    if (destType === 'personal') {
+      enqueueUploads({
+        files: queue.map((item) => item.file),
+        source: 'global-drag',
+        target: { kind: 'personal', folder: folderPath || undefined },
+      });
+    } else if (destType === 'workspace' && selectedWs) {
+      enqueueUploads({
+        files: queue.map((item) => item.file),
+        source: 'global-drag',
+        target: {
+          kind: 'workspace',
           workspaceId: selectedWs.workspace_id,
-          workspaceFiles: true,
-          workspaceQuota: true,
-        });
-      }
+          workspaceName: selectedWs.name,
+          folder: folderPath === '/' ? undefined : folderPath,
+        },
+      });
     }
-  }, [queue, destType, folderPath, selectedWs, toast, uploading, markCancelled]);
+
+    openDrawer();
+    setOpen(false);
+    setTimeout(() => {
+      setStep('destination');
+      setDestType(null);
+      setSelectedWs(null);
+      setFolderPath('');
+      setPathInput('');
+      setFolders([]);
+      setQueue([]);
+    }, 300);
+  }, [destType, enqueueUploads, folderPath, openDrawer, queue, selectedWs]);
 
   // ── Close / reset ──────────────────────────────────────────────────────────
   const handleClose = () => {
-    if (uploading) return;
     setOpen(false);
     setTimeout(() => {
       setStep('destination');
@@ -353,9 +248,6 @@ export default function GlobalDragUpload() {
 
   // ── Derived ────────────────────────────────────────────────────────────────
   const canNext = destType === 'personal' || (destType === 'workspace' && selectedWs !== null);
-  const allDone = queue.length > 0 && queue.every(q => q.status === 'success');
-  const hasErrors = queue.some(q => q.status === 'error');
-  const retryable = queue.filter(q => q.status === 'pending' || q.status === 'error').length;
 
   const destSummary = destType === 'personal'
     ? `Personal Storage${folderPath ? ` › ${folderPath.replace(/\//g, ' › ')}` : ''}`
@@ -425,7 +317,6 @@ export default function GlobalDragUpload() {
         onClose={handleClose}
         maxWidth="sm"
         fullWidth
-        disableEscapeKeyDown={uploading}
       >
         {/* ─── Step 1: Destination ─────────────────────────────────────────── */}
         {step === 'destination' && (
@@ -640,128 +531,70 @@ export default function GlobalDragUpload() {
             <DialogActions sx={{ px: 3, pb: 2.5 }}>
               <Button onClick={handleClose} variant="text">Cancel</Button>
               <Button
-                onClick={() => setStep('upload')}
+                onClick={() => setStep('review')}
                 variant="contained"
                 endIcon={<ChevronRight size={16} />}
               >
-                Upload here
+                Review files
               </Button>
             </DialogActions>
           </>
         )}
 
-        {/* ─── Step 3: Upload ───────────────────────────────────────────────── */}
-        {step === 'upload' && (
+        {/* ─── Step 3: Review / queue ───────────────────────────────────────── */}
+        {step === 'review' && (
           <>
             <DialogTitle sx={{ pb: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {!uploading && !allDone && (
-                  <IconButton size="small" onClick={goBack} edge="start">
-                    <ArrowLeft size={16} />
-                  </IconButton>
-                )}
-                <span>{allDone ? 'Upload complete!' : `Upload ${queue.length} file${queue.length !== 1 ? 's' : ''}`}</span>
+                <IconButton size="small" onClick={goBack} edge="start">
+                  <ArrowLeft size={16} />
+                </IconButton>
+                <span>Queue {queue.length} file{queue.length !== 1 ? 's' : ''}</span>
               </Box>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 0.5, fontWeight: 400, pl: !uploading && !allDone ? '36px' : 0 }}
-              >
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 400, pl: '36px' }}>
                 → {destSummary || 'Root'}
               </Typography>
             </DialogTitle>
 
             <DialogContent>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                These uploads will start immediately and keep running while you browse the app. Use the uploads drawer or uploads page to monitor progress, cancel, or retry.
+              </Typography>
               <List dense disablePadding>
                 {queue.map(item => (
                   <Box
                     key={item.id}
                     sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.75 }}
                   >
-                    {/* Status icon */}
-                    {item.status === 'uploading' ? (
-                      <CircularProgress size={18} sx={{ flexShrink: 0 }} />
-                    ) : item.status === 'success' ? (
-                      <CheckCircle size={18} className="text-green-500 shrink-0" />
-                    ) : item.status === 'error' ? (
-                      <XCircle size={18} className="text-red-500 shrink-0" />
-                    ) : (
-                      <Box sx={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid', borderColor: 'divider', flexShrink: 0 }} />
-                    )}
+                    <Box sx={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid', borderColor: 'divider', flexShrink: 0 }} />
 
-                    {/* Name + error */}
                     <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                       <Typography variant="body2" noWrap fontWeight={500}>
                         {item.file.name}
                       </Typography>
-                      <Box sx={{ mt: 0.75 }}>
-                        <LinearProgress
-                          variant="determinate"
-                          value={item.progress}
-                          color={item.status === 'error' ? 'error' : item.status === 'success' ? 'success' : 'primary'}
-                        />
-                      </Box>
-                      {item.status === 'error' && item.error && (
-                        <Typography variant="caption" color="error">
-                          {item.error}
-                        </Typography>
-                      )}
+                      <Typography variant="caption" color="text.secondary">
+                        {formatBytes(item.file.size)}
+                      </Typography>
                     </Box>
 
-                    {/* Size */}
-                    <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
-                      {item.progress}% · {formatBytes(item.file.size)}
-                    </Typography>
-
-                    {(item.status !== 'success' && (!uploading || destType === 'personal')) && (
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          if (uploading && destType === 'personal') {
-                            cancelUpload(item.id);
-                            return;
-                          }
-                          setQueue((prev) => prev.filter((entry) => entry.id !== item.id));
-                        }}
-                      >
-                        <X size={14} />
-                      </IconButton>
-                    )}
+                    <IconButton
+                      size="small"
+                      onClick={() => setQueue((prev) => prev.filter((entry) => entry.id !== item.id))}
+                    >
+                      <X size={14} />
+                    </IconButton>
                   </Box>
                 ))}
               </List>
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2.5 }}>
-              {allDone ? (
-                <Button onClick={handleClose} variant="contained">Done</Button>
-              ) : (
-                <>
-                  <Button onClick={handleClose} variant="text" disabled={uploading}>
-                    Cancel
-                  </Button>
-                  {uploading ? (
-                    destType === 'personal' ? (
-                      <Button onClick={cancelAllUploads} color="error" variant="contained">
-                        Cancel all
-                      </Button>
-                    ) : (
-                      <Button variant="contained" disabled startIcon={<CircularProgress size={14} color="inherit" />}>
-                        Uploading…
-                      </Button>
-                    )
-                  ) : (
-                    <Button
-                      onClick={handleUpload}
-                      variant="contained"
-                    >
-                      {hasErrors
-                        ? `Retry failed (${retryable})`
-                        : `Upload ${retryable} file${retryable !== 1 ? 's' : ''}`}
-                    </Button>
-                  )}
-                </>
-              )}
+              <Button onClick={handleClose} variant="text">
+                Cancel
+              </Button>
+              <Button onClick={handleUpload} variant="contained" disabled={queue.length === 0}>
+                Start background uploads
+              </Button>
             </DialogActions>
           </>
         )}

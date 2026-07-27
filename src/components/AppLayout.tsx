@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
+import UploadsPanel from '@/components/UploadsPanel';
 import { useThemeMode } from '@/hooks/useThemeMode';
+import { useUploadManager } from '@/hooks/useUploadManager';
 import { getUnseenReceivedCount, getMyInvites } from '@/api';
 import {
   Drawer,
   AppBar,
   Toolbar,
+  Button,
   IconButton,
   Avatar,
   Menu,
@@ -36,6 +39,7 @@ import {
   LayoutGrid,
   BarChart2,
   KeyRound,
+  X,
 } from 'lucide-react';
 import GlobalDragUpload from '@/components/GlobalDragUpload';
 
@@ -43,7 +47,7 @@ const DRAWER_WIDTH = 240;
 
 const personalNavItems = [
   { to: '/files', label: 'My Files', icon: FolderOpen },
-  { to: '/upload', label: 'Upload', icon: Upload },
+  { to: '/upload', label: 'Uploads', icon: Upload },
   { to: '/shared', label: 'Shared by Me', icon: Share2 },
   { to: '/received', label: 'Received', icon: Inbox },
 ];
@@ -67,6 +71,8 @@ export default function AppLayout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
+  const navigate = useNavigate();
+  const { drawerOpen, openDrawer, closeDrawer, pendingCount, activeCount, failedCount } = useUploadManager();
 
   const fetchUnseenCount = useCallback(async () => {
     try {
@@ -133,7 +139,11 @@ export default function AppLayout() {
           }}
         >
           <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-            {item.to === '/received' && unseenCount > 0 ? (
+            {item.to === '/upload' && pendingCount > 0 ? (
+              <Badge badgeContent={pendingCount} color={failedCount > 0 ? 'error' : 'primary'} max={99}>
+                <item.icon size={18} />
+              </Badge>
+            ) : item.to === '/received' && unseenCount > 0 ? (
               <Badge badgeContent={unseenCount} color="error" max={99}>
                 <item.icon size={18} />
               </Badge>
@@ -280,6 +290,11 @@ export default function AppLayout() {
               </IconButton>
             )}
             <div className="flex-1" />
+            <IconButton onClick={openDrawer} size="small" sx={{ mr: 1 }}>
+              <Badge badgeContent={pendingCount} color={failedCount > 0 ? 'error' : 'primary'} max={99} invisible={pendingCount === 0}>
+                <Upload size={18} />
+              </Badge>
+            </IconButton>
             <IconButton onClick={toggleMode} size="small" sx={{ mr: 1 }}>
               {mode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </IconButton>
@@ -313,6 +328,48 @@ export default function AppLayout() {
             </Menu>
           </Toolbar>
         </AppBar>
+
+        <Drawer
+          anchor="right"
+          open={drawerOpen}
+          onClose={closeDrawer}
+          sx={{ '& .MuiDrawer-paper': { width: { xs: '100%', sm: 440 }, boxSizing: 'border-box' } }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <Box sx={{ p: 2.5, borderBottom: 1, borderColor: 'divider' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                <Box>
+                  <Typography variant="h6" fontWeight={800}>Uploads</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    {activeCount > 0
+                      ? `${activeCount} upload${activeCount !== 1 ? 's' : ''} running in the background`
+                      : pendingCount > 0
+                        ? `${pendingCount} upload${pendingCount !== 1 ? 's' : ''} need attention`
+                        : 'No active background uploads'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => {
+                      closeDrawer();
+                      navigate('/upload');
+                    }}
+                  >
+                    Open page
+                  </Button>
+                  <IconButton size="small" onClick={closeDrawer}>
+                    <X size={16} />
+                  </IconButton>
+                </Box>
+              </Box>
+            </Box>
+            <Box sx={{ p: 2, overflowY: 'auto', flex: 1 }}>
+              <UploadsPanel compact />
+            </Box>
+          </Box>
+        </Drawer>
 
         <main className="mx-auto w-full max-w-7xl min-w-0 flex-1 p-6 max-md:p-4">
           <GlobalDragUpload />

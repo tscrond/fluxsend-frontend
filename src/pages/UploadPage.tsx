@@ -1,202 +1,60 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { UploadCancelledError, uploadFile, type MultipartUploadProgress } from '@/api';
-import { emitDataRefresh } from '@/lib/dataRefresh';
-import { useToast } from '@/hooks/useToast';
-import { Box, Button, Paper, Typography, IconButton, LinearProgress, TextField } from '@mui/material';
-import { Upload, FileUp, CheckCircle, XCircle, X } from 'lucide-react';
-import { runWithConcurrency } from '@/lib/utils';
-
-const FILE_UPLOAD_CONCURRENCY = 3;
-
-interface QueuedFile {
-  id: number;
-  file: File;
-  status: 'pending' | 'uploading' | 'success' | 'error';
-  progress: number;
-  error?: string;
-}
-
-let fileId = 0;
+import { useCallback, useRef, useState } from 'react';
+import { Box, Button, Paper, TextField, Typography } from '@mui/material';
+import { Upload } from 'lucide-react';
+import UploadsPanel from '@/components/UploadsPanel';
+import { useUploadManager } from '@/hooks/useUploadManager';
 
 export default function UploadPage() {
-  const [queue, setQueue] = useState<QueuedFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [folder, setFolder] = useState('');
-  const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const controllersRef = useRef(new Map<number, AbortController>());
-  const cancelledIdsRef = useRef(new Set<number>());
-  const cancelAllRequestedRef = useRef(false);
-  const { toast } = useToast();
-
-  useEffect(() => () => {
-    controllersRef.current.forEach((controller) => controller.abort());
-    controllersRef.current.clear();
-  }, []);
+  const { enqueueUploads, activeCount, failedCount, completedCount } = useUploadManager();
 
   const addFiles = useCallback((files: FileList | File[]) => {
-    const newItems: QueuedFile[] = Array.from(files).map((file) => ({
-      id: ++fileId,
-      file,
-      status: 'pending' as const,
-      progress: 0,
-    }));
-    setQueue((prev) => [...prev, ...newItems]);
-  }, []);
+    const nextFiles = Array.from(files);
+    if (nextFiles.length === 0) return;
 
-  const removeFromQueue = useCallback((id: number) => {
-    setQueue((prev) => prev.filter((f) => f.id !== id));
-  }, []);
-
-  const markCancelled = useCallback((id: number) => {
-    setQueue((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, status: 'error' as const, error: 'Cancelled' }
-          : item,
-      ),
-    );
-  }, []);
-
-  const cancelUpload = useCallback((id: number) => {
-    cancelledIdsRef.current.add(id);
-    const controller = controllersRef.current.get(id);
-    if (controller) {
-      controller.abort();
-      return;
-    }
-    markCancelled(id);
-  }, [markCancelled]);
-
-  const cancelAllUploads = useCallback(() => {
-    cancelAllRequestedRef.current = true;
-    setQueue((prev) =>
-      prev.map((item) =>
-        item.status === 'pending' || item.status === 'uploading'
-          ? { ...item, status: 'error' as const, error: 'Cancelled' }
-          : item,
-      ),
-    );
-    controllersRef.current.forEach((controller, id) => {
-      cancelledIdsRef.current.add(id);
-      controller.abort();
-    });
-  }, []);
-
-  const applyProgress = useCallback((id: number, progress: MultipartUploadProgress) => {
-    setQueue((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? { ...item, progress: Math.round(progress.fraction * 100) }
-          : item,
-      ),
-    );
-  }, []);
-
-  const uploadAll = useCallback(async () => {
-    if (uploading) return;
-
-    const pending = queue.filter((f) => f.status === 'pending' || f.status === 'error');
-    if (pending.length === 0) return;
-
-    cancelAllRequestedRef.current = false;
-    cancelledIdsRef.current.clear();
-    setUploading(true);
-
-    let successCount = 0;
-    let errorCount = 0;
-    const cancelledIds = new Set<number>();
-
-    const markCancelledInRun = (id: number) => {
-      cancelledIds.add(id);
-      markCancelled(id);
-    };
-
-    await runWithConcurrency(pending, FILE_UPLOAD_CONCURRENCY, async (item) => {
-      if (cancelAllRequestedRef.current || cancelledIdsRef.current.has(item.id)) {
-        markCancelledInRun(item.id);
-        return;
-      }
-
-      setQueue((prev) =>
-        prev.map((f) => (f.id === item.id ? { ...f, status: 'uploading' as const, progress: 0, error: undefined } : f)),
-      );
-
-      const controller = new AbortController();
-      controllersRef.current.set(item.id, controller);
-
-      try {
-        await uploadFile(item.file, folder.trim() || undefined, {
-          onProgress: (progress) => applyProgress(item.id, progress),
-          signal: controller.signal,
-        });
-        successCount++;
-        setQueue((prev) =>
-          prev.map((f) => (f.id === item.id ? { ...f, status: 'success' as const, progress: 100 } : f)),
-        );
-      } catch (err) {
-        if (err instanceof UploadCancelledError) {
-          markCancelledInRun(item.id);
-          return;
-        }
-
-        errorCount++;
-        const errorMsg = err instanceof Error ? err.message : 'Upload failed';
-        setQueue((prev) =>
-          prev.map((f) =>
-            f.id === item.id
-              ? { ...f, status: 'error' as const, error: errorMsg }
-              : f,
-          ),
-        );
-      } finally {
-        controllersRef.current.delete(item.id);
-      }
+    enqueueUploads({
+      files: nextFiles,
+      source: 'upload-page',
+      target: { kind: 'personal', folder: folder.trim() || undefined },
     });
 
-    setUploading(false);
+    if (inputRef.current) inputRef.current.value = '';
+  }, [enqueueUploads, folder]);
 
-    // Show appropriate toast based on actual results
-    if (successCount > 0) {
-      toast('success', `Uploaded ${successCount} file${successCount !== 1 ? 's' : ''}`);
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    if (e.dataTransfer.files.length > 0) {
+      addFiles(e.dataTransfer.files);
     }
-    if (errorCount > 0) {
-      toast('error', `Failed to upload ${errorCount} file${errorCount !== 1 ? 's' : ''}`);
-    }
-    if (cancelledIds.size > 0) {
-      toast('info', `Cancelled ${cancelledIds.size} file${cancelledIds.size !== 1 ? 's' : ''}`);
-    }
-
-    if (successCount > 0) {
-      emitDataRefresh({ personalFiles: true, analytics: true });
-    }
-  }, [applyProgress, folder, markCancelled, queue, toast, uploading]);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragging(false);
-      if (e.dataTransfer.files.length > 0) {
-        addFiles(e.dataTransfer.files);
-      }
-    },
-    [addFiles],
-  );
-
-  const successCount = queue.filter((f) => f.status === 'success').length;
-  const pendingCount = queue.filter((f) => f.status === 'pending' || f.status === 'error').length;
-  const isUploading = uploading;
+  }, [addFiles]);
 
   return (
     <div>
       <div className="mb-6">
-        <Typography variant="h5" fontWeight={700}>Upload Files</Typography>
+        <Typography variant="h5" fontWeight={700}>Uploads</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Drag and drop or browse to upload
+          Queue personal uploads here and keep tracking every upload while you navigate the app.
         </Typography>
       </div>
 
-      {/* Optional folder */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Paper variant="outlined" sx={{ p: 2, minWidth: 160 }}>
+          <Typography variant="caption" color="text.secondary">Active</Typography>
+          <Typography variant="h6" fontWeight={800}>{activeCount}</Typography>
+        </Paper>
+        <Paper variant="outlined" sx={{ p: 2, minWidth: 160 }}>
+          <Typography variant="caption" color="text.secondary">Need attention</Typography>
+          <Typography variant="h6" fontWeight={800}>{failedCount}</Typography>
+        </Paper>
+        <Paper variant="outlined" sx={{ p: 2, minWidth: 160 }}>
+          <Typography variant="caption" color="text.secondary">Completed this session</Typography>
+          <Typography variant="h6" fontWeight={800}>{completedCount}</Typography>
+        </Paper>
+      </Box>
+
       <TextField
         size="small"
         label="Destination folder (optional)"
@@ -208,11 +66,9 @@ export default function UploadPage() {
         helperText="Leave empty to upload to Root. Use / to nest folders (max 3 levels)."
       />
 
-      {/* Drop zone */}
       <Paper
         variant="outlined"
-        className={`flex flex-col items-center py-16 px-6 text-center cursor-pointer transition-colors
-          ${dragging ? 'border-indigo-500 bg-indigo-50' : 'border-dashed hover:border-indigo-500 hover:bg-indigo-50/50'}`}
+        className={`flex flex-col items-center py-16 px-6 text-center cursor-pointer transition-colors ${dragging ? 'border-indigo-500 bg-indigo-50' : 'border-dashed hover:border-indigo-500 hover:bg-indigo-50/50'}`}
         sx={{ borderStyle: 'dashed', borderWidth: 2 }}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
@@ -229,94 +85,21 @@ export default function UploadPage() {
             e.target.value = '';
           }}
         />
-        <div className="w-16 h-16 rounded-full bg-indigo-100 text-indigo-500 flex items-center justify-center mb-4">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 text-indigo-500">
           <Upload size={32} />
         </div>
-        <Typography variant="body1">
-          <strong>Click to upload</strong> or drag and drop
+        <Typography variant="h6" fontWeight={700}>Select or Drop Files</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 3, maxWidth: 520 }}>
+          Files start uploading immediately in the background. You can keep browsing the app and manage progress from here or the global uploads drawer.
         </Typography>
-        <Typography variant="caption" color="text.secondary">Any file type supported</Typography>
+        <Button variant="contained" startIcon={<Upload size={16} />}>
+          Add files
+        </Button>
       </Paper>
 
-      {/* Queue */}
-      {queue.length > 0 && (
-        <div className="mt-7 min-w-0">
-          <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <Typography variant="body2" color="text.secondary">
-              {successCount > 0 && `${successCount} uploaded`}
-              {successCount > 0 && pendingCount > 0 && ' · '}
-              {pendingCount > 0 && `${pendingCount} pending`}
-            </Typography>
-            <div className="flex flex-wrap gap-2">
-              <Button size="small" variant="outlined" onClick={() => setQueue([])} disabled={isUploading}>
-                Clear all
-              </Button>
-              {isUploading ? (
-                <Button
-                  size="small"
-                  color="error"
-                  variant="contained"
-                  onClick={cancelAllUploads}
-                >
-                  Cancel all
-                </Button>
-              ) : (
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={uploadAll}
-                  disabled={pendingCount === 0}
-                  startIcon={<FileUp size={14} />}
-                >
-                  {`Upload ${pendingCount > 0 ? `(${pendingCount})` : 'all'}`}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <Paper variant="outlined" className="w-full max-w-full overflow-x-hidden">
-            {queue.map((item) => (
-              <div key={item.id} className="flex w-full min-w-0 items-start gap-1.5 border-b border-slate-200 px-2 py-2.5 last:border-b-0 sm:items-center sm:gap-2 sm:px-4 sm:py-3">
-                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-                  {item.status === 'success' && <CheckCircle size={16} className="text-green-500 shrink-0" />}
-                  {item.status === 'error' && <XCircle size={16} className="text-red-500 shrink-0" />}
-                  {item.status === 'uploading' && <Upload size={16} className="text-indigo-500 shrink-0" />}
-                  {item.status === 'pending' && <FileUp size={16} className="text-slate-400 shrink-0" />}
-                  <div className="min-w-0 flex flex-col">
-                    <span className="block max-w-full break-all text-sm font-medium sm:truncate sm:break-normal">{item.file.name}</span>
-                    <span className="block break-all pr-1 text-xs text-slate-400">
-                      {(item.file.size / 1024).toFixed(1)} KB · {item.progress}%
-                      {item.error && <span className="break-all text-red-500"> · {item.error}</span>}
-                    </span>
-                    <Box sx={{ mt: 0.75 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={item.progress}
-                        color={item.status === 'error' ? 'error' : item.status === 'success' ? 'success' : 'primary'}
-                      />
-                    </Box>
-                  </div>
-                </div>
-                {item.status !== 'success' && (
-                  <IconButton
-                    size="small"
-                    onClick={() => {
-                      if (isUploading) {
-                        cancelUpload(item.id);
-                        return;
-                      }
-                      removeFromQueue(item.id);
-                    }}
-                    className="shrink-0"
-                  >
-                    <X size={14} />
-                  </IconButton>
-                )}
-              </div>
-            ))}
-          </Paper>
-        </div>
-      )}
+      <Box sx={{ mt: 4 }}>
+        <UploadsPanel />
+      </Box>
     </div>
   );
 }

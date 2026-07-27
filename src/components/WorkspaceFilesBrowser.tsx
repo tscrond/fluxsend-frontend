@@ -1,22 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getWorkspaceFilesTree,
-  uploadWorkspaceFile,
   mkdirWorkspace,
   deleteWorkspaceFile,
   deleteWorkspaceFolder,
   moveWorkspaceFile,
   moveWorkspaceFolder,
   getWorkspaceFileDownloadUrl,
-  ApiError,
   type WorkspaceFileEntry,
   type WorkspaceFolderEntry,
   type WorkspaceFilesTree,
 } from '@/api';
 import WorkspaceFilePreviewDrawer from '@/components/WorkspaceFilePreviewDrawer';
-import { emitDataRefresh, onDataRefresh } from '@/lib/dataRefresh';
+import { useUploadManager } from '@/hooks/useUploadManager';
+import { onDataRefresh } from '@/lib/dataRefresh';
 import { useToast } from '@/hooks/useToast';
-import { formatBytes, getFileIcon, runWithConcurrency } from '@/lib/utils';
+import { formatBytes, getFileIcon } from '@/lib/utils';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, TextField, InputAdornment, IconButton, Menu, MenuItem,
@@ -33,6 +32,7 @@ import type { } from 'react'; // keep React in scope
 
 interface Props {
   workspaceId: string;
+  workspaceName: string;
   role: string;
 }
 
@@ -44,9 +44,7 @@ function canWrite(role: string) {
   return role === 'owner' || role === 'admin' || role === 'editor';
 }
 
-const WORKSPACE_FILE_UPLOAD_CONCURRENCY = 3;
-
-export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
+export default function WorkspaceFilesBrowser({ workspaceId, workspaceName, role }: Props) {
   const [currentPath, setCurrentPath] = useState<string>('/');
   const [treeData, setTreeData] = useState<WorkspaceFilesTree | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +69,6 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
 
   // Upload
   const uploadRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
 
   // Mkdir
   const [mkdirDialogOpen, setMkdirDialogOpen] = useState(false);
@@ -83,6 +80,7 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
 
   const { toast } = useToast();
+  const { enqueueUploads, openDrawer } = useUploadManager();
   const writeAllowed = canWrite(role);
 
   const fetchTree = useCallback(async (path: string) => {
@@ -198,35 +196,18 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
-    setUploading(true);
-    let success = 0;
-    let failed = 0;
-    let quotaHit = false;
-
-    await runWithConcurrency(files, WORKSPACE_FILE_UPLOAD_CONCURRENCY, async (file) => {
-      if (quotaHit) return;
-
-      try {
-        await uploadWorkspaceFile(workspaceId, file, currentPath);
-        success++;
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 429) {
-          quotaHit = true;
-          toast('error', err.message);
-          return;
-        }
-        failed++;
-      }
+    enqueueUploads({
+      files,
+      source: 'workspace-browser',
+      target: {
+        kind: 'workspace',
+        workspaceId,
+        workspaceName,
+        folder: currentPath === '/' ? undefined : currentPath,
+      },
     });
-
-    if (success > 0) toast('success', `${success} file${success !== 1 ? 's' : ''} uploaded`);
-    if (failed > 0 && !quotaHit) toast('error', `${failed} file${failed !== 1 ? 's' : ''} failed to upload`);
-    setUploading(false);
+    openDrawer();
     if (uploadRef.current) uploadRef.current.value = '';
-    fetchTree(currentPath);
-    if (success > 0) {
-      emitDataRefresh({ analytics: true, workspaceId, workspaceFiles: true, workspaceQuota: true });
-    }
   };
 
   // ── Mkdir ───────────────────────────────────────────────────────────────────
@@ -241,11 +222,7 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
       setNewFolderName('');
       fetchTree(currentPath);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 429) {
-        toast('error', err.message);
-      } else {
-        toast('error', 'Failed to create folder');
-      }
+      toast('error', err instanceof Error && err.message ? err.message : 'Failed to create folder');
     } finally {
       setMkdirLoading(false);
     }
@@ -296,7 +273,7 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Tooltip title="Refresh files">
             <span>
-              <IconButton size="small" onClick={() => fetchTree(currentPath)} disabled={loading || uploading}>
+              <IconButton size="small" onClick={() => fetchTree(currentPath)} disabled={loading}>
                 <RefreshCw size={16} />
               </IconButton>
             </span>
@@ -313,8 +290,7 @@ export default function WorkspaceFilesBrowser({ workspaceId, role }: Props) {
               <Button
                 variant="contained"
                 size="small"
-                startIcon={uploading ? <CircularProgress size={14} color="inherit" /> : <Upload size={15} />}
-                disabled={uploading}
+                startIcon={<Upload size={15} />}
                 onClick={() => uploadRef.current?.click()}
               >
                 Upload
