@@ -343,7 +343,7 @@ export default function WorkspaceDetailPage() {
 
       {/* Files tab */}
       {tab === 'files' && workspaceId && workspace?.role && (
-        <WorkspaceFilesBrowser workspaceId={workspaceId} role={workspace.role} />
+        <WorkspaceFilesBrowser workspaceId={workspaceId} workspaceName={workspace.name} role={workspace.role} />
       )}
 
       {tab === 'api-keys' && workspaceId && canManageWorkspace && (

@@ -221,6 +221,13 @@ interface UploadMultipartPartResponse {
   storage_metadata?: Record<string, unknown>;
 }
 
+interface MultipartUploadPaths {
+  initPath: string;
+  partPath: (uploadId: string, partNumber: number) => string;
+  completePath: (uploadId: string) => string;
+  abortPath: (uploadId: string) => string;
+}
+
 export interface CompleteMultipartUploadResponse {
   upload_id: string;
   file_name: string;
@@ -265,12 +272,191 @@ function isAbortLikeError(error: unknown): boolean {
     || (error instanceof Error && error.message === 'Upload cancelled');
 }
 
-async function abortMultipartUpload(uploadId: string): Promise<void> {
+function buildMultipartUploadInitBody(file: File, folder?: string): Record<string, unknown> {
+  return {
+    filename: file.name,
+    size: file.size,
+    content_type: file.type || 'application/octet-stream',
+    folder: folder ?? '',
+  };
+}
+
+async function abortMultipartUpload(uploadId: string, paths: MultipartUploadPaths): Promise<void> {
   try {
-    await request(`/files/uploads/${encodeURIComponent(uploadId)}`, { method: 'DELETE' });
+    await request(paths.abortPath(uploadId), { method: 'DELETE' });
   } catch {
     // Best-effort cleanup only.
   }
+}
+
+async function uploadMultipartFile(
+  file: File,
+  folder: string | undefined,
+  options: UploadFileOptions,
+  paths: MultipartUploadPaths,
+): Promise<CompleteMultipartUploadResponse> {
+  const signal = options.signal;
+
+  if (file.size <= 0) {
+    throw new Error('Cannot upload an empty file');
+  }
+
+  if (signal?.aborted) {
+    throw new UploadCancelledError();
+  }
+
+  let uploadId: string | null = null;
+  let uploadCompleted = false;
+
+  const activeAborts = new Set<() => void>();
+  const activeProgress = new Map<number, number>();
+
+  const abortActiveRequests = () => {
+    for (const abort of activeAborts) abort();
+  };
+
+  const handleSignalAbort = () => {
+    abortActiveRequests();
+  };
+
+  signal?.addEventListener('abort', handleSignalAbort);
+
+  const throwIfAborted = () => {
+    if (signal?.aborted) {
+      throw new UploadCancelledError();
+    }
+  };
+
+  try {
+    throwIfAborted();
+
+    const initResponse = await request<CreateMultipartUploadResponse>(paths.initPath, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildMultipartUploadInitBody(file, folder)),
+      signal,
+    });
+    uploadId = initResponse.upload_id;
+
+    const chunkSize = normalizeChunkSize(initResponse.chunk_size, file.size);
+    const partCount = Math.max(1, Math.ceil(file.size / chunkSize));
+    const configuredConcurrency = options.chunkConcurrency ?? DEFAULT_UPLOAD_CHUNK_CONCURRENCY;
+    const chunkConcurrency = Math.max(1, Math.min(Math.floor(configuredConcurrency), partCount));
+
+    let completedBytes = 0;
+    let nextPartNumber = 1;
+    let firstError: unknown = null;
+
+    const emitProgress = () => {
+      let uploadedBytes = completedBytes;
+      for (const value of activeProgress.values()) uploadedBytes += value;
+
+      options.onProgress?.({
+        uploadedBytes,
+        totalBytes: file.size,
+        fraction: file.size > 0 ? Math.min(uploadedBytes / file.size, 1) : 1,
+      });
+    };
+
+    emitProgress();
+
+    const uploadPart = async (partNumber: number) => {
+      throwIfAborted();
+
+      const start = (partNumber - 1) * chunkSize;
+      const end = Math.min(file.size, start + chunkSize);
+      const chunk = file.slice(start, end);
+
+      const requestHandle = uploadChunkRequest<UploadMultipartPartResponse>(
+        paths.partPath(initResponse.upload_id, partNumber),
+        chunk,
+        (loaded) => {
+          activeProgress.set(partNumber, Math.min(loaded, chunk.size));
+          emitProgress();
+        },
+      );
+
+      activeAborts.add(requestHandle.abort);
+
+      try {
+        await requestHandle.promise;
+        completedBytes += chunk.size;
+        activeProgress.delete(partNumber);
+        emitProgress();
+      } finally {
+        activeAborts.delete(requestHandle.abort);
+      }
+    };
+
+    const workers = Array.from({ length: chunkConcurrency }, async () => {
+      while (!firstError) {
+        throwIfAborted();
+
+        const partNumber = nextPartNumber;
+        if (partNumber > partCount) return;
+        nextPartNumber += 1;
+
+        try {
+          await uploadPart(partNumber);
+        } catch (error) {
+          if (!firstError) {
+            firstError = error;
+            abortActiveRequests();
+          }
+          throw error;
+        }
+      }
+    });
+
+    try {
+      await Promise.all(workers);
+    } catch (error) {
+      throw firstError instanceof Error ? firstError : error;
+    }
+
+    throwIfAborted();
+
+    const completeResponse = await request<CompleteMultipartUploadResponse>(
+      paths.completePath(initResponse.upload_id),
+      { method: 'POST', signal },
+    );
+    uploadCompleted = true;
+
+    options.onProgress?.({
+      uploadedBytes: file.size,
+      totalBytes: file.size,
+      fraction: 1,
+    });
+
+    return completeResponse;
+  } catch (error) {
+    if (isAbortLikeError(error) || signal?.aborted) {
+      if (uploadId !== null && !uploadCompleted) {
+        await abortMultipartUpload(uploadId, paths);
+      }
+      throw new UploadCancelledError();
+    }
+    throw error;
+  } finally {
+    signal?.removeEventListener('abort', handleSignalAbort);
+  }
+}
+
+const privateMultipartUploadPaths: MultipartUploadPaths = {
+  initPath: '/files/uploads',
+  partPath: (uploadId, partNumber) => `/files/uploads/${encodeURIComponent(uploadId)}/parts/${partNumber}`,
+  completePath: (uploadId) => `/files/uploads/${encodeURIComponent(uploadId)}/complete`,
+  abortPath: (uploadId) => `/files/uploads/${encodeURIComponent(uploadId)}`,
+};
+
+function workspaceMultipartUploadPaths(workspaceId: string): MultipartUploadPaths {
+  const encodedWorkspaceId = encodeURIComponent(workspaceId);
+  return {
+    initPath: `/workspaces/${encodedWorkspaceId}/files/uploads`,
+    partPath: (uploadId, partNumber) => `/workspaces/${encodedWorkspaceId}/files/uploads/${encodeURIComponent(uploadId)}/parts/${partNumber}`,
+    completePath: (uploadId) => `/workspaces/${encodedWorkspaceId}/files/uploads/${encodeURIComponent(uploadId)}/complete`,
+    abortPath: (uploadId) => `/workspaces/${encodedWorkspaceId}/files/uploads/${encodeURIComponent(uploadId)}`,
+  };
 }
 
 function uploadChunkRequest<T>(
@@ -334,156 +520,7 @@ export async function uploadFile(
   folder?: string,
   options: UploadFileOptions = {},
 ): Promise<CompleteMultipartUploadResponse> {
-  const signal = options.signal;
-
-  if (file.size <= 0) {
-    throw new Error('Cannot upload an empty file');
-  }
-
-  if (signal?.aborted) {
-    throw new UploadCancelledError();
-  }
-
-  let uploadId: string | null = null;
-  let uploadCompleted = false;
-
-  const activeAborts = new Set<() => void>();
-  const activeProgress = new Map<number, number>();
-
-  const abortActiveRequests = () => {
-    for (const abort of activeAborts) abort();
-  };
-
-  const handleSignalAbort = () => {
-    abortActiveRequests();
-  };
-
-  signal?.addEventListener('abort', handleSignalAbort);
-
-  const throwIfAborted = () => {
-    if (signal?.aborted) {
-      throw new UploadCancelledError();
-    }
-  };
-
-  try {
-    throwIfAborted();
-
-    const initResponse = await request<CreateMultipartUploadResponse>('/files/uploads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        filename: file.name,
-        size: file.size,
-        content_type: file.type || 'application/octet-stream',
-        folder: folder ?? '',
-      }),
-      signal,
-    });
-    uploadId = initResponse.upload_id;
-
-    const chunkSize = normalizeChunkSize(initResponse.chunk_size, file.size);
-    const partCount = Math.max(1, Math.ceil(file.size / chunkSize));
-    const configuredConcurrency = options.chunkConcurrency ?? DEFAULT_UPLOAD_CHUNK_CONCURRENCY;
-    const chunkConcurrency = Math.max(1, Math.min(Math.floor(configuredConcurrency), partCount));
-
-    let completedBytes = 0;
-    let nextPartNumber = 1;
-    let firstError: unknown = null;
-
-    const emitProgress = () => {
-      let uploadedBytes = completedBytes;
-      for (const value of activeProgress.values()) uploadedBytes += value;
-
-      options.onProgress?.({
-        uploadedBytes,
-        totalBytes: file.size,
-        fraction: file.size > 0 ? Math.min(uploadedBytes / file.size, 1) : 1,
-      });
-    };
-
-    emitProgress();
-
-    const uploadPart = async (partNumber: number) => {
-      throwIfAborted();
-
-      const start = (partNumber - 1) * chunkSize;
-      const end = Math.min(file.size, start + chunkSize);
-      const chunk = file.slice(start, end);
-
-      const requestHandle = uploadChunkRequest<UploadMultipartPartResponse>(
-        `/files/uploads/${encodeURIComponent(initResponse.upload_id)}/parts/${partNumber}`,
-        chunk,
-        (loaded) => {
-          activeProgress.set(partNumber, Math.min(loaded, chunk.size));
-          emitProgress();
-        },
-      );
-
-      activeAborts.add(requestHandle.abort);
-
-      try {
-        await requestHandle.promise;
-        completedBytes += chunk.size;
-        activeProgress.delete(partNumber);
-        emitProgress();
-      } finally {
-        activeAborts.delete(requestHandle.abort);
-      }
-    };
-
-    const workers = Array.from({ length: chunkConcurrency }, async () => {
-      while (!firstError) {
-        throwIfAborted();
-
-        const partNumber = nextPartNumber;
-        if (partNumber > partCount) return;
-        nextPartNumber += 1;
-
-        try {
-          await uploadPart(partNumber);
-        } catch (error) {
-          if (!firstError) {
-            firstError = error;
-            abortActiveRequests();
-          }
-          throw error;
-        }
-      }
-    });
-
-    try {
-      await Promise.all(workers);
-    } catch (error) {
-      throw firstError instanceof Error ? firstError : error;
-    }
-
-    throwIfAborted();
-
-    const completeResponse = await request<CompleteMultipartUploadResponse>(
-      `/files/uploads/${encodeURIComponent(initResponse.upload_id)}/complete`,
-      { method: 'POST', signal },
-    );
-    uploadCompleted = true;
-
-    options.onProgress?.({
-      uploadedBytes: file.size,
-      totalBytes: file.size,
-      fraction: 1,
-    });
-
-    return completeResponse;
-  } catch (error) {
-    if (isAbortLikeError(error) || signal?.aborted) {
-      if (uploadId !== null && !uploadCompleted) {
-        await abortMultipartUpload(uploadId);
-      }
-      throw new UploadCancelledError();
-    }
-    throw error;
-  } finally {
-    signal?.removeEventListener('abort', handleSignalAbort);
-  }
+  return uploadMultipartFile(file, folder, options, privateMultipartUploadPaths);
 }
 
 export function deleteFile(fileName: string): Promise<{ file_deleted: string }> {
@@ -970,14 +1007,13 @@ export function getWorkspaceFilesTree(workspaceId: string, path?: string): Promi
   return request<WorkspaceFilesTree>(`/workspaces/${encodeURIComponent(workspaceId)}/files/tree${qs}`);
 }
 
-export function uploadWorkspaceFile(workspaceId: string, file: File, folder?: string): Promise<unknown> {
-  const formData = new FormData();
-  formData.append('file', file);
-  if (folder && folder !== '/') formData.append('folder', folder);
-  return request(`/workspaces/${encodeURIComponent(workspaceId)}/files/upload`, {
-    method: 'POST',
-    body: formData,
-  });
+export function uploadWorkspaceFile(
+  workspaceId: string,
+  file: File,
+  folder?: string,
+  options: UploadFileOptions = {},
+): Promise<CompleteMultipartUploadResponse> {
+  return uploadMultipartFile(file, folder, options, workspaceMultipartUploadPaths(workspaceId));
 }
 
 export function mkdirWorkspace(workspaceId: string, folderName: string, parentPath: string): Promise<WorkspaceFolderResult> {
