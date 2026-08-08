@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { checkAuth, getUserData, logout as apiLogout, getLoginUrl, type UserData } from '@/api';
+import { checkAuth, getUserData, getAuthProviders, logout as apiLogout, getLoginUrl, type AuthProviders, type UserData } from '@/api';
 
 interface AuthContextValue {
   user: UserData | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  authProviders: AuthProviders;
   login: (provider: string) => void;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -15,9 +16,17 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authProviders, setAuthProviders] = useState<AuthProviders>({
+    google: false,
+    github: false,
+    password: false,
+  });
 
   const refresh = useCallback(async () => {
     try {
+      const providerStatus = await getAuthProviders();
+      setAuthProviders(providerStatus);
+
       const authStatus = await checkAuth();
       if (authStatus.authenticated) {
         const { user_data } = await getUserData();
@@ -54,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isLoading,
       isAuthenticated: user !== null,
+      authProviders,
       login,
       logout,
       refresh,

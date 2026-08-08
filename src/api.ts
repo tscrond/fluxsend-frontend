@@ -102,6 +102,12 @@ export interface AuthStatus {
   };
 }
 
+export interface AuthProviders {
+  google: boolean;
+  github: boolean;
+  password: boolean;
+}
+
 export function getLoginUrl(provider: string): string {
   return `${API_BASE}/auth/${provider}/login`;
 }
@@ -112,6 +118,14 @@ export async function checkAuth(): Promise<AuthStatus> {
   } catch {
     // 403 is the expected response when not logged in
     return { authenticated: false };
+  }
+}
+
+export async function getAuthProviders(): Promise<AuthProviders> {
+  try {
+    return await request<AuthProviders>('/auth/providers');
+  } catch {
+    return { google: false, github: false, password: false };
   }
 }
 
