@@ -1,11 +1,23 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { checkAuth, getUserData, getAuthProviders, logout as apiLogout, getLoginUrl, type AuthProviders, type UserData } from '@/api';
+import {
+  checkAuth,
+  getUserData,
+  getUserIdentities,
+  getAuthProviders,
+  logout as apiLogout,
+  getLoginUrl,
+  type AuthProviders,
+  type UserData,
+  type UserIdentity,
+} from '@/api';
 
 interface AuthContextValue {
   user: UserData | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   authProviders: AuthProviders;
+  identities: UserIdentity[];
+  hasPasswordIdentity: boolean;
   login: (provider: string) => void;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -21,6 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     github: false,
     password: false,
   });
+  const [identities, setIdentities] = useState<UserIdentity[]>([]);
+  const [hasPasswordIdentity, setHasPasswordIdentity] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -31,11 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (authStatus.authenticated) {
         const { user_data } = await getUserData();
         setUser(user_data);
+        const identitiesResponse = await getUserIdentities();
+        setIdentities(identitiesResponse.identities);
+        setHasPasswordIdentity(identitiesResponse.has_password_identity);
       } else {
         setUser(null);
+        setIdentities([]);
+        setHasPasswordIdentity(false);
       }
     } catch {
       setUser(null);
+      setIdentities([]);
+      setHasPasswordIdentity(false);
     } finally {
       setIsLoading(false);
     }
@@ -64,6 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       isAuthenticated: user !== null,
       authProviders,
+      identities,
+      hasPasswordIdentity,
       login,
       logout,
       refresh,

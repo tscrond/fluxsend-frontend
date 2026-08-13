@@ -14,6 +14,8 @@ import SharedPage from '@/pages/SharedPage';
 import ReceivedPage from '@/pages/ReceivedPage';
 import SettingsPage from '@/pages/SettingsPage';
 import LandingPage from '@/pages/LandingPage';
+import PasswordVerifyPage from '@/pages/PasswordVerifyPage';
+import PasswordResetVerifyPage from '@/pages/PasswordResetVerifyPage';
 import SharePage from '@/pages/SharePage';
 import WorkspacesPage from '@/pages/WorkspacesPage';
 import WorkspaceCreatePage from '@/pages/WorkspaceCreatePage';
@@ -126,6 +128,14 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/password/new/verify/:id',
+    element: <PasswordVerifyPage />,
+  },
+  {
+    path: '/password/reset/verify/:id',
+    element: <PasswordResetVerifyPage />,
   },
   {
     path: '/share/:token',

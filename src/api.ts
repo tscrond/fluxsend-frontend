@@ -133,6 +133,64 @@ export function logout(): Promise<void> {
   return request<void>('/auth/logout', { method: 'POST' });
 }
 
+export interface PasswordRegisterResponse {
+  challenge_id: string;
+}
+
+export function passwordRegister(email: string, password: string): Promise<PasswordRegisterResponse> {
+  return request<PasswordRegisterResponse>('/auth/password/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export function passwordVerifyNewUser(challengeId: string, email: string, code: string): Promise<void> {
+  return request<void>(`/auth/password/new/verify/${encodeURIComponent(challengeId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code }),
+  });
+}
+
+export function passwordLogin(email: string, password: string): Promise<{ user_id: string }> {
+  return request<{ user_id: string }>('/auth/password/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export interface PasswordResetRequestResponse {
+  sent: boolean;
+}
+
+export function requestPasswordReset(email: string): Promise<PasswordResetRequestResponse> {
+  return request<PasswordResetRequestResponse>('/auth/password/reset', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export interface PasswordResetVerifyResponse {
+  verified?: boolean;
+  password_reset?: boolean;
+}
+
+export function verifyPasswordReset(
+  challengeId: string,
+  email: string,
+  code: string,
+  newPassword?: string,
+): Promise<PasswordResetVerifyResponse> {
+  return request<PasswordResetVerifyResponse>(`/auth/password/reset/verify/${encodeURIComponent(challengeId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code, new_password: newPassword ?? '' }),
+  });
+}
+
 // ─── User ───────────────────────────────────────────────────────────────────
 
 export interface UserData {
@@ -166,6 +224,27 @@ export interface UserDataResponse {
 
 export function getUserData(): Promise<UserDataResponse> {
   return request<UserDataResponse>('/user/data');
+}
+
+export interface UserIdentity {
+  id: string;
+  user_id: string;
+  provider: string;
+  provider_user_id: string;
+  email: string;
+  email_verified: boolean;
+  name: string;
+  avatar_url: string;
+  created_at: string;
+}
+
+export interface UserIdentitiesResponse {
+  identities: UserIdentity[];
+  has_password_identity: boolean;
+}
+
+export function getUserIdentities(): Promise<UserIdentitiesResponse> {
+  return request<UserIdentitiesResponse>('/user/identities');
 }
 
 export interface DailyActivity {

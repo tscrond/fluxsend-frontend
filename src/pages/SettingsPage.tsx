@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { deleteAccount } from '@/api';
+import { ApiError, deleteAccount, requestPasswordReset } from '@/api';
 import {
   Paper, Typography, Avatar, Button, Dialog, DialogTitle, DialogContent,
-  DialogActions, TextField, Checkbox, FormControlLabel, Alert, Chip, CircularProgress,
+  DialogActions, TextField, Checkbox, FormControlLabel, Alert, Chip, CircularProgress, Stack,
 } from '@mui/material';
 import { User, Shield, Trash2, AlertTriangle, CreditCard } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, identities, hasPasswordIdentity } = useAuth();
   const { toast } = useToast();
   const [showDelete, setShowDelete] = useState(false);
   const [deleteData, setDeleteData] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState(user?.email ?? '');
+  const [resetSending, setResetSending] = useState(false);
 
   const handleDelete = async () => {
     if (confirmText !== 'DELETE') return;
@@ -28,6 +31,32 @@ export default function SettingsPage() {
       setDeleting(false);
     }
   };
+
+  const handleResetRequest = async (event: React.FormEvent) => {
+  event.preventDefault();
+  const normalizedEmail = resetEmail.trim().toLowerCase();
+  if (!normalizedEmail) {
+    toast('error', 'Email is required');
+    return;
+  }
+
+  setResetSending(true);
+  try {
+    await requestPasswordReset(normalizedEmail);
+    toast('success', 'If that email has a password identity, a reset link will arrive shortly.');
+    setShowReset(false);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      toast('error', error.message || 'Password reset request failed.');
+    } else {
+      toast('error', 'Password reset request failed.');
+    }
+  } finally {
+    setResetSending(false);
+  }
+  };
+
+  const formatProvider = (provider: string) => provider.charAt(0).toUpperCase() + provider.slice(1);
 
   return (
     <div>
@@ -96,11 +125,39 @@ export default function SettingsPage() {
           <div>
             <Typography variant="body2" fontWeight={500}>Authentication</Typography>
             <Typography variant="caption" color="text.secondary">
-              Signed in via {user?.provider ? `${user.provider.charAt(0).toUpperCase()}${user.provider.slice(1)} OAuth` : 'OAuth'}
+              Signed in via {user?.provider ? `${user.provider.charAt(0).toUpperCase()}${user.provider.slice(1)} Auth` : 'Auth'}
             </Typography>
           </div>
           <Chip label="Active" size="small" color="success" />
         </div>
+        <div className="py-3 border-b border-slate-100">
+          <Typography variant="body2" fontWeight={500} sx={{ mb: 1 }}>
+            Linked identities
+          </Typography>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            {identities.map((identity) => (
+              <Chip
+                key={`${identity.provider}:${identity.provider_user_id}`}
+                label={`${formatProvider(identity.provider)}${identity.email ? ` • ${identity.email}` : ''}`}
+                size="small"
+                variant="outlined"
+              />
+            ))}
+          </Stack>
+        </div>
+        {hasPasswordIdentity && (
+          <div className="flex items-center justify-between py-3 border-b border-slate-100">
+            <div>
+              <Typography variant="body2" fontWeight={500}>Password authentication</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Reset the password identity linked to this account.
+              </Typography>
+            </div>
+            <Button size="small" variant="contained" onClick={() => setShowReset(true)}>
+              Reset Password
+            </Button>
+          </div>
+        )}
         <div className="flex items-center justify-between py-3">
           <div>
             <Typography variant="body2" fontWeight={500}>Sign out</Typography>
@@ -161,6 +218,33 @@ export default function SettingsPage() {
             {deleting ? 'Deleting...' : 'Delete My Account'}
           </Button>
         </DialogActions>
+      </Dialog>
+
+      <Dialog open={showReset} onClose={() => setShowReset(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogContent>
+          <Stack component="form" spacing={2} onSubmit={handleResetRequest} sx={{ pt: 1 }}>
+            <Alert severity="info">
+              We’ll send a password reset link to the email address on your password identity.
+            </Alert>
+            <TextField
+              label="Email"
+              type="email"
+              size="small"
+              fullWidth
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              autoComplete="email"
+              disabled={resetSending}
+            />
+            <DialogActions sx={{ px: 0, pb: 0 }}>
+              <Button onClick={() => setShowReset(false)} disabled={resetSending}>Cancel</Button>
+              <Button type="submit" variant="contained" disabled={resetSending}>
+                {resetSending ? 'Sending...' : 'Send reset link'}
+              </Button>
+            </DialogActions>
+          </Stack>
+        </DialogContent>
       </Dialog>
     </div>
   );
