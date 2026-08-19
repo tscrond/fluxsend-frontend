@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useSearchParams, Navigate } from 'react-router';
+import { useSearchParams, Navigate, useNavigate } from 'react-router';
 import {
   Alert,
   Box,
@@ -39,6 +39,7 @@ export default function LoginPage() {
   const { isAuthenticated, isLoading, authProviders, login, refresh } = useAuth();
   const { toast } = useToast();
   const [search] = useSearchParams();
+  const navigate = useNavigate();
 
   const [tab, setTab] = useState<'signin' | 'register'>('signin');
   const [email, setEmail] = useState('');
@@ -47,6 +48,7 @@ export default function LoginPage() {
   const [resetOpen, setResetOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetSubmitting, setResetSubmitting] = useState(false);
+  const [loginFailed, setLoginFailed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const verificationNotice = useMemo(() => search.get('verified') === '1', [search]);
@@ -66,6 +68,8 @@ export default function LoginPage() {
 
   async function onPasswordSignIn(event: React.FormEvent) {
     event.preventDefault();
+    setLoginFailed(false);
+
     const validationError = validateCredentials(email, password);
     if (validationError) {
       toast('error', validationError);
@@ -76,8 +80,9 @@ export default function LoginPage() {
     try {
       await passwordLogin(normalizeEmail(email), password);
       await refresh();
-      window.location.href = '/files';
+      navigate('/files', { replace: true });
     } catch (error) {
+      setLoginFailed(true);
       if (error instanceof ApiError) {
         toast('error', error.message || 'Login failed.');
       } else {
@@ -90,6 +95,8 @@ export default function LoginPage() {
 
   async function onPasswordRegister(event: React.FormEvent) {
     event.preventDefault();
+    setLoginFailed(false);
+
     const validationError = validateCredentials(email, password);
     if (validationError) {
       toast('error', validationError);
@@ -227,8 +234,12 @@ export default function LoginPage() {
               label="Email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (loginFailed) setLoginFailed(false);
+              }}
               autoComplete="email"
+              error={tab === 'signin' && loginFailed}
               disabled={submitting}
             />
             <TextField
@@ -236,8 +247,14 @@ export default function LoginPage() {
               label="Password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (loginFailed) setLoginFailed(false);
+              }}
               autoComplete={tab === 'signin' ? 'current-password' : 'new-password'}
+              error={tab === 'signin' && loginFailed}
+              helperText={tab === 'signin' && loginFailed ? 'login failed' : ' '}
+              FormHelperTextProps={{ sx: { color: '#f87171', minHeight: 20 } }}
               disabled={submitting}
             />
 

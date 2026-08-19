@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { ApiError, deleteAccount, requestPasswordReset } from '@/api';
+import { ApiError, deleteAccount, requestPasswordAttach, requestPasswordReset } from '@/api';
 import {
   Paper, Typography, Avatar, Button, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, Checkbox, FormControlLabel, Alert, Chip, CircularProgress, Stack,
@@ -11,6 +12,7 @@ import { User, Shield, Trash2, AlertTriangle, CreditCard } from 'lucide-react';
 export default function SettingsPage() {
   const { user, logout, identities, hasPasswordIdentity } = useAuth();
   const { toast } = useToast();
+  const [search] = useSearchParams();
   const [showDelete, setShowDelete] = useState(false);
   const [deleteData, setDeleteData] = useState(true);
   const [deleting, setDeleting] = useState(false);
@@ -18,6 +20,12 @@ export default function SettingsPage() {
   const [showReset, setShowReset] = useState(false);
   const [resetEmail, setResetEmail] = useState(user?.email ?? '');
   const [resetSending, setResetSending] = useState(false);
+  const [showSetup, setShowSetup] = useState(false);
+  const [setupPassword, setSetupPassword] = useState('');
+  const [setupPasswordConfirm, setSetupPasswordConfirm] = useState('');
+  const [setupSending, setSetupSending] = useState(false);
+
+  const passwordAttachedNotice = search.get('password_attached') === '1';
 
   const handleDelete = async () => {
     if (confirmText !== 'DELETE') return;
@@ -33,27 +41,61 @@ export default function SettingsPage() {
   };
 
   const handleResetRequest = async (event: React.FormEvent) => {
-  event.preventDefault();
-  const normalizedEmail = resetEmail.trim().toLowerCase();
-  if (!normalizedEmail) {
-    toast('error', 'Email is required');
-    return;
-  }
-
-  setResetSending(true);
-  try {
-    await requestPasswordReset(normalizedEmail);
-    toast('success', 'If that email has a password identity, a reset link will arrive shortly.');
-    setShowReset(false);
-  } catch (error) {
-    if (error instanceof ApiError) {
-      toast('error', error.message || 'Password reset request failed.');
-    } else {
-      toast('error', 'Password reset request failed.');
+    event.preventDefault();
+    const normalizedEmail = resetEmail.trim().toLowerCase();
+    if (!normalizedEmail) {
+      toast('error', 'Email is required');
+      return;
     }
-  } finally {
-    setResetSending(false);
-  }
+
+    setResetSending(true);
+    try {
+      await requestPasswordReset(normalizedEmail);
+      toast('success', 'If that email has a password identity, a reset link will arrive shortly.');
+      setShowReset(false);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast('error', error.message || 'Password reset request failed.');
+      } else {
+        toast('error', 'Password reset request failed.');
+      }
+    } finally {
+      setResetSending(false);
+    }
+  };
+
+  const handleSetupPasswordRequest = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const normalizedPassword = setupPassword.trim();
+    const normalizedPasswordConfirm = setupPasswordConfirm.trim();
+
+    if (normalizedPassword.length < 8) {
+      toast('error', 'Password must be at least 8 characters.');
+      return;
+    }
+
+    if (normalizedPassword !== normalizedPasswordConfirm) {
+      toast('error', 'Passwords do not match.');
+      return;
+    }
+
+    setSetupSending(true);
+    try {
+      await requestPasswordAttach(normalizedPassword);
+      setShowSetup(false);
+      setSetupPassword('');
+      setSetupPasswordConfirm('');
+      toast('success', 'Verification link sent. Check your email to finish linking password login.');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast('error', error.message || 'Password setup request failed.');
+      } else {
+        toast('error', 'Password setup request failed.');
+      }
+    } finally {
+      setSetupSending(false);
+    }
   };
 
   const formatProvider = (provider: string) => provider.charAt(0).toUpperCase() + provider.slice(1);
@@ -65,6 +107,11 @@ export default function SettingsPage() {
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           Manage your account and preferences
         </Typography>
+        {passwordAttachedNotice && (
+          <Alert severity="success" sx={{ mt: 2 }}>
+            Password login is now linked to your account.
+          </Alert>
+        )}
       </div>
 
       {/* Profile */}
@@ -158,6 +205,19 @@ export default function SettingsPage() {
             </Button>
           </div>
         )}
+        {!hasPasswordIdentity && (
+          <div className="flex items-center justify-between py-3 border-b border-slate-100">
+            <div>
+              <Typography variant="body2" fontWeight={500}>Add password login</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Set up password authentication for this account. We will verify via email.
+              </Typography>
+            </div>
+            <Button size="small" variant="contained" onClick={() => setShowSetup(true)}>
+              Set Up Password
+            </Button>
+          </div>
+        )}
         <div className="flex items-center justify-between py-3">
           <div>
             <Typography variant="body2" fontWeight={500}>Sign out</Typography>
@@ -241,6 +301,43 @@ export default function SettingsPage() {
               <Button onClick={() => setShowReset(false)} disabled={resetSending}>Cancel</Button>
               <Button type="submit" variant="contained" disabled={resetSending}>
                 {resetSending ? 'Sending...' : 'Send reset link'}
+              </Button>
+            </DialogActions>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showSetup} onClose={() => setShowSetup(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Set Up Password Login</DialogTitle>
+        <DialogContent>
+          <Stack component="form" spacing={2} onSubmit={handleSetupPasswordRequest} sx={{ pt: 1 }}>
+            <Alert severity="info">
+              Choose a password and confirm using the verification email sent to your account.
+            </Alert>
+            <TextField
+              label="New password"
+              type="password"
+              size="small"
+              fullWidth
+              value={setupPassword}
+              onChange={(e) => setSetupPassword(e.target.value)}
+              autoComplete="new-password"
+              disabled={setupSending}
+            />
+            <TextField
+              label="Confirm password"
+              type="password"
+              size="small"
+              fullWidth
+              value={setupPasswordConfirm}
+              onChange={(e) => setSetupPasswordConfirm(e.target.value)}
+              autoComplete="new-password"
+              disabled={setupSending}
+            />
+            <DialogActions sx={{ px: 0, pb: 0 }}>
+              <Button onClick={() => setShowSetup(false)} disabled={setupSending}>Cancel</Button>
+              <Button type="submit" variant="contained" disabled={setupSending}>
+                {setupSending ? 'Sending...' : 'Send verification email'}
               </Button>
             </DialogActions>
           </Stack>

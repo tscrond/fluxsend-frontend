@@ -65,13 +65,15 @@ async function request<T>(path: string, options: RequestInit & { rawResponse?: b
     },
   });
 
-  if (res.status === 401) {
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
-  }
-
   if (!res.ok) {
     const body = await res.text();
+    if (res.status === 401) {
+      const onLoginScreen = window.location.pathname.startsWith('/login');
+      const isPasswordLoginRequest = path === '/auth/password/login';
+      if (!onLoginScreen && !isPasswordLoginRequest) {
+        window.location.href = '/login';
+      }
+    }
     throw new ApiError(res.status, body, getApiErrorMessage(res.status, body));
   }
 
@@ -188,6 +190,30 @@ export function verifyPasswordReset(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, code, new_password: newPassword ?? '' }),
+  });
+}
+
+export interface PasswordAttachRequestResponse {
+  challenge_id: string;
+}
+
+export function requestPasswordAttach(password: string): Promise<PasswordAttachRequestResponse> {
+  return request<PasswordAttachRequestResponse>('/auth/password/attach', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+}
+
+export interface PasswordAttachVerifyResponse {
+  attached: boolean;
+}
+
+export function verifyPasswordAttach(challengeId: string, email: string, code: string): Promise<PasswordAttachVerifyResponse> {
+  return request<PasswordAttachVerifyResponse>(`/auth/password/attach/verify/${encodeURIComponent(challengeId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code }),
   });
 }
 
