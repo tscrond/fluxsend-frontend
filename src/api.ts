@@ -65,13 +65,15 @@ async function request<T>(path: string, options: RequestInit & { rawResponse?: b
     },
   });
 
-  if (res.status === 401) {
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
-  }
-
   if (!res.ok) {
     const body = await res.text();
+    if (res.status === 401) {
+      const onLoginScreen = window.location.pathname.startsWith('/login');
+      const isPasswordLoginRequest = path === '/auth/password/login';
+      if (!onLoginScreen && !isPasswordLoginRequest) {
+        window.location.href = '/login';
+      }
+    }
     throw new ApiError(res.status, body, getApiErrorMessage(res.status, body));
   }
 
@@ -133,6 +135,88 @@ export function logout(): Promise<void> {
   return request<void>('/auth/logout', { method: 'POST' });
 }
 
+export interface PasswordRegisterResponse {
+  challenge_id: string;
+}
+
+export function passwordRegister(email: string, password: string): Promise<PasswordRegisterResponse> {
+  return request<PasswordRegisterResponse>('/auth/password/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export function passwordVerifyNewUser(challengeId: string, email: string, code: string): Promise<void> {
+  return request<void>(`/auth/password/new/verify/${encodeURIComponent(challengeId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code }),
+  });
+}
+
+export function passwordLogin(email: string, password: string): Promise<{ user_id: string }> {
+  return request<{ user_id: string }>('/auth/password/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export interface PasswordResetRequestResponse {
+  sent: boolean;
+}
+
+export function requestPasswordReset(email: string): Promise<PasswordResetRequestResponse> {
+  return request<PasswordResetRequestResponse>('/auth/password/reset', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export interface PasswordResetVerifyResponse {
+  verified?: boolean;
+  password_reset?: boolean;
+}
+
+export function verifyPasswordReset(
+  challengeId: string,
+  email: string,
+  code: string,
+  newPassword?: string,
+): Promise<PasswordResetVerifyResponse> {
+  return request<PasswordResetVerifyResponse>(`/auth/password/reset/verify/${encodeURIComponent(challengeId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code, new_password: newPassword ?? '' }),
+  });
+}
+
+export interface PasswordAttachRequestResponse {
+  challenge_id: string;
+}
+
+export function requestPasswordAttach(password: string): Promise<PasswordAttachRequestResponse> {
+  return request<PasswordAttachRequestResponse>('/auth/password/attach', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+}
+
+export interface PasswordAttachVerifyResponse {
+  attached: boolean;
+}
+
+export function verifyPasswordAttach(challengeId: string, email: string, code: string): Promise<PasswordAttachVerifyResponse> {
+  return request<PasswordAttachVerifyResponse>(`/auth/password/attach/verify/${encodeURIComponent(challengeId)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, code }),
+  });
+}
+
 // ─── User ───────────────────────────────────────────────────────────────────
 
 export interface UserData {
@@ -166,6 +250,27 @@ export interface UserDataResponse {
 
 export function getUserData(): Promise<UserDataResponse> {
   return request<UserDataResponse>('/user/data');
+}
+
+export interface UserIdentity {
+  id: string;
+  user_id: string;
+  provider: string;
+  provider_user_id: string;
+  email: string;
+  email_verified: boolean;
+  name: string;
+  avatar_url: string;
+  created_at: string;
+}
+
+export interface UserIdentitiesResponse {
+  identities: UserIdentity[];
+  has_password_identity: boolean;
+}
+
+export function getUserIdentities(): Promise<UserIdentitiesResponse> {
+  return request<UserIdentitiesResponse>('/user/identities');
 }
 
 export interface DailyActivity {
