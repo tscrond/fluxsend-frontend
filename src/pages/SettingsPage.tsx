@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { ApiError, deleteAccount, requestPasswordAttach, requestPasswordReset } from '@/api';
+import { ApiError, deleteAccount, requestPasswordAttach, requestSelfPasswordReset } from '@/api';
 import {
   Paper, Typography, Avatar, Button, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, Checkbox, FormControlLabel, Alert, Chip, CircularProgress, Stack,
@@ -50,8 +50,8 @@ export default function SettingsPage() {
 
     setResetSending(true);
     try {
-      await requestPasswordReset(normalizedEmail);
-      toast('success', 'If that email has a password identity, a reset link will arrive shortly.');
+      await requestSelfPasswordReset(normalizedEmail);
+      toast('success', 'If this account can reset its password, a reset link will arrive shortly.');
       setShowReset(false);
     } catch (error) {
       if (error instanceof ApiError) {
@@ -285,10 +285,10 @@ export default function SettingsPage() {
         <DialogContent>
           <Stack component="form" spacing={2} onSubmit={handleResetRequest} sx={{ pt: 1 }}>
             <Alert severity="info">
-              We’ll send a password reset link to the email address on your password identity.
+              This resets the password identity linked to your current account. The email below is used only as the delivery destination for the reset link.
             </Alert>
             <TextField
-              label="Email"
+              label="Delivery email"
               type="email"
               size="small"
               fullWidth

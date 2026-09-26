@@ -175,6 +175,14 @@ export function requestPasswordReset(email: string): Promise<PasswordResetReques
   });
 }
 
+export function requestSelfPasswordReset(email: string): Promise<PasswordResetRequestResponse> {
+  return request<PasswordResetRequestResponse>('/auth/password/reset/self', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+}
+
 export interface PasswordResetVerifyResponse {
   verified?: boolean;
   password_reset?: boolean;

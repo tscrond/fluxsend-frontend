@@ -1,3 +1,4 @@
+AGENTS.md
 # Logs
 logs
 *.log
@@ -22,3 +23,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+AGENTS.md
+*.code-workspace
