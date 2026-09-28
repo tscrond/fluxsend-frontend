@@ -806,12 +806,14 @@ export function markReceivedSeen(sharingToken: string): Promise<unknown> {
 
 // ─── Notes ──────────────────────────────────────────────────────────────────
 
-export function getNote(checksum: string): Promise<{ content: string }> {
-  return request<{ content: string }>(`/files/${encodeURIComponent(checksum)}/note`);
+export function getNote(checksum: string, fileName: string): Promise<{ content: string }> {
+  return request<{ content: string }>(
+    `/files/${encodeURIComponent(checksum)}/note?file_name=${encodeURIComponent(fileName)}`,
+  );
 }
 
-export function saveNote(checksum: string, content: string): Promise<{ note: string }> {
-  return request<{ note: string }>(`/files/${encodeURIComponent(checksum)}/note`, {
+export function saveNote(checksum: string, fileName: string, content: string): Promise<{ note: string }> {
+  return request<{ note: string }>(`/files/${encodeURIComponent(checksum)}/note?file_name=${encodeURIComponent(fileName)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ content }),
