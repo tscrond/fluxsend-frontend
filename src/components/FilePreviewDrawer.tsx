@@ -118,7 +118,7 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
 
       const [previewResult, noteResult] = await Promise.allSettled([
         getPrivateDownloadToken(currentFile.name),
-        getNote(currentFile.md5_checksum),
+        getNote(currentFile.md5_checksum, currentFile.name),
       ]);
 
       if (!active) return;
@@ -152,7 +152,7 @@ export default function FilePreviewDrawer({ open, file, onClose }: Props) {
 
     setNoteSaving(true);
     try {
-      await saveNote(file.md5_checksum, note.slice(0, MAX_NOTE_LENGTH));
+      await saveNote(file.md5_checksum, file.name, note.slice(0, MAX_NOTE_LENGTH));
       toast('success', 'Note saved');
     } catch {
       toast('error', 'Failed to save note');

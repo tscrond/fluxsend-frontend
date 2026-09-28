@@ -21,7 +21,7 @@ export default function NoteModal({ file, onClose }: Props) {
   useEffect(() => {
     async function load() {
       try {
-        const res = await getNote(file.md5);
+        const res = await getNote(file.md5, file.name);
         setContent(res.content ?? '');
       } catch {
         setContent('');
@@ -30,12 +30,12 @@ export default function NoteModal({ file, onClose }: Props) {
       }
     }
     load();
-  }, [file.md5]);
+  }, [file.md5, file.name]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveNote(file.md5, content);
+      await saveNote(file.md5, file.name, content);
       toast('success', 'Note saved');
       onClose();
     } catch {
