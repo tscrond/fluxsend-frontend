@@ -1,8 +1,18 @@
 FROM node:22-alpine AS build
 WORKDIR /app
+
+# Build-time configuration — Vite inlines these values into the bundle.
+#   docker build --build-arg VITE_LANDING_ENABLED=false -t fluxsend-frontend:dev .
+ARG VITE_API_BASE=""
+ARG VITE_LANDING_ENABLED="false"
+
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+
+ENV VITE_API_BASE=$VITE_API_BASE
+ENV VITE_LANDING_ENABLED=$VITE_LANDING_ENABLED
+
 RUN npm run build
 
 FROM nginx:alpine

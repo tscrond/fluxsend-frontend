@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d1117" />
+    <meta name="description" content="FluxSend Privacy Policy — how we collect, use, share, and protect personal data." />
+    <meta name="robots" content="index, follow" />
+    <title>Privacy Policy — FluxSend</title>
+    <link rel="icon" type="image/png" href="/fs.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Datatype:wght@100..900&display=swap" rel="stylesheet" />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme-mode');
+          document.documentElement.setAttribute('data-theme', stored === 'light' || stored === 'dark' ? stored : 'dark');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
+    <style>
+      :root {
+        --accent: #6366f1;
+        --accent-light: #818cf8;
+        --accent-dark: #4f46e5;
+        --warn: #d29922;
+        --radius: 10px;
+      }
+      html[data-theme='dark'] {
+        --bg: #0d1117;
+        --bg-trans: rgba(13, 17, 23, 0.86);
+        --surface: #161b22;
+        --surface-2: #0b1220;
+        --border: #30363d;
+        --border-muted: #21262d;
+        --text: #e6edf3;
+        --text-2: #7d8590;
+        --text-3: #484f58;
+        --hover: rgba(177, 186, 196, 0.07);
+        --accent-soft: rgba(99, 102, 241, 0.14);
+      }
+      html[data-theme='light'] {
+        --bg: #f6f8fa;
+        --bg-trans: rgba(246, 248, 250, 0.86);
+        --surface: #ffffff;
+        --surface-2: #f6f8fa;
+        --border: #d0d7de;
+        --border-muted: #eaecef;
+        --text: #1f2328;
+        --text-2: #57606a;
+        --text-3: #8c959f;
+        --hover: rgba(31, 35, 40, 0.05);
+        --accent-soft: rgba(99, 102, 241, 0.08);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+        scroll-padding-top: 84px;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Datatype', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        font-weight: 500;
+        font-size: 16px;
+        line-height: 1.7;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      h1,
+      h2,
+      h3 {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+      }
+      .skip {
+        position: absolute;
+        left: -9999px;
+      }
+      .skip:focus {
+        left: 16px;
+        top: 16px;
+        z-index: 100;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 8px 14px;
+        border-radius: 8px;
+        color: var(--text);
+      }
+
+      /* Nav */
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-trans);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      .nav-inner {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 24px;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        font-size: 1.05rem;
+        white-space: nowrap;
+      }
+      .brand:hover {
+        text-decoration: none;
+      }
+      .brand img {
+        height: 26px;
+        width: auto;
+        opacity: 0.9;
+        display: block;
+      }
+      .brand .accent {
+        color: var(--accent);
+      }
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .nav-links a,
+      .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        color: var(--text-2);
+        font-weight: 700;
+        font-size: 0.82rem;
+      }
+      .nav-links a:hover,
+      .theme-toggle:hover {
+        background: var(--hover);
+        color: var(--text);
+        text-decoration: none;
+      }
+      .nav-links a.active {
+        color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .theme-toggle {
+        background: transparent;
+        cursor: pointer;
+        min-width: 38px;
+        justify-content: center;
+      }
+      .theme-toggle svg {
+        width: 16px;
+        height: 16px;
+        display: block;
+      }
+      html[data-theme='dark'] .icon-moon {
+        display: none;
+      }
+      html[data-theme='light'] .icon-sun {
+        display: none;
+      }
+
+      /* Layout */
+      .layout {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: flex;
+        gap: 56px;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 44px 24px 96px;
+      }
+      .toc {
+        display: none;
+      }
+      article {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 840px;
+      }
+
+      /* Hero */
+      .eyebrow {
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 0.72rem;
+        font-weight: 700;
+        margin: 0 0 10px;
+      }
+      article h1 {
+        font-size: clamp(1.9rem, 4vw, 2.6rem);
+        margin: 0 0 14px;
+      }
+      .meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.82rem;
+        color: var(--text-2);
+        font-weight: 700;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 5px 12px;
+        margin: 0 0 22px;
+      }
+      .lede {
+        font-size: 1.03rem;
+        margin: 0;
+        line-height: 1.75;
+      }
+      .crosslink {
+        font-size: 0.9rem;
+        color: var(--text-2);
+        margin-top: 16px;
+      }
+      .crosslink a {
+        font-weight: 700;
+      }
+
+      /* Doc */
+      article h2 {
+        font-size: 1.32rem;
+        margin: 2.6rem 0 0.9rem;
+        padding-top: 1.6rem;
+        border-top: 1px solid var(--border-muted);
+      }
+      article h2:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+        margin-top: 2.2rem;
+      }
+      article h3 {
+        font-size: 1.02rem;
+        margin: 1.9rem 0 0.6rem;
+      }
+      p {
+        margin: 0.85rem 0;
+      }
+      ul,
+      ol {
+        margin: 0.85rem 0;
+        padding-left: 1.3rem;
+      }
+      li {
+        margin: 0.4rem 0;
+      }
+      li::marker {
+        color: var(--accent);
+      }
+      strong {
+        font-weight: 800;
+      }
+      code {
+        font-family: 'Datatype', ui-monospace, SFMono-Regular, Consolas, monospace;
+        background: var(--surface);
+        border: 1px solid var(--border-muted);
+        border-radius: 5px;
+        padding: 1px 6px;
+        font-size: 0.86em;
+      }
+      .muted {
+        color: var(--text-2);
+        font-size: 0.92rem;
+      }
+      .ph {
+        color: var(--warn);
+        border-bottom: 1px dashed var(--warn);
+        font-weight: 700;
+      }
+      .note {
+        border-left: 3px solid var(--accent);
+        background: var(--accent-soft);
+        border-radius: 0 10px 10px 0;
+        padding: 14px 18px;
+        margin: 20px 0;
+      }
+      .note p {
+        margin: 0.35rem 0;
+      }
+      .note .note-title {
+        display: block;
+        font-weight: 800;
+        margin-bottom: 2px;
+      }
+
+      /* Tables */
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin: 18px 0;
+        background: var(--surface);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 520px;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        background: var(--surface-2);
+        color: var(--text-2);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        font-weight: 700;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      td {
+        padding: 12px 14px;
+        border-top: 1px solid var(--border-muted);
+        vertical-align: top;
+        line-height: 1.6;
+      }
+      tbody tr:first-child td {
+        border-top: 0;
+      }
+
+      /* Footer */
+      footer {
+        border-top: 1px solid var(--border);
+      }
+      .footer-inner {
+        max-width: 1180px;
+        margin: 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 26px 24px;
+      }
+      .footer-inner .brand {
+        font-size: 0.95rem;
+      }
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        font-size: 0.82rem;
+      }
+      .footer-links a {
+        color: var(--text-2);
+        font-weight: 700;
+      }
+      .footer-links a:hover {
+        color: var(--accent);
+      }
+      .copyright {
+        font-size: 0.78rem;
+        color: var(--text-3);
+      }
+
+      @media (min-width: 1080px) {
+        .toc {
+          display: block;
+          position: sticky;
+          top: 84px;
+          flex: 0 0 210px;
+          font-size: 0.85rem;
+        }
+        .toc p {
+          font-size: 0.68rem;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: var(--text-3);
+          font-weight: 700;
+          margin: 0 0 10px;
+        }
+        .toc a {
+          display: block;
+          color: var(--text-2);
+          font-weight: 600;
+          padding: 4px 0 4px 12px;
+          margin-left: -12px;
+          border-left: 2px solid transparent;
+        }
+        .toc a:hover {
+          color: var(--accent);
+          text-decoration: none;
+          border-left-color: var(--accent);
+        }
+      }
+      @media (max-width: 640px) {
+        .layout {
+          padding: 28px 16px 72px;
+        }
+        .nav-inner {
+          padding: 10px 16px;
+          gap: 10px;
+        }
+        .brand {
+          font-size: 0.95rem;
+        }
+        .brand img {
+          height: 22px;
+        }
+        .nav-links a,
+        .theme-toggle {
+          padding: 6px 9px;
+          font-size: 0.78rem;
+        }
+        table {
+          min-width: 480px;
+        }
+        .footer-inner {
+          padding: 22px 16px;
+        }
+      }
+      @media print {
+        .nav,
+        .toc,
+        .theme-toggle {
+          display: none !important;
+        }
+        body {
+          background: #fff;
+          color: #000;
+          font-size: 12pt;
+        }
+        a {
+          color: #000;
+          text-decoration: underline;
+        }
+        .meta {
+          background: none;
+          border-color: #999;
+        }
+        .table-wrap {
+          break-inside: avoid;
+        }
+        article h2 {
+          break-after: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+
+    <header class="nav">
+      <div class="nav-inner">
+        <a class="brand" href="/">
+          <img src="/fs.png" alt="" onerror="this.style.display='none'" />
+          <span>FLUX<span class="accent">SEND</span></span>
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="privacy-policy.html" class="active" aria-current="page">Privacy</a>
+          <a href="terms-of-service.html">Terms</a>
+          <a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a>
+          <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle color theme">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="toc" aria-label="On this page">
+        <p>On this page</p>
+        <a href="#who-we-are">1. Who we are</a>
+        <a href="#scope">2. Scope</a>
+        <a href="#data-we-collect">3. What we collect</a>
+        <a href="#why-we-use">4. Why we use your data</a>
+        <a href="#sharing">5. Sharing &amp; sub-processors</a>
+        <a href="#retention">6. How long we keep data</a>
+        <a href="#rights">7. Your rights</a>
+        <a href="#account-deletion">8. Account deletion</a>
+        <a href="#children">9. Children's privacy</a>
+        <a href="#cookies">10. Cookies &amp; local storage</a>
+        <a href="#security">11. Security</a>
+        <a href="#changes">12. Changes to this policy</a>
+        <a href="#contact">13. Contact</a>
+      </aside>
+
+      <article id="content">
+        <p class="eyebrow">Legal</p>
+        <h1>Privacy Policy</h1>
+        <p class="meta">Last updated: 4 October 2026</p>
+
+        <p class="lede">
+          FluxSend is a self-hostable file storage, sharing, and transfer platform. This Privacy Policy explains what
+          personal data we collect when you use the Service, why we collect it, how we share and protect it, and the
+          rights you have over it.
+        </p>
+        <p class="crosslink">
+          Please read it together with our <a href="terms-of-service.html">Terms of Service</a>. By creating an
+          account or using the Service, you acknowledge this policy.
+        </p>
+
+        <h2 id="who-we-are">1. Who we are</h2>
+        <p>
+          FluxSend is a self-hostable file storage, sharing, and transfer platform. For the FluxSend instance we operate,
+          the entity below is the <strong>data controller</strong> for personal data processed through the Service, within
+          the meaning of the EU General Data Protection Regulation (GDPR).
+        </p>
+        <!-- TODO: replace the bracketed values in this table with your registered business details before publishing. -->
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr>
+                <th scope="row">Operator</th>
+                <td>Orion Software Tomasz Skrond</td>
+              </tr>
+              <tr>
+                <th scope="row">Country</th>
+                <td>Poland</td>
+              </tr>
+              <tr>
+                <th scope="row">NIP</th>
+                <td><span class="ph">5482778053</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Registered address</th>
+                <td><span class="ph">Józefa Madzi 3 43-438 Brenna</span></td>
+              </tr>
+              <tr>
+                <th scope="row">Contact email</th>
+                <td><a href="mailto:contact@fluxsend.win">contact@fluxsend.app</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          For privacy questions, data subject requests, or complaints, contact us at
+          <a href="mailto:contact@fluxsend.app">contact@fluxsend.app</a>.
+        </p>
+        <div class="note">
+          <span class="note-title">Using a self-hosted instance?</span>
+          <p>
+            FluxSend can be self-hosted. If you use an instance operated by someone other than us — for example, an
+            instance run by your employer, another administrator, or yourself — then <strong>that operator is the data
+            controller</strong> for the data in that instance. This policy describes how the FluxSend software and a
+            typical deployment handle personal data, but it is the operator of your instance who is responsible for it.
+            To exercise your rights on a self-hosted instance, contact that instance's administrator.
+          </p>
+        </div>
+
+        <h2 id="scope">2. Scope</h2>
+        <p>This policy applies to personal data processed when you:</p>
+        <ul>
+          <li>use the FluxSend web application;</li>
+          <li>use the FluxSend API, including requests made with an API key or the CLI;</li>
+          <li>receive emails or other communications we send you (for example account verification, password reset, or
+            share notifications).</li>
+        </ul>
+        <p>
+          It does not apply to third-party websites or services we link to, or to services you connect to a self-hosted
+          deployment. Those are governed by their own privacy notices.
+        </p>
+
+        <h2 id="data-we-collect">3. What we collect</h2>
+        <p>We collect only the personal data we need to provide the Service.</p>
+
+        <h3>3.1 Account and authentication data</h3>
+        <p>When you create an account or sign in, we process:</p>
+        <ul>
+          <li><strong>Email address</strong> — used for authentication, transactional email, account recovery, and to
+            deliver files that other users share with you.</li>
+          <li><strong>Display name</strong> — shown in the app next to your shares and workspace membership.</li>
+          <li><strong>Password</strong> — stored only as a cryptographic hash (Argon2id). We never store or log your
+            plain-text password. Password auth is optional and may be disabled on some instances.</li>
+          <li><strong>Linked sign-in identities</strong> — if you sign in with Google or GitHub, the provider name,
+            provider user ID, email address, display name, avatar URL, and the scopes you granted. We use these only to
+            authenticate you.</li>
+          <li><strong>Email verification status</strong> — whether your email address has been confirmed.</li>
+          <li><strong>One-time verification codes</strong> — for registration, password reset, and similar flows. Codes
+            are stored only as a hash, expire quickly, are limited in the number of attempts, and are deleted once used.</li>
+          <li><strong>Account metadata</strong> — such as your plan tier and account creation date.</li>
+        </ul>
+
+        <h3>3.2 Session and technical data</h3>
+        <p>When you sign in and use the Service, we process:</p>
+        <ul>
+          <li><strong>Session data</strong> — a session identifier and an authentication cookie, the session expiry, and
+            (for OAuth-linked sessions) the provider access token used to keep you signed in.</li>
+          <li><strong>IP address and user agent</strong> — recorded with authentication challenges and rate-limit records
+            to protect sessions and prevent brute-force and abuse.</li>
+          <li><strong>Request logs</strong> — basic technical records used to operate and secure the Service.</li>
+        </ul>
+
+        <h3>3.3 Files, shares, and workspace data</h3>
+        <p>To store, organise, preview, and share files, we process:</p>
+        <ul>
+          <li><strong>File and folder metadata</strong> — file name, type, size, checksum, folder structure, and the
+            storage bucket or object key the file lives in.</li>
+          <li><strong>File notes</strong> — any note you attach to a file.</li>
+          <li><strong>Share records</strong> — who you shared a file with, the sharing token, and its creation and expiry
+            times, plus quick-share links and their download activity counters.</li>
+          <li><strong>Received-files state</strong> — which files have been shared with you and whether you have read them.</li>
+          <li><strong>Workspace data</strong> — workspace name, slug, members, roles, and pending invitations.</li>
+          <li><strong>API key data</strong> — the key name, description, a hash of the key, its scopes, status, and last
+            used time. The plain-text key is shown once and never stored.</li>
+        </ul>
+        <div class="note">
+          <span class="note-title">Your file contents</span>
+          <p>
+            The contents of your files are stored in the object storage backend configured for your instance (see section
+            5). Files are <strong>private by default</strong>: they are only accessible to you, and to recipients you
+            explicitly share them with, or through download links you create.
+          </p>
+        </div>
+
+        <h3>3.4 Usage and quota data</h3>
+        <p>
+          We keep counters and aggregates that make the Service work — such as storage used, number of files, daily upload
+          and share counts, your plan tier, and the analytics shown in the app. These are used to enforce plan limits and
+          to give you visibility into your own usage.
+        </p>
+
+        <h3>3.5 Communications</h3>
+        <p>
+          If you contact us, we process your email address and the content of your message in order to respond. We also
+          keep delivery and notification metadata for the transactional emails we send.
+        </p>
+        <div class="note">
+          <span class="note-title">No payment data</span>
+          <p>
+            FluxSend does not include a payment processor, and we do not collect or store payment card details. Plan
+            tiers on an instance are assigned by that instance's administrator.
+          </p>
+        </div>
+
+        <h2 id="why-we-use">4. Why we use your data, and our legal bases</h2>
+        <p>Under the GDPR (Article 6), we rely on the following legal bases:</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Purpose</th>
+                <th scope="col">Data used</th>
+                <th scope="col">Legal basis</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Create and manage your account, authenticate you, and let you upload, organise, preview, and share files</td>
+                <td>Account, session, file, share, and workspace data</td>
+                <td>Performance of a contract — Art. 6(1)(b)</td>
+              </tr>
+              <tr>
+                <td>Send transactional emails (account verification, password reset, share notifications)</td>
+                <td>Email address and verification data</td>
+                <td>Performance of a contract — Art. 6(1)(b)</td>
+              </tr>
+              <tr>
+                <td>Enforce plan limits and quotas</td>
+                <td>Usage and quota data</td>
+                <td>Performance of a contract — Art. 6(1)(b)</td>
+              </tr>
+              <tr>
+                <td>Keep the Service secure — detect fraud, prevent brute-force and abuse, and protect sessions</td>
+                <td>IP address, user agent, session and rate-limit records</td>
+                <td>Legitimate interests — Art. 6(1)(f)</td>
+              </tr>
+              <tr>
+                <td>Operate, monitor, and improve the Service — diagnose errors and maintain request logs</td>
+                <td>Request logs, error data, and usage data</td>
+                <td>Legitimate interests — Art. 6(1)(f)</td>
+              </tr>
+              <tr>
+                <td>Comply with legal obligations and respond to lawful requests</td>
+                <td>Data required by the relevant obligation</td>
+                <td>Legal obligation — Art. 6(1)(c)</td>
+              </tr>
+              <tr>
+                <td>Establish, exercise, or defend legal claims</td>
+                <td>Records relevant to the claim</td>
+                <td>Legitimate interests — Art. 6(1)(f)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          We do not use your personal data for advertising or profiling, we do not sell it, and we do not make decisions
+          about you by automated means that produce legal or similarly significant effects.
+        </p>
+
+        <h2 id="sharing">5. Sharing and sub-processors</h2>
+        <p>
+          We do not sell your data. We share it only with the service providers we need to run the Service, and only to
+          the extent necessary. Each provider listed below acts as a data processor under a contract with us.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Provider</th>
+                <th scope="col">Purpose</th>
+                <th scope="col">Data involved</th>
+                <th scope="col">Location</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Google LLC</td>
+                <td>Sign in with Google (OAuth); Google Cloud Storage when configured as the storage backend</td>
+                <td>Name, email, avatar, provider user ID; stored files and metadata</td>
+                <td>USA / configured region</td>
+              </tr>
+              <tr>
+                <td>GitHub, Inc.</td>
+                <td>Sign in with GitHub (OAuth)</td>
+                <td>Name, email, avatar, provider user ID</td>
+                <td>USA</td>
+              </tr>
+              <tr>
+                <td>Amazon Web Services (S3, SES, CloudFront)</td>
+                <td>Object storage, transactional email, and CDN delivery when configured</td>
+                <td>File contents and metadata; recipient email and message content; download requests</td>
+                <td>Configured AWS region</td>
+              </tr>
+              <tr>
+                <td>Self-hosted MinIO</td>
+                <td>Object storage when configured</td>
+                <td>File contents and metadata</td>
+                <td>Operator's own infrastructure</td>
+              </tr>
+              <tr>
+                <td>Managed PostgreSQL provider</td>
+                <td>Application database hosting</td>
+                <td>Account, file metadata, share, workspace, and API-key records</td>
+                <td>Configured region</td>
+              </tr>
+              <tr>
+                <td>SMTP / email provider</td>
+                <td>Delivery of transactional emails</td>
+                <td>Recipient email address and email content</td>
+                <td>Provider-dependent</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted">
+          The exact list of providers depends on how your instance is configured. Because FluxSend is self-hostable, a
+          self-hosted operator may use entirely different providers, and it is that operator's responsibility to disclose
+          them to you.
+        </p>
+        <h3>International transfers</h3>
+        <p>
+          Some of the providers above are based in the United States. Where personal data is transferred from the European
+          Economic Area (EEA) to those providers, the transfer is protected by appropriate safeguards, such as the EU
+          Standard Contractual Clauses (Commission Implementing Decision (EU) 2021/914) or an EU adequacy decision. You
+          can request a copy of the applicable safeguards by contacting us at
+          <a href="mailto:contact@fluxsend.app">contact@fluxsend.app</a>.
+        </p>
+
+        <h2 id="retention">6. How long we keep your data</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Data category</th>
+                <th scope="col">Retention period</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Account data (email, display name, password hash, linked identities)</td>
+                <td>For the lifetime of your account; deleted within 30 days of account closure</td>
+              </tr>
+              <tr>
+                <td>Session records and authentication cookie</td>
+                <td>Until the session expires or you sign out</td>
+              </tr>
+              <tr>
+                <td>One-time verification codes</td>
+                <td>Minutes; deleted immediately once used or expired</td>
+              </tr>
+              <tr>
+                <td>File metadata and stored files</td>
+                <td>Until you delete them or close your account; deleted within 30 days of account closure</td>
+              </tr>
+              <tr>
+                <td>Share records and quick-share links</td>
+                <td>Until they expire or are revoked, or until your account is closed</td>
+              </tr>
+              <tr>
+                <td>Workspace data</td>
+                <td>For the lifetime of the workspace; deleted with the workspace or account</td>
+              </tr>
+              <tr>
+                <td>API keys</td>
+                <td>Until revoked or deleted, or until your account is closed</td>
+              </tr>
+              <tr>
+                <td>Application and request logs</td>
+                <td>A short period (typically up to 30 days), unless retained longer for a security investigation</td>
+              </tr>
+              <tr>
+                <td>Backups</td>
+                <td>Up to the retention window of your configured storage or database provider</td>
+              </tr>
+              <tr>
+                <td>Records we must keep by law</td>
+                <td>For as long as the applicable law requires</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>After the applicable retention period, data is deleted or irreversibly anonymised.</p>
+
+        <h2 id="rights">7. Your rights under the GDPR</h2>
+        <p>If you are in the EEA, the United Kingdom, or Switzerland, you have the following rights:</p>
+        <ul>
+          <li><strong>Access (Art. 15)</strong> — request a copy of the personal data we hold about you.</li>
+          <li><strong>Rectification (Art. 16)</strong> — ask us to correct inaccurate data.</li>
+          <li><strong>Erasure (Art. 17)</strong> — ask us to delete your personal data. See section 8 for how to delete
+            your account.</li>
+          <li><strong>Restriction (Art. 18)</strong> — ask us to pause processing while a dispute is resolved.</li>
+          <li><strong>Data portability (Art. 20)</strong> — receive your data in a machine-readable format.</li>
+          <li><strong>Objection (Art. 21)</strong> — object to processing based on our legitimate interests.</li>
+          <li><strong>Withdraw consent</strong> — where we rely on consent, you may withdraw it at any time without
+            affecting processing carried out before the withdrawal.</li>
+        </ul>
+        <p>
+          To exercise any of these rights, email us at <a href="mailto:contact@fluxsend.win">contact@fluxsend.win</a> with
+          the subject line <strong>"Data Subject Request"</strong>. We will respond within 30 days and may ask you to
+          verify your identity first. If you use a self-hosted instance, send your request to that instance's operator.
+        </p>
+        <p>If you are not satisfied with our response, you may lodge a complaint with the Polish supervisory authority:</p>
+        <ul>
+          <li>Prezes Urzędu Ochrony Danych Osobowych (UODO), ul. Stawki 2, 00-193 Warsaw, Poland</li>
+          <li><a href="https://uodo.gov.pl" target="_blank" rel="noreferrer">uodo.gov.pl</a></li>
+        </ul>
+
+        <h2 id="account-deletion">8. Account deletion</h2>
+        <p>
+          You can delete your account at any time from the <strong>Settings</strong> page in the app. When you do, you can
+          choose whether to also delete the files you have uploaded. Deleting your account removes your account details,
+          linked identities, password credentials, active sessions, API keys, and share records.
+        </p>
+        <p>
+          Deleting your account does not delete files that other users have shared with you — those remain with the sender.
+          It also does not delete data that we are required to retain for legal, tax, or security reasons, and we may keep
+          limited records where necessary to resolve disputes or prevent abuse.
+        </p>
+        <p>
+          If you cannot access Settings, or you use a self-hosted instance, contact the instance administrator to request
+          deletion. On the instance we operate, you can also email
+          <a href="mailto:contact@fluxsend.win">contact@fluxsend.win</a>.
+        </p>
+
+        <h2 id="children">9. Children's privacy</h2>
+        <p>
+          The Service is not directed to children. You must be at least <strong>16 years old</strong> to create an account,
+          which reflects the age of digital consent in Poland under the GDPR (Article 8). We do not knowingly collect
+          personal data from anyone below that age. If you believe a child has created an account without appropriate
+          consent, contact us at <a href="mailto:contact@fluxsend.win">contact@fluxsend.win</a> and we will delete the
+          account promptly.
+        </p>
+
+        <h2 id="cookies">10. Cookies and local storage</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Technology</th>
+                <th scope="col">Where used</th>
+                <th scope="col">Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Session cookie</td>
+                <td>Web app</td>
+                <td>Keeps you signed in; set by FluxSend, expiring when your session ends</td>
+              </tr>
+              <tr>
+                <td>Local storage (<code>theme-mode</code>)</td>
+                <td>Web app</td>
+                <td>Remembers your light or dark theme choice on your device</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          We do not use advertising cookies, analytics cookies, or cross-site tracking technologies, so a cookie consent
+          banner is not required for the Service. Necessary cookies are used only to operate the Service.
+        </p>
+
+        <h2 id="security">11. Security</h2>
+        <p>We apply the following technical and organisational measures:</p>
+        <ul>
+          <li>Passwords are hashed with Argon2id; plain-text passwords are never stored or logged.</li>
+          <li>Data in transit is encrypted with TLS.</li>
+          <li>API keys, verification codes, and sharing tokens are stored as hashes, and download links are signed and
+            short-lived.</li>
+          <li>Files are private by default and shared only through explicit, revocable shares or links.</li>
+          <li>Authentication endpoints are rate-limited, and verification codes are attempt-limited.</li>
+          <li>Access to production infrastructure and databases is restricted to authorised personnel.</li>
+        </ul>
+        <p>
+          No system is perfectly secure. If a personal data breach poses a risk to your rights, we will notify the
+          relevant supervisory authority within 72 hours and inform affected users without undue delay, as required by
+          GDPR Articles 33 and 34.
+        </p>
+
+        <h2 id="changes">12. Changes to this policy</h2>
+        <p>
+          We may update this policy from time to time. For material changes — those that significantly affect your rights
+          or how we use your data — we will notify you by email at least 30 days before the change takes effect and show a
+          notice in the app. The updated policy will be published at this URL with a new "Last updated" date. Continued
+          use of the Service after the effective date constitutes acceptance of the updated policy.
+        </p>
+
+        <h2 id="contact">13. Contact</h2>
+        <ul>
+          <li>Email: <a href="mailto:contact@fluxsend.win">contact@fluxsend.win</a></li>
+          <li>Subject line: <strong>Privacy Inquiry</strong> for general questions, or
+            <strong>Data Subject Request</strong> for rights requests.</li>
+        </ul>
+      </article>
+    </div>
+
+    <footer>
+      <div class="footer-inner">
+        <span class="brand">FLUX<span class="accent">SEND</span></span>
+        <nav class="footer-links" aria-label="Footer">
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <a href="terms-of-service.html">Terms of Service</a>
+          <a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a>
+        </nav>
+        <span class="copyright">© 2026 Tomasz Skrond · Self-hosted · Secure · Open source</span>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        var button = document.querySelector('[data-theme-toggle]');
+        if (!button) return;
+        button.addEventListener('click', function () {
+          var root = document.documentElement;
+          var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+          root.setAttribute('data-theme', next);
+          try {
+            localStorage.setItem('theme-mode', next);
+          } catch (e) {}
+        });
+      })();
+    </script>
+  </body>
+</html>

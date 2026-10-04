@@ -1,0 +1,2054 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0d1117" id="theme-color-meta" />
+    <meta
+      name="description"
+      content="FluxSend — self-hostable file transfer with signed links, per-file access control, and S3-compatible storage."
+    />
+    <meta name="robots" content="index, follow" />
+    <title>FluxSend — Secure file sharing, made simple.</title>
+    <link rel="icon" type="image/png" href="fs.png" />
+    <link rel="apple-touch-icon" href="fs.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Datatype:wght@100..900&display=swap" rel="stylesheet" />
+    <script>
+      (function () {
+        var theme = 'dark';
+        try {
+          var stored = localStorage.getItem('theme-mode');
+          if (stored === 'light' || stored === 'dark') theme = stored;
+        } catch (e) {}
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+    <style>
+      /* ── Tokens ────────────────────────────────────────────────────────── */
+      :root {
+        --accent: #6366f1;
+        --maxw: 1240px;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+      }
+      html[data-theme='dark'] {
+        color-scheme: dark;
+        --accent-2: #818cf8;
+        --accent-3: #4f46e5;
+        --accent-btn: #4f46e5;
+        --accent-btn-hover: #4338ca;
+        --ok: #3fb950;
+        --edge: #59636e;
+        --bg: #0d1117;
+        --bg-veil: rgba(13, 17, 23, 0.86);
+        --panel: #10161e;
+        --panel-2: #0b1017;
+        --line: #30363d;
+        --line-2: #1c2129;
+        --ink: #e6edf3;
+        --ink-2: #8b949e;
+        --ink-3: #7d8590;
+        --grid: rgba(230, 237, 243, 0.035);
+        --glow: rgba(99, 102, 241, 0.22);
+        --accent-wash: rgba(99, 102, 241, 0.12);
+        --hover: rgba(177, 186, 196, 0.07);
+        --grain: 0.05;
+      }
+      html[data-theme='light'] {
+        color-scheme: light;
+        --accent-2: #4f46e5;
+        --accent-3: #4f46e5;
+        --accent-btn: #4f46e5;
+        --accent-btn-hover: #4338ca;
+        --ok: #1a7f37;
+        --edge: #848d99;
+        --bg: #f6f8fa;
+        --bg-veil: rgba(246, 248, 250, 0.88);
+        --panel: #ffffff;
+        --panel-2: #f6f8fa;
+        --line: #d0d7de;
+        --line-2: #e6eaf0;
+        --ink: #1f2328;
+        --ink-2: #57606a;
+        --ink-3: #656d76;
+        --grid: rgba(31, 35, 40, 0.05);
+        --glow: rgba(99, 102, 241, 0.14);
+        --accent-wash: rgba(99, 102, 241, 0.08);
+        --hover: rgba(31, 35, 40, 0.05);
+        --grain: 0.035;
+      }
+
+      /* ── Base ──────────────────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+        scroll-padding-top: 96px;
+      }
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Datatype', system-ui, -apple-system, sans-serif;
+        font-weight: 500;
+        font-size: 16px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        -webkit-tap-highlight-color: transparent;
+      }
+      /* Blueprint grid + film grain, both purely decorative */
+      body::before,
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+      }
+      body::before {
+        background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 72px 72px;
+      }
+      body::after {
+        opacity: var(--grain);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+      main,
+      .site-head,
+      .site-foot {
+        position: relative;
+        z-index: 1;
+      }
+      img,
+      svg,
+      video {
+        display: block;
+        max-width: 100%;
+      }
+      a {
+        color: var(--accent-2);
+        text-decoration: none;
+      }
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        font-weight: 800;
+        line-height: 1.06;
+        letter-spacing: -0.035em;
+        text-wrap: balance;
+      }
+      p {
+        margin: 0;
+        text-wrap: pretty;
+        overflow-wrap: break-word;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent-2);
+        outline-offset: 3px;
+        border-radius: 3px;
+      }
+      ::selection {
+        background: var(--accent);
+        color: #fff;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      }
+      .skip {
+        position: absolute;
+        left: 12px;
+        top: -60px;
+        z-index: 200;
+        padding: 10px 16px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--ink);
+        font-size: 0.85rem;
+        font-weight: 700;
+        transition: top 0.18s ease;
+      }
+      .skip:focus {
+        top: 12px;
+      }
+      .wrap {
+        width: 100%;
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .num {
+        font-variant-numeric: tabular-nums;
+      }
+      .accent {
+        color: var(--accent);
+      }
+
+      /* ── Buttons ───────────────────────────────────────────────────────── */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        min-height: 44px;
+        padding: 13px 22px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        line-height: 1;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+      }
+      .btn:hover {
+        text-decoration: none;
+      }
+      .btn-primary {
+        background: var(--accent-btn);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: var(--accent-btn-hover);
+      }
+      .btn-primary:active {
+        transform: translateY(1px);
+      }
+      .btn-ghost {
+        border-color: var(--edge);
+        color: var(--ink);
+        background: transparent;
+      }
+      .btn-ghost:hover {
+        border-color: var(--accent);
+        color: var(--accent-2);
+      }
+      .btn-sm {
+        padding: 9px 16px;
+        font-size: 0.82rem;
+      }
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--ink-2);
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+      }
+      .icon-btn:hover {
+        background: var(--hover);
+        color: var(--ink);
+      }
+      html[data-theme='dark'] .i-sun,
+      html[data-theme='light'] .i-moon {
+        display: none;
+      }
+
+      /* ── Header ────────────────────────────────────────────────────────── */
+      .site-head {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        border-bottom: 1px solid var(--line);
+        background: var(--bg-veil);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
+      .head-inner {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 12px 24px;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+        color: var(--ink);
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+      .brand:hover {
+        text-decoration: none;
+      }
+      .brand img {
+        width: 26px;
+        height: 26px;
+        opacity: 0.92;
+      }
+      .head-nav {
+        display: none;
+        align-items: center;
+        gap: 2px;
+        margin-left: 26px;
+      }
+      .head-nav a {
+        padding: 8px 12px;
+        border-radius: 4px;
+        color: var(--ink-2);
+        font-size: 0.85rem;
+        font-weight: 700;
+        transition: background-color 0.18s ease, color 0.18s ease;
+      }
+      .head-nav a:hover {
+        background: var(--hover);
+        color: var(--ink);
+        text-decoration: none;
+      }
+      .head-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+      }
+      .head-actions .quiet {
+        display: none;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 10px;
+        border-radius: 4px;
+        color: var(--ink-2);
+        font-size: 0.82rem;
+        font-weight: 700;
+        transition: color 0.18s ease, background-color 0.18s ease;
+      }
+      .head-actions .quiet:hover {
+        background: var(--hover);
+        color: var(--ink);
+        text-decoration: none;
+      }
+      .head-actions .btn-sm {
+        display: none;
+      }
+      .menu-btn {
+        display: inline-flex;
+      }
+      /* Scroll progress rail — driven by CSS scroll timeline where supported */
+      .progress {
+        height: 2px;
+        background: transparent;
+      }
+      .progress span {
+        display: block;
+        height: 100%;
+        width: 100%;
+        transform: scaleX(0);
+        transform-origin: 0 50%;
+        background: var(--accent);
+      }
+      @supports (animation-timeline: scroll()) {
+        .progress span {
+          animation: progress linear both;
+          animation-duration: auto;
+          animation-timeline: scroll(root block);
+        }
+        @keyframes progress {
+          to {
+            transform: scaleX(1);
+          }
+        }
+      }
+      .mobile-menu {
+        display: none;
+        padding: 12px 24px 18px;
+        border-top: 1px solid var(--line-2);
+      }
+      .mobile-menu.open {
+        display: block;
+      }
+      .mobile-menu ul {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .mobile-menu a {
+        display: block;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        color: var(--ink);
+        font-size: 0.85rem;
+        font-weight: 700;
+      }
+      .mobile-menu a:hover {
+        border-color: var(--accent);
+        color: var(--accent-2);
+        text-decoration: none;
+      }
+
+      /* ── Section scaffolding ───────────────────────────────────────────── */
+      .band {
+        position: relative;
+        padding: 72px 0;
+        scroll-margin-top: 96px;
+      }
+      .band + .band {
+        border-top: 1px solid var(--line-2);
+      }
+      .band-head {
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        margin-bottom: 14px;
+        color: var(--ink-3);
+      }
+      .band-head .rule {
+        flex: 1;
+        height: 1px;
+        background: var(--line);
+        min-width: 20px;
+      }
+      .band h2 {
+        max-width: 22ch;
+        font-size: clamp(1.85rem, 4.4vw, 3rem);
+        margin-bottom: 14px;
+      }
+      .band-sub {
+        max-width: 56ch;
+        color: var(--ink-2);
+        line-height: 1.7;
+      }
+
+      /* ── Hero ──────────────────────────────────────────────────────────── */
+      .hero {
+        position: relative;
+        padding: 64px 0 56px;
+        overflow: hidden;
+        background: linear-gradient(
+          90deg,
+          rgba(18, 22, 35, 0.92) 0%,
+          rgba(23, 27, 42, 0.84) 26%,
+          rgba(10, 13, 20, 0.5) 56%,
+          rgba(10, 13, 20, 0.92) 100%
+        );
+      }
+      .hero::before {
+        content: '';
+        position: absolute;
+        inset: -18% -8% -12% -10%;
+        background:
+          radial-gradient(circle at 22% 32%, rgba(99, 102, 241, 0.32), transparent 34%),
+          linear-gradient(90deg, rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.02) 38%, transparent 62%);
+        filter: blur(28px);
+        opacity: 0.9;
+        pointer-events: none;
+      }
+      .hero::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          90deg,
+          rgba(13, 17, 23, 0.12) 0%,
+          rgba(13, 17, 23, 0.06) 30%,
+          rgba(13, 17, 23, 0.02) 55%,
+          rgba(13, 17, 23, 0.18) 100%
+        );
+        pointer-events: none;
+      }
+      .hero-grid {
+        position: relative;
+        display: grid;
+        gap: 48px;
+      }
+      .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 26px;
+        padding: 6px 12px 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-2);
+        background: var(--panel-2);
+        font-family: var(--mono);
+        font-size: 0.66rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ok);
+        box-shadow: 0 0 0 3px rgba(63, 185, 80, 0.22);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent);
+        flex-shrink: 0;
+      }
+      .hero h1 {
+        font-size: clamp(2.5rem, 8.2vw, 5rem);
+        line-height: 0.98;
+        letter-spacing: -0.045em;
+        margin-bottom: 26px;
+      }
+      .lede {
+        max-width: 46ch;
+        color: var(--ink-2);
+        font-size: 1.08rem;
+        line-height: 1.68;
+        margin-bottom: 32px;
+      }
+      .hero-cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 40px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1px;
+        margin: 0;
+        border: 1px solid var(--line);
+        background: var(--line);
+      }
+      .stats > div {
+        min-width: 0;
+        padding: 12px 14px;
+        background: var(--panel-2);
+      }
+      .stats dt {
+        color: var(--ink-3);
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .stats dd {
+        margin: 4px 0 0;
+        font-size: 0.86rem;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+      }
+
+      /* Transfer panel */
+      .transfer {
+        margin: 0;
+      }
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        box-shadow: 0 24px 60px -30px rgba(2, 6, 23, 0.7);
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 11px 16px;
+        border-bottom: 1px solid var(--line-2);
+        color: var(--ink-3);
+      }
+      .live {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--ok);
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .transfer-body {
+        padding: 20px 16px;
+      }
+      .file-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+      .file-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.95rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .file-size {
+        flex-shrink: 0;
+        color: var(--ink-2);
+      }
+      .bar {
+        height: 6px;
+        margin-bottom: 8px;
+        border-radius: 99px;
+        background: var(--line-2);
+        overflow: hidden;
+      }
+      .bar span {
+        display: block;
+        width: var(--w, 0%);
+        height: 100%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, var(--accent-3), var(--accent-2));
+        transform-origin: 0 50%;
+        animation: fill 1.5s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+      }
+      @keyframes fill {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+      .bar-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 22px;
+        color: var(--ink-3);
+      }
+      .meta {
+        display: grid;
+        gap: 1px;
+        margin: 0;
+        border: 1px solid var(--line-2);
+        background: var(--line-2);
+      }
+      .meta > div {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 9px 12px;
+        background: var(--panel-2);
+      }
+      .meta dt {
+        color: var(--ink-3);
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .meta dd {
+        min-width: 0;
+        margin: 0;
+        font-size: 0.82rem;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .panel-foot {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px 18px;
+      }
+      .chip {
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        color: var(--ink-2);
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .chip-strong {
+        border-color: var(--accent-btn);
+        color: #fff;
+        background: var(--accent-btn);
+      }
+
+      /* ── Ticker ────────────────────────────────────────────────────────── */
+      .ticker {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        overflow: hidden;
+        border-top: 1px solid var(--line-2);
+        border-bottom: 1px solid var(--line-2);
+        padding: 13px 0;
+        mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+      }
+      .ticker-track {
+        display: flex;
+        flex-shrink: 0;
+        gap: 40px;
+        padding-right: 40px;
+        width: max-content;
+        animation: slide 46s linear infinite;
+        color: var(--ink-3);
+      }
+      .ticker-track span {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        white-space: nowrap;
+      }
+      .ticker-track span::after {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--accent);
+        opacity: 0.6;
+      }
+      .ticker:hover .ticker-track {
+        animation-play-state: paused;
+      }
+      @keyframes slide {
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* ── Feature spec grid ─────────────────────────────────────────────── */
+      .specs {
+        display: grid;
+        grid-template-columns: 1fr;
+        margin-top: 40px;
+        border: 1px solid var(--line);
+        background: var(--line-2);
+        gap: 1px;
+      }
+      .spec {
+        position: relative;
+        padding: 26px 22px 24px;
+        background: var(--bg);
+        transition: background-color 0.2s ease;
+      }
+      .spec:hover {
+        background: var(--panel);
+      }
+      .spec:hover .spec-icon {
+        border-color: var(--accent);
+        color: var(--accent-2);
+      }
+      .spec-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      .spec-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        color: var(--ink-2);
+        transition: border-color 0.2s ease, color 0.2s ease;
+      }
+      .spec-icon svg {
+        width: 17px;
+        height: 17px;
+      }
+      .spec-index {
+        color: var(--ink-3);
+        font-family: var(--mono);
+        font-size: 0.66rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+      }
+      .spec h3 {
+        margin-bottom: 8px;
+        font-size: 1rem;
+        letter-spacing: -0.02em;
+      }
+      .spec p {
+        color: var(--ink-2);
+        font-size: 0.875rem;
+        line-height: 1.65;
+      }
+
+      /* ── Demos ─────────────────────────────────────────────────────────── */
+      .rail-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+      .rail-buttons {
+        display: none;
+        gap: 8px;
+      }
+      .rail {
+        display: flex;
+        gap: 20px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding: 4px 0 14px;
+        scrollbar-width: none;
+      }
+      .rail::-webkit-scrollbar {
+        display: none;
+      }
+      .demo {
+        flex: 0 0 auto;
+        width: 88%;
+        scroll-snap-align: start;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        overflow: hidden;
+        transition: border-color 0.22s ease;
+      }
+      .demo.is-active {
+        border-color: var(--accent);
+      }
+      .demo-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line-2);
+        color: var(--ink-3);
+      }
+      .demo-body {
+        padding: 14px;
+      }
+      .frame {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        border: 1px solid var(--line-2);
+        border-radius: 4px;
+        overflow: hidden;
+        background: var(--panel-2);
+      }
+      .frame video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .frame-play {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        border: 0;
+        background: linear-gradient(180deg, rgba(2, 6, 23, 0.05), rgba(2, 6, 23, 0.6));
+        color: #f4f7fb;
+        font-family: var(--mono);
+        font-size: 0.66rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: background-color 0.2s ease;
+      }
+      .frame-play:hover {
+        background: linear-gradient(180deg, rgba(2, 6, 23, 0.15), rgba(2, 6, 23, 0.72));
+      }
+      .frame-play svg {
+        width: 22px;
+        height: 22px;
+      }
+      .demo-copy {
+        padding: 16px 14px 18px;
+      }
+      .demo-copy h3 {
+        margin-bottom: 6px;
+        font-size: 0.95rem;
+      }
+      .demo-copy p {
+        color: var(--ink-2);
+        font-size: 0.85rem;
+        line-height: 1.6;
+      }
+      .dots {
+        display: flex;
+        justify-content: center;
+        gap: 0;
+        margin-top: 8px;
+      }
+      /* The visible dot is a pseudo-element so the button itself keeps a
+         36x44 touch target — the dots are the only paging control on mobile. */
+      .dot-btn {
+        position: relative;
+        width: 32px;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+      .dot-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 8px;
+        height: 8px;
+        border-radius: 99px;
+        background: var(--line);
+        transform: translate(-50%, -50%);
+        transition: width 0.2s ease, background-color 0.2s ease;
+      }
+      .dot-btn.is-active::before {
+        width: 26px;
+        background: var(--accent);
+      }
+
+      /* ── Plans ─────────────────────────────────────────────────────────── */
+      .tier {
+        display: grid;
+        grid-template-columns: 1fr;
+        margin-top: 40px;
+        border: 1px solid var(--line);
+        background: var(--line-2);
+        gap: 1px;
+      }
+      .tier-col {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        padding: 28px 22px;
+        background: var(--bg);
+      }
+      .tier-col.is-featured {
+        background: var(--panel);
+      }
+      .tier-col.is-featured::before {
+        content: '';
+        position: absolute;
+        inset: -1px -1px auto;
+        height: 2px;
+        background: var(--accent);
+      }
+      .tier-flag {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 4px 9px;
+        background: var(--accent-btn);
+        color: #fff;
+        font-family: var(--mono);
+        font-size: 0.58rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .tier-name {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink-2);
+      }
+      .tier-storage {
+        margin: 10px 0 2px;
+        font-size: 2.4rem;
+        font-weight: 800;
+        letter-spacing: -0.045em;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+      }
+      .tier-note {
+        color: var(--ink-3);
+        font-size: 0.75rem;
+      }
+      .tier-limits {
+        margin: 22px 0 22px;
+        padding: 0;
+        border-top: 1px solid var(--line-2);
+      }
+      .tier-limits > div {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 9px 0;
+        border-bottom: 1px dashed var(--line-2);
+      }
+      .tier-limits dt {
+        color: var(--ink-2);
+        font-size: 0.78rem;
+      }
+      .tier-limits dd {
+        margin: 0;
+        font-size: 0.8rem;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
+      .tier-list {
+        display: grid;
+        gap: 9px;
+        margin: 0 0 24px;
+        padding: 0;
+        list-style: none;
+        color: var(--ink-2);
+        font-size: 0.82rem;
+      }
+      .tier-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        line-height: 1.5;
+      }
+      .tier-list svg {
+        width: 13px;
+        height: 13px;
+        margin-top: 3px;
+        flex-shrink: 0;
+        color: var(--accent);
+      }
+      .tier-cta {
+        margin-top: auto;
+      }
+      .tier-cta .btn {
+        width: 100%;
+      }
+
+      /* ── CTA ───────────────────────────────────────────────────────────── */
+      .cta {
+        position: relative;
+        overflow: hidden;
+        border-top: 1px solid var(--line-2);
+        padding: 88px 0;
+        scroll-margin-top: 96px;
+      }
+      .cta::before {
+        content: '';
+        position: absolute;
+        inset: auto -10% -60% -10%;
+        height: 130%;
+        background: radial-gradient(circle at 50% 100%, var(--glow), transparent 58%);
+        pointer-events: none;
+      }
+      .cta-inner {
+        position: relative;
+        display: grid;
+        gap: 28px;
+      }
+      .cta h2 {
+        max-width: 24ch;
+        font-size: clamp(1.9rem, 5vw, 3.1rem);
+      }
+      .cta-copy {
+        max-width: 46ch;
+        color: var(--ink-2);
+        line-height: 1.7;
+      }
+      .cta-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .ghost-mark {
+        display: none;
+        font-size: clamp(4rem, 12vw, 9rem);
+        font-weight: 100;
+        letter-spacing: -0.05em;
+        line-height: 0.8;
+        color: var(--ink);
+        opacity: 0.06;
+        user-select: none;
+      }
+
+      /* ── Footer ────────────────────────────────────────────────────────── */
+      .site-foot {
+        border-top: 1px solid var(--line);
+        padding: 34px 0 40px;
+      }
+      .foot-inner {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .foot-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 20px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+      .foot-links a {
+        display: inline-block;
+        padding: 8px 0;
+        color: var(--ink-2);
+        transition: color 0.18s ease;
+      }
+      .foot-links a:hover {
+        color: var(--accent-2);
+      }
+      .foot-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 18px;
+        color: var(--ink-3);
+        font-size: 0.78rem;
+      }
+
+      /* ── Lightbox ──────────────────────────────────────────────────────── */
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        overscroll-behavior: contain;
+        background: rgba(2, 6, 23, 0.72);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+      .lightbox.open {
+        display: flex;
+      }
+      .lightbox-panel {
+        width: min(1200px, 100%);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        overflow: hidden;
+      }
+      .lightbox-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line-2);
+      }
+      .lightbox-head h3 {
+        font-size: 0.95rem;
+      }
+      .lightbox-media {
+        aspect-ratio: 16 / 9;
+        background: #020617;
+      }
+      .lightbox-media video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      /* ── Reveal ────────────────────────────────────────────────────────── */
+      .reveal {
+        opacity: 0;
+        visibility: hidden;
+        transform: translate3d(0, 18px, 0);
+        will-change: opacity, transform;
+        transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+          transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+          visibility 0s linear 0.8s;
+      }
+      .reveal.is-in {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        transition-delay: 0s;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+        }
+        .ticker-track {
+          animation: none;
+        }
+        .bar span {
+          animation: none;
+        }
+        .reveal {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      /* ── Responsive ────────────────────────────────────────────────────── */
+      /* Touch layouts: comfortable hit areas without growing the desktop bar. */
+      @media (max-width: 999px) {
+        .icon-btn {
+          width: 44px;
+          height: 44px;
+        }
+        .brand {
+          min-height: 44px;
+        }
+        .mobile-menu a {
+          padding: 14px;
+        }
+        .foot-links {
+          gap: 4px 20px;
+        }
+      }
+      @media (min-width: 700px) {
+        .specs {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .tier {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .demo {
+          width: 58%;
+        }
+        .foot-inner {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+      }
+      @media (min-width: 1000px) {
+        .band {
+          padding: 104px 0;
+        }
+        .hero {
+          padding: 96px 0 84px;
+        }
+        .hero-grid {
+          grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+          align-items: center;
+          gap: 64px;
+        }
+        .head-nav,
+        .head-actions .quiet,
+        .head-actions .btn-sm {
+          display: flex;
+        }
+        .menu-btn {
+          display: none;
+        }
+        .mobile-menu {
+          display: none !important;
+        }
+        .specs {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .tier {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .demo {
+          width: 44%;
+          scroll-snap-align: center;
+        }
+        .rail-buttons {
+          display: flex;
+        }
+        .cta-inner {
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: end;
+        }
+        .ghost-mark {
+          display: block;
+          text-align: right;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <!-- Deployment config: point appUrl at the app origin when this page is hosted
+         separately. Empty string = same origin.
+         <script>window.FLUXSEND_CONFIG = { appUrl: "https://app.fluxsend.win" };</script> -->
+    <script>
+      window.FLUXSEND_CONFIG = { appUrl: '' };
+    </script>
+
+    <header class="site-head">
+      <div class="head-inner">
+        <a class="brand" href="#top" translate="no">
+          <img src="fs.png" alt="" width="26" height="26" />
+          <span>FLUX<span class="accent">SEND</span></span>
+        </a>
+
+        <nav class="head-nav" aria-label="Sections">
+          <a href="#features">Features</a>
+          <a href="#demos">Demos</a>
+          <a href="#plans">Plans</a>
+        </nav>
+
+        <div class="head-actions">
+          <a class="quiet" href="https://docs.fluxsend.win" target="_blank" rel="noreferrer">
+            Docs
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg>
+          </a>
+          <a class="quiet" href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" /><path d="M9 18c-4.51 2-5-2-7-2" /></svg>
+            GitHub
+          </a>
+          <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch to light theme">
+            <svg class="i-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg>
+            <svg class="i-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
+          </button>
+          <a class="btn btn-primary btn-sm" href="/login" data-app-link="/login">Sign in</a>
+          <button class="icon-btn menu-btn" type="button" id="menu-toggle" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="mobile-menu" id="mobile-menu">
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#demos">Demos</a></li>
+          <li><a href="#plans">Plans</a></li>
+          <li><a href="https://docs.fluxsend.win" target="_blank" rel="noreferrer">Docs</a></li>
+          <li><a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a></li>
+          <li><a href="/login" data-app-link="/login">Sign in</a></li>
+        </ul>
+      </div>
+
+      <div class="progress" aria-hidden="true"><span></span></div>
+    </header>
+
+    <main id="main">
+      <!-- ── Hero ──────────────────────────────────────────────────────── -->
+      <section class="hero" id="top">
+        <div class="wrap hero-grid">
+          <div>
+            <p class="kicker"><span class="dot" aria-hidden="true"></span> Self-hostable · Open source</p>
+            <h1>Secure file sharing,<br /><span class="accent">made simple.</span></h1>
+            <p class="lede">
+              Upload, store, and share your files with anyone. Fast, secure, and effortless — hosted on your own
+              infrastructure.
+            </p>
+            <div class="hero-cta">
+              <a class="btn btn-primary" href="/login" data-app-link="/login">
+                Get Started
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+              </a>
+              <a class="btn btn-ghost" href="#features">See Features</a>
+            </div>
+            <dl class="stats">
+              <div>
+                <dt>License</dt>
+                <dd>MIT</dd>
+              </div>
+              <div>
+                <dt>Deploy</dt>
+                <dd>Docker</dd>
+              </div>
+              <div>
+                <dt>Storage</dt>
+                <dd>S3 · MinIO · GCS</dd>
+              </div>
+            </dl>
+          </div>
+
+          <figure class="transfer">
+            <figcaption class="sr-only">
+              Illustration of a FluxSend transfer: a 12.4&nbsp;MB file at 76&nbsp;% progress, shared with a recipient over
+              a signed link that expires.
+            </figcaption>
+            <div class="panel" aria-hidden="true">
+              <div class="panel-head">
+                <span class="mono">Transfer</span>
+                <span class="live"><span class="dot"></span>live</span>
+              </div>
+              <div class="transfer-body">
+                <div class="file-row">
+                  <span class="file-name">resume_final.pdf</span>
+                  <span class="mono file-size num">12.4 MB</span>
+                </div>
+                <div class="bar"><span style="--w: 76%"></span></div>
+                <div class="bar-label mono"><span>Uploading</span><span class="num">76 %</span></div>
+                <dl class="meta">
+                  <div><dt>Recipient</dt><dd>ana@studio.dev</dd></div>
+                  <div><dt>Expires</dt><dd>in 7 days</dd></div>
+                  <div><dt>Signed token</dt><dd class="num">4f9c…a71</dd></div>
+                </dl>
+              </div>
+              <div class="panel-foot">
+                <span class="chip chip-strong">Copy link</span>
+                <span class="chip">Revoke</span>
+              </div>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ── Ticker ────────────────────────────────────────────────────── -->
+      <div class="ticker" aria-hidden="true">
+        <div class="ticker-track">
+          <span class="mono">Upload</span>
+          <span class="mono">Share</span>
+          <span class="mono">Expire</span>
+          <span class="mono">Preview</span>
+          <span class="mono">Workspaces</span>
+          <span class="mono">API keys</span>
+          <span class="mono">Signed links</span>
+          <span class="mono">MinIO</span>
+          <span class="mono">S3</span>
+          <span class="mono">Self-hosted</span>
+          <span class="mono">Upload</span>
+          <span class="mono">Share</span>
+          <span class="mono">Expire</span>
+          <span class="mono">Preview</span>
+          <span class="mono">Workspaces</span>
+          <span class="mono">API keys</span>
+          <span class="mono">Signed links</span>
+          <span class="mono">MinIO</span>
+          <span class="mono">S3</span>
+          <span class="mono">Self-hosted</span>
+        </div>
+      </div>
+
+      <!-- ── Features ──────────────────────────────────────────────────── -->
+      <section class="band" id="features">
+        <div class="wrap">
+          <div class="band-head mono">
+            <span>02</span>
+            <span>Features</span>
+            <span class="rule"></span>
+          </div>
+          <h2>Everything you need to share files</h2>
+          <p class="band-sub">
+            Built for developers and power users who want full control without sacrificing usability.
+          </p>
+
+          <div class="specs">
+            <article class="spec reveal">
+              <div class="spec-top">
+                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12" /><path d="m17 8-5-5-5 5" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /></svg></span>
+                <span class="spec-index">01</span>
+              </div>
+              <h3>File Storage</h3>
+              <p>Upload and organize files in a structured folder tree. Your own private bucket, accessible anytime.</p>
+            </article>
+            <article class="spec reveal">
+              <div class="spec-top">
+                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /><line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></svg></span>
+                <span class="spec-index">02</span>
+              </div>
+              <h3>Targeted Sharing</h3>
+              <p>Share files directly with registered users. Set expiry times and track what you’ve sent.</p>
+            </article>
+            <article class="spec reveal">
+              <div class="spec-top">
+                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg></span>
+                <span class="spec-index">03</span>
+              </div>
+              <h3>Quick Share Links</h3>
+              <p>Generate one-time download links for any file instantly — no account required on the recipient side.</p>
+            </article>
+            <article class="spec reveal">
+              <div class="spec-top">
+                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg></span>
+                <span class="spec-index">04</span>
+              </div>
+              <h3>Received Files</h3>
+              <p>Files shared with you appear in your inbox. Preview inline or download — always organised.</p>
+            </article>
+            <article class="spec reveal">
+              <div class="spec-top">
+                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z" /><path d="m7 16.5-4.74-2.85" /><path d="m7 16.5 5-3" /><path d="M7 16.5v5.17" /><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z" /><path d="m17 16.5-5-3" /><path d="m17 16.5 4.74-2.85" /><path d="M17 16.5v5.17" /><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z" /><path d="M12 8 7.26 5.15" /><path d="m12 8 4.74-2.85" /><path d="M12 13.5V8" /></svg></span>
+                <span class="spec-index">05</span>
+              </div>
+              <h3>Workspaces</h3>
+              <p>Create multiple workspaces to isolate teams, projects, and data domains with clean switching.</p>
+            </article>
+            <article class="spec reveal">
+              <div class="spec-top">
+                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" /><circle cx="16.5" cy="7.5" r=".5" fill="currentColor" /></svg></span>
+                <span class="spec-index">06</span>
+              </div>
+              <h3>API Keys</h3>
+              <p>Generate and revoke workspace and private API keys for automated uploads and secure integrations.</p>
+            </article>
+            <article class="spec reveal">
+              <div class="spec-top">
+                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg></span>
+                <span class="spec-index">07</span>
+              </div>
+              <h3>File Preview</h3>
+              <p>Preview images, PDFs, and text files directly in the browser — no download needed.</p>
+            </article>
+            <article class="spec reveal">
+              <div class="spec-top">
+                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /></svg></span>
+                <span class="spec-index">08</span>
+              </div>
+              <h3>Private by Default</h3>
+              <p>Every file is private until you explicitly share it. Signed tokens protect every download.</p>
+            </article>
+            <article class="spec reveal">
+              <div class="spec-top">
+                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg></span>
+                <span class="spec-index">09</span>
+              </div>
+              <h3>Self-Hostable</h3>
+              <p>Deploy FluxSend on your own infrastructure. Full control over your data and storage backend.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Demos ─────────────────────────────────────────────────────── -->
+      <section class="band" id="demos">
+        <div class="wrap">
+          <div class="band-head mono">
+            <span>03</span>
+            <span>Product demo</span>
+            <span class="rule"></span>
+          </div>
+          <div class="rail-head">
+            <h2>See FluxSend in action</h2>
+            <div class="rail-buttons">
+              <button class="icon-btn" type="button" id="demo-prev" aria-label="Show previous demo">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+              </button>
+              <button class="icon-btn" type="button" id="demo-next" aria-label="Show next demo">
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="rail" id="demo-rail">
+            <article class="demo reveal" data-demo>
+              <div class="demo-head">
+                <span class="mono">Frame 01</span>
+                <span class="mono">Webm</span>
+              </div>
+              <div class="demo-body">
+                <div class="frame">
+                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/workspaces.webm" muted loop playsinline preload="metadata"></video>
+                  <button class="frame-play" type="button" data-play="Workspace Tour" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/workspaces.webm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
+                    Watch
+                  </button>
+                </div>
+              </div>
+              <div class="demo-copy">
+                <h3>Workspace Tour</h3>
+                <p>Create and switch workspaces, then manage files per workspace boundary.</p>
+              </div>
+            </article>
+
+            <article class="demo reveal" data-demo>
+              <div class="demo-head">
+                <span class="mono">Frame 02</span>
+                <span class="mono">Webm</span>
+              </div>
+              <div class="demo-body">
+                <div class="frame">
+                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/file-sharing.webm" muted loop playsinline preload="metadata"></video>
+                  <button class="frame-play" type="button" data-play="File Sharing Flow" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/file-sharing.webm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
+                    Watch
+                  </button>
+                </div>
+              </div>
+              <div class="demo-copy">
+                <h3>File Sharing Flow</h3>
+                <p>Share files to between users and track received items.</p>
+              </div>
+            </article>
+
+            <article class="demo reveal" data-demo>
+              <div class="demo-head">
+                <span class="mono">Frame 03</span>
+                <span class="mono">Webm</span>
+              </div>
+              <div class="demo-body">
+                <div class="frame">
+                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/quickshare.webm" muted loop playsinline preload="metadata"></video>
+                  <button class="frame-play" type="button" data-play="Quick Share Links" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/quickshare.webm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
+                    Watch
+                  </button>
+                </div>
+              </div>
+              <div class="demo-copy">
+                <h3>Quick Share Links</h3>
+                <p>Demonstrate one-time links and secure download flow for external recipients.</p>
+              </div>
+            </article>
+
+            <article class="demo reveal" data-demo>
+              <div class="demo-head">
+                <span class="mono">Frame 04</span>
+                <span class="mono">Webm</span>
+              </div>
+              <div class="demo-body">
+                <div class="frame">
+                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/api-keys.webm" muted loop playsinline preload="metadata"></video>
+                  <button class="frame-play" type="button" data-play="API Key Automation" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/api-keys.webm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
+                    Watch
+                  </button>
+                </div>
+              </div>
+              <div class="demo-copy">
+                <h3>API Key Automation</h3>
+                <p>Generate keys and run scripted uploads from CI, CLI, or external services.</p>
+              </div>
+            </article>
+
+            <article class="demo reveal" data-demo>
+              <div class="demo-head">
+                <span class="mono">Frame 05</span>
+                <span class="mono">Webm</span>
+              </div>
+              <div class="demo-body">
+                <div class="frame">
+                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/stats.webm" muted loop playsinline preload="metadata"></video>
+                  <button class="frame-play" type="button" data-play="Analytics" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/stats.webm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
+                    Watch
+                  </button>
+                </div>
+              </div>
+              <div class="demo-copy">
+                <h3>Analytics</h3>
+                <p>View your workspace/personal usage - full visibility, no surprises.</p>
+              </div>
+            </article>
+          </div>
+
+          <div class="dots" id="demo-dots"></div>
+        </div>
+      </section>
+
+      <!-- ── Plans ─────────────────────────────────────────────────────── -->
+      <section class="band" id="plans">
+        <div class="wrap">
+          <div class="band-head mono">
+            <span>04</span>
+            <span>Plans</span>
+            <span class="rule"></span>
+          </div>
+          <h2>Plan tiers</h2>
+          <p class="band-sub">
+            Plans are assigned by your instance administrator. Each tier unlocks higher limits and capacity.
+          </p>
+
+          <div class="tier">
+            <article class="tier-col reveal">
+              <p class="tier-name">Free</p>
+              <p class="tier-storage">5 GB</p>
+              <p class="tier-note">total storage</p>
+              <dl class="tier-limits">
+                <div><dt>Max file size</dt><dd>250 MB / file</dd></div>
+                <div><dt>Max files</dt><dd>20 files</dd></div>
+                <div><dt>Uploads</dt><dd>5 / day</dd></div>
+                <div><dt>Shares</dt><dd>10 / day</dd></div>
+              </dl>
+              <ul class="tier-list">
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>File upload &amp; storage</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Targeted sharing</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Quick share links</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Inline file preview</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Private downloads</li>
+              </ul>
+              <div class="tier-cta">
+                <a class="btn btn-ghost" href="/login" data-app-link="/login">Start free</a>
+              </div>
+            </article>
+
+            <article class="tier-col is-featured reveal">
+              <span class="tier-flag">Recommended</span>
+              <p class="tier-name">Developer</p>
+              <p class="tier-storage">50 GB</p>
+              <p class="tier-note">total storage</p>
+              <dl class="tier-limits">
+                <div><dt>Max file size</dt><dd>2 GB / file</dd></div>
+                <div><dt>Max files</dt><dd>500 files</dd></div>
+                <div><dt>Uploads</dt><dd>100 / day</dd></div>
+                <div><dt>Shares</dt><dd>500 / day</dd></div>
+              </dl>
+              <ul class="tier-list">
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Everything in Free</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Large file transfers</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>High daily upload limit</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>High daily share limit</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>File notes &amp; metadata</li>
+              </ul>
+              <div class="tier-cta">
+                <a class="btn btn-primary" href="/login" data-app-link="/login">Get started</a>
+              </div>
+            </article>
+
+            <article class="tier-col reveal">
+              <p class="tier-name">Enterprise</p>
+              <p class="tier-storage">1 TB</p>
+              <p class="tier-note">total storage</p>
+              <dl class="tier-limits">
+                <div><dt>Max file size</dt><dd>10 GB / file</dd></div>
+                <div><dt>Max files</dt><dd>Unlimited</dd></div>
+                <div><dt>Uploads</dt><dd>Unlimited</dd></div>
+                <div><dt>Shares</dt><dd>Unlimited</dd></div>
+              </dl>
+              <ul class="tier-list">
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Everything in Developer</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Maximum storage quota</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>No upload restrictions</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>No share restrictions</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Full platform access</li>
+              </ul>
+              <div class="tier-cta">
+                <a class="btn btn-ghost" href="/login" data-app-link="/login">Get started</a>
+              </div>
+            </article>
+
+            <article class="tier-col reveal">
+              <p class="tier-name">Custom</p>
+              <p class="tier-storage">Tailored</p>
+              <p class="tier-note">limits negotiated with admin</p>
+              <dl class="tier-limits">
+                <div><dt>Max file size</dt><dd>Negotiated</dd></div>
+                <div><dt>Max files</dt><dd>Negotiated</dd></div>
+                <div><dt>Uploads</dt><dd>Negotiated</dd></div>
+                <div><dt>Shares</dt><dd>Negotiated</dd></div>
+              </dl>
+              <ul class="tier-list">
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Custom storage quota</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Negotiated limits</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Dedicated support</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Priority onboarding</li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>White glove setup</li>
+              </ul>
+              <div class="tier-cta">
+                <a class="btn btn-ghost" href="mailto:admin@fluxsend.local">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" /></svg>
+                  Contact administrator
+                </a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── CTA ───────────────────────────────────────────────────────── -->
+      <section class="cta" id="start">
+        <div class="wrap cta-inner">
+          <div class="reveal">
+            <div class="band-head mono">
+              <span>05</span>
+              <span>Start</span>
+              <span class="rule"></span>
+            </div>
+            <h2>Ready to take control of your files?</h2>
+            <p class="cta-copy" style="margin-top: 16px">
+              Sign in to your FluxSend instance and start sharing securely.
+            </p>
+            <div class="cta-actions" style="margin-top: 28px">
+              <a class="btn btn-primary" href="/login" data-app-link="/login">
+                Get Started
+                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+              </a>
+              <a class="btn btn-ghost" href="https://docs.fluxsend.win" target="_blank" rel="noreferrer">Read the docs</a>
+            </div>
+          </div>
+          <p class="ghost-mark" translate="no" aria-hidden="true">FLUXSEND</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-foot">
+      <div class="wrap foot-inner">
+        <a class="brand" href="#top" translate="no">
+          <img src="fs.png" alt="" width="26" height="26" />
+          <span>FLUX<span class="accent">SEND</span></span>
+        </a>
+        <ul class="foot-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#demos">Demos</a></li>
+          <li><a href="#plans">Plans</a></li>
+          <li><a href="https://docs.fluxsend.win" target="_blank" rel="noreferrer">Docs</a></li>
+          <li><a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a></li>
+          <li><a href="/legal/privacy-policy.html" data-app-link="/legal/privacy-policy.html">Privacy</a></li>
+          <li><a href="/legal/terms-of-service.html" data-app-link="/legal/terms-of-service.html">Terms</a></li>
+        </ul>
+        <p class="foot-meta">
+          <span>Self-hosted · Secure · Open source</span>
+          <span>© 2026 Orion Software Tomasz Skrond</span>
+        </p>
+      </div>
+    </footer>
+
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
+      <div class="lightbox-panel">
+        <div class="lightbox-head">
+          <h3 id="lightbox-title">Demo</h3>
+          <button class="icon-btn" type="button" id="lightbox-close" aria-label="Close demo video">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+          </button>
+        </div>
+        <div class="lightbox-media">
+          <video id="lightbox-video" controls playsinline preload="metadata"></video>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var config = window.FLUXSEND_CONFIG || {};
+        var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        var themeMeta = document.getElementById('theme-color-meta');
+
+        /* Point app/legal links at the app origin when this page is hosted separately. */
+        if (config.appUrl) {
+          var base = String(config.appUrl).replace(/\/+$/, '');
+          document.querySelectorAll('[data-app-link]').forEach(function (el) {
+            el.setAttribute('href', base + el.getAttribute('data-app-link'));
+          });
+        }
+
+        /* Theme */
+        function applyThemeLabel() {
+          var dark = root.getAttribute('data-theme') !== 'light';
+          if (themeMeta) themeMeta.setAttribute('content', dark ? '#0d1117' : '#f6f8fa');
+          document.querySelectorAll('[data-theme-toggle]').forEach(function (button) {
+            button.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+          });
+        }
+        document.querySelectorAll('[data-theme-toggle]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            root.setAttribute('data-theme', next);
+            try {
+              localStorage.setItem('theme-mode', next);
+            } catch (e) {}
+            applyThemeLabel();
+          });
+        });
+        applyThemeLabel();
+
+        /* Mobile menu */
+        var menu = document.getElementById('mobile-menu');
+        var menuToggle = document.getElementById('menu-toggle');
+        if (menu && menuToggle) {
+          menuToggle.addEventListener('click', function () {
+            var open = !menu.classList.contains('open');
+            menu.classList.toggle('open', open);
+            menuToggle.setAttribute('aria-expanded', String(open));
+            menuToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+          });
+          menu.addEventListener('click', function (event) {
+            if (event.target.closest('a')) {
+              menu.classList.remove('open');
+              menuToggle.setAttribute('aria-expanded', 'false');
+              menuToggle.setAttribute('aria-label', 'Open menu');
+            }
+          });
+        }
+
+        /* Reveal on scroll — transform/opacity only */
+        var revealables = document.querySelectorAll('.reveal');
+        if (reduceMotion || !('IntersectionObserver' in window)) {
+          revealables.forEach(function (el) {
+            el.classList.add('is-in');
+          });
+        } else {
+          var observer = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry, index) {
+                if (!entry.isIntersecting) return;
+                entry.target.style.transitionDelay = Math.min(index * 80, 260) + 'ms';
+                entry.target.classList.add('is-in');
+                observer.unobserve(entry.target);
+              });
+            },
+            { threshold: 0.12, rootMargin: '0px 0px -48px 0px' }
+          );
+          revealables.forEach(function (el) {
+            observer.observe(el);
+          });
+        }
+
+        /* Demo rail */
+        var rail = document.getElementById('demo-rail');
+        var dotsHost = document.getElementById('demo-dots');
+        var cards = rail ? Array.prototype.slice.call(rail.querySelectorAll('[data-demo]')) : [];
+        var active = 0;
+
+        function setActive(index) {
+          active = Math.max(0, Math.min(index, cards.length - 1));
+          cards.forEach(function (card, i) {
+            card.classList.toggle('is-active', i === active);
+          });
+          dots.forEach(function (dot, i) {
+            dot.classList.toggle('is-active', i === active);
+            dot.setAttribute('aria-current', i === active ? 'true' : 'false');
+          });
+        }
+
+        function goTo(index) {
+          if (!cards.length) return;
+          var safe = Math.max(0, Math.min(index, cards.length - 1));
+          cards[safe].scrollIntoView({
+            behavior: reduceMotion ? 'auto' : 'smooth',
+            block: 'nearest',
+            inline: 'center',
+          });
+          setActive(safe);
+        }
+
+        var dots = [];
+        if (dotsHost) {
+          dots = cards.map(function (_, index) {
+            var dot = document.createElement('button');
+            dot.type = 'button';
+            dot.className = 'dot-btn';
+            dot.setAttribute('aria-label', 'Show demo ' + (index + 1));
+            dot.addEventListener('click', function () {
+              goTo(index);
+            });
+            dotsHost.appendChild(dot);
+            return dot;
+          });
+        }
+
+        if (rail && cards.length) {
+          var frame = 0;
+          rail.addEventListener(
+            'scroll',
+            function () {
+              if (frame) cancelAnimationFrame(frame);
+              frame = requestAnimationFrame(function () {
+                var railRect = rail.getBoundingClientRect();
+                var best = 0;
+                var bestRatio = -1;
+                cards.forEach(function (card, index) {
+                  var rect = card.getBoundingClientRect();
+                  var visible = Math.max(0, Math.min(rect.right, railRect.right) - Math.max(rect.left, railRect.left));
+                  var ratio = rect.width ? visible / rect.width : 0;
+                  if (ratio > bestRatio) {
+                    bestRatio = ratio;
+                    best = index;
+                  }
+                });
+                setActive(best);
+              });
+            },
+            { passive: true }
+          );
+          setActive(0);
+
+          var prev = document.getElementById('demo-prev');
+          var next = document.getElementById('demo-next');
+          if (prev) prev.addEventListener('click', function () { goTo(active - 1); });
+          if (next) next.addEventListener('click', function () { goTo(active + 1); });
+        }
+
+        /* Hover preview on fine pointers — never under reduced motion */
+        if (canHover && !reduceMotion) {
+          document.querySelectorAll('.frame').forEach(function (frame) {
+            var video = frame.querySelector('video');
+            if (!video) return;
+            frame.addEventListener('pointerenter', function () {
+              var play = video.play();
+              if (play && typeof play.catch === 'function') play.catch(function () {});
+            });
+            frame.addEventListener('pointerleave', function () {
+              video.pause();
+              try {
+                video.currentTime = 0;
+              } catch (e) {}
+            });
+          });
+        }
+
+        /* Lightbox */
+        var lightbox = document.getElementById('lightbox');
+        var lightboxVideo = document.getElementById('lightbox-video');
+        var lightboxTitle = document.getElementById('lightbox-title');
+        var lightboxClose = document.getElementById('lightbox-close');
+        var lastFocused = null;
+
+        function openLightbox(title, src, trigger) {
+          lastFocused = trigger || null;
+          lightboxTitle.textContent = title;
+          lightboxVideo.setAttribute('src', src);
+          lightbox.classList.add('open');
+          document.body.style.overflow = 'hidden';
+          lightboxClose.focus();
+          var play = lightboxVideo.play();
+          if (play && typeof play.catch === 'function') play.catch(function () {});
+        }
+
+        function closeLightbox() {
+          if (!lightbox.classList.contains('open')) return;
+          lightbox.classList.remove('open');
+          lightboxVideo.pause();
+          lightboxVideo.removeAttribute('src');
+          lightboxVideo.load();
+          document.body.style.overflow = '';
+          if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+        }
+
+        document.querySelectorAll('[data-play]').forEach(function (button) {
+          button.addEventListener('click', function () {
+            openLightbox(button.getAttribute('data-play'), button.getAttribute('data-src'), button);
+          });
+        });
+        lightboxClose.addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', function (event) {
+          if (event.target === lightbox) closeLightbox();
+        });
+        document.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape') closeLightbox();
+        });
+      })();
+    </script>
+  </body>
+</html>
