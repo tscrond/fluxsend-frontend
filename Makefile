@@ -6,7 +6,7 @@ LANDING_ENABLED ?= false
 build:
 	docker build --build-arg VITE_LANDING_ENABLED=$(LANDING_ENABLED) -t fluxsend-frontend:dev . &&\
   docker build -t fluxsend-web:dev ./static-site &&\
-  cd /home/tskr/projects/fluxsend-backend/ &&\
+  cd ../fluxsend-backend/ &&\
   docker build -t fluxsend-backend:dev . &&\
   cd -
 
