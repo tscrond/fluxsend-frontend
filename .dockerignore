@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.github
+.vscode
+.idea
+
+# Static marketing site is hosted separately, not part of the app image.
+static-site

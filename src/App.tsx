@@ -121,11 +121,21 @@ function buildTheme(mode: 'light' | 'dark') {
   });
 }
 
+// The landing page can be served by this app or by a separate static site.
+// Set VITE_LANDING_ENABLED=false to remove it from the app: "/" then goes
+// straight to the app shell (/files, which redirects to /login when signed out).
+const landingEnabled = import.meta.env.VITE_LANDING_ENABLED !== 'false';
+
 const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <LandingPage />,
-  },
+  landingEnabled
+    ? {
+        path: '/',
+        element: <LandingPage />,
+      }
+    : {
+        path: '/',
+        element: <Navigate to="/files" replace />,
+      },
   {
     path: '/login',
     element: <LoginPage />,
