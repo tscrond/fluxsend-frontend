@@ -24,7 +24,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
   # Static marketing site — its own image, independent from the app frontend.
-  build-multiarch-static:
+  build-static:
     uses: ./.github/workflows/_build.yaml
     permissions:
         contents: read
@@ -33,9 +33,9 @@ jobs:
     with:
       image-name-dockerhub: bobaklabs/fluxsend-web
       image-name-github: tscrond/fluxsend-web
-      arch: "linux/amd64,linux/arm64"
+      arch: "linux/amd64"
       context: static-site
-      dockerfile: Dockerfile
+      dockerfile: static-site/Dockerfile
     secrets:
         docker-hub-username: ${{ secrets.DOCKERHUB_USERNAME }}
         docker-hub-token: ${{ secrets.DOCKERHUB_TOKEN }}
