@@ -1,6 +1,6 @@
 # Build the app image without the landing page (serve it from ./static-site instead):
 #   make build LANDING_ENABLED=false
-LANDING_ENABLED ?= true
+LANDING_ENABLED ?= false
 
 .PHONY: build
 build:
