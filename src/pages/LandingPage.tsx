@@ -543,7 +543,7 @@ export default function LandingPage() {
                   <Button
                     variant="text"
                     size="small"
-                    href="https://docs.fluxsend.win"
+                    href="https://docs.fluxsend.app"
                     target="_blank"
                     rel="noreferrer"
                     onClick={() => setMobileNavOpen(false)}
@@ -624,7 +624,7 @@ export default function LandingPage() {
           <Button
             variant="text"
             size="small"
-            href="https://docs.fluxsend.win"
+            href="https://docs.fluxsend.app"
             target="_blank"
             rel="noreferrer"
             endIcon={<ArrowUpRight size={14} />}
