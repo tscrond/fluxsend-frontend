@@ -105,6 +105,37 @@
         color: var(--text);
       }
 
+      /* Domain migration notice */
+      .migrate-banner {
+        border-bottom: 1px solid var(--border);
+        background: var(--accent-soft);
+      }
+      .migrate-banner p {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 10px 24px;
+        text-align: center;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: var(--text);
+      }
+      .migrate-banner strong {
+        font-weight: 800;
+      }
+      .migrate-banner a {
+        color: var(--accent);
+        font-weight: 700;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        white-space: nowrap;
+      }
+      @media (max-width: 560px) {
+        .migrate-banner p {
+          font-size: 0.78rem;
+          padding: 8px 20px;
+        }
+      }
+
       /* Nav */
       .nav {
         position: sticky;
