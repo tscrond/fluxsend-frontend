@@ -809,22 +809,35 @@
         display: flex;
         flex-shrink: 0;
         align-items: center;
-        gap: 40px;
+        gap: 0;
         padding-right: 40px;
       }
       .ticker-track span {
+        position: relative;
         display: inline-flex;
         align-items: center;
-        gap: 14px;
+        justify-content: center;
+        padding: 0 22px;
         white-space: nowrap;
       }
+      .ticker-track span::before,
       .ticker-track span::after {
         content: '';
+        position: absolute;
+        top: 50%;
         width: 5px;
         height: 5px;
         border-radius: 50%;
         background: var(--accent);
         opacity: 0.6;
+      }
+      .ticker-track span::before {
+        left: 0;
+        transform: translate(-50%, -50%);
+      }
+      .ticker-track span::after {
+        right: 0;
+        transform: translate(50%, -50%);
       }
       .ticker:hover .ticker-track {
         animation-play-state: paused;
