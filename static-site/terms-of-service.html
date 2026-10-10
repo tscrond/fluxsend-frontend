@@ -7,10 +7,51 @@
     <meta name="description" content="FluxSend Terms of Service — the rules for using the FluxSend file sharing platform." />
     <meta name="robots" content="index, follow" />
     <title>Terms of Service — FluxSend</title>
-    <link rel="icon" type="image/png" href="/fs.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Datatype:wght@100..900&display=swap" rel="stylesheet" />
+    <link rel="canonical" href="https://fluxsend.app/legal/terms-of-service" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FluxSend" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="Terms of Service — FluxSend" />
+    <meta property="og:description" content="The rules for using the FluxSend file sharing platform." />
+    <meta property="og:url" content="https://fluxsend.app/legal/terms-of-service" />
+    <meta property="og:image" content="https://fluxsend.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Terms of Service — FluxSend" />
+    <meta name="twitter:description" content="The rules for using the FluxSend file sharing platform." />
+    <meta name="twitter:image" content="https://fluxsend.app/og-image.png" />
+
+    <link rel="icon" type="image/png" sizes="512x512" href="/fs.png" />
+    <link rel="apple-touch-icon" href="/fs.png" />
+
+    <!-- Self-hosted Datatype (variable) — removes a render-blocking third-party font request -->
+    <link rel="preload" href="/fonts/datatype-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <style>
+      @font-face {
+        font-family: 'Datatype';
+        font-style: normal;
+        font-weight: 100 900;
+        font-stretch: 100%;
+        font-display: swap;
+        src: url('/fonts/datatype-latin-ext.woff2') format('woff2');
+        unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
+      @font-face {
+        font-family: 'Datatype';
+        font-style: normal;
+        font-weight: 100 900;
+        font-stretch: 100%;
+        font-display: swap;
+        src: url('/fonts/datatype-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+    </style>
     <script>
       (function () {
         try {
@@ -103,37 +144,6 @@
         padding: 8px 14px;
         border-radius: 8px;
         color: var(--text);
-      }
-
-      /* Domain migration notice */
-      .migrate-banner {
-        border-bottom: 1px solid var(--border);
-        background: var(--accent-soft);
-      }
-      .migrate-banner p {
-        max-width: 1180px;
-        margin: 0 auto;
-        padding: 10px 24px;
-        text-align: center;
-        font-size: 0.85rem;
-        line-height: 1.5;
-        color: var(--text);
-      }
-      .migrate-banner strong {
-        font-weight: 800;
-      }
-      .migrate-banner a {
-        color: var(--accent);
-        font-weight: 700;
-        text-decoration: underline;
-        text-underline-offset: 2px;
-        white-space: nowrap;
-      }
-      @media (max-width: 560px) {
-        .migrate-banner p {
-          font-size: 0.78rem;
-          padding: 8px 20px;
-        }
       }
 
       /* Nav */
@@ -502,6 +512,30 @@
         }
       }
     </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebPage",
+            "@id": "https://fluxsend.app/legal/terms-of-service#webpage",
+            "url": "https://fluxsend.app/legal/terms-of-service",
+            "name": "Terms of Service — FluxSend",
+            "description": "The rules for using the FluxSend file sharing platform.",
+            "isPartOf": { "@id": "https://fluxsend.app/#website" },
+            "inLanguage": "en"
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://fluxsend.app/legal/terms-of-service#breadcrumb",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://fluxsend.app/" },
+              { "@type": "ListItem", "position": 2, "name": "Terms of Service", "item": "https://fluxsend.app/legal/terms-of-service" }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <a class="skip" href="#content">Skip to content</a>
@@ -513,8 +547,8 @@
           <span>FLUX<span class="accent">SEND</span></span>
         </a>
         <nav class="nav-links" aria-label="Primary">
-          <a href="privacy-policy.html">Privacy</a>
-          <a href="terms-of-service.html" class="active" aria-current="page">Terms</a>
+          <a href="privacy-policy">Privacy</a>
+          <a href="terms-of-service" class="active" aria-current="page">Terms</a>
           <a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a>
           <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle color theme">
             <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" /></svg>
@@ -555,7 +589,7 @@
           transfer platform (the "Service") — operated by Tomasz Skrond ("we", "our", or "us").
         </p>
         <p class="crosslink">
-          Please read them together with our <a href="privacy-policy.html">Privacy Policy</a>. By creating an
+          Please read them together with our <a href="privacy-policy">Privacy Policy</a>. By creating an
           account or using the Service, you agree to these Terms. If you do not agree, do not use the Service.
         </p>
 
@@ -598,7 +632,7 @@
         <h3>3.3 Account deletion</h3>
         <p>
           You may delete your account at any time from the <strong>Settings</strong> page, where you can also choose to
-          delete the files you have uploaded. See our <a href="privacy-policy.html#account-deletion">Privacy
+          delete the files you have uploaded. See our <a href="privacy-policy#account-deletion">Privacy
           Policy</a> for details on what is deleted and what may be retained after deletion.
         </p>
 
@@ -717,7 +751,7 @@
           transmit, and display your content only as needed to operate the Service — for example, to store your files, show
           previews, generate download links, and share files with recipients you choose. This licence ends when you delete
           the content or your account, except for copies retained in backups for the periods described in our
-          <a href="privacy-policy.html#retention">Privacy Policy</a>.
+          <a href="privacy-policy#retention">Privacy Policy</a>.
         </p>
 
         <h2 id="disclaimers">8. Disclaimers</h2>
@@ -780,7 +814,7 @@
         <p>
           When your account is terminated, your licence to use the Service ends and you lose access to your account and the
           files associated with it. Data is retained and deleted in accordance with our
-          <a href="privacy-policy.html">Privacy Policy</a>.
+          <a href="privacy-policy">Privacy Policy</a>.
         </p>
 
         <h2 id="service-changes">12. Changes to the Service</h2>
@@ -839,8 +873,8 @@
       <div class="footer-inner">
         <span class="brand">FLUX<span class="accent">SEND</span></span>
         <nav class="footer-links" aria-label="Footer">
-          <a href="privacy-policy.html">Privacy Policy</a>
-          <a href="terms-of-service.html">Terms of Service</a>
+          <a href="privacy-policy">Privacy Policy</a>
+          <a href="terms-of-service">Terms of Service</a>
           <a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a>
         </nav>
         <span class="copyright">© 2026 Tomasz Skrond · Self-hosted · Secure · Open source</span>

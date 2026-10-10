@@ -1,0 +1,39 @@
+# FluxSend
+
+> FluxSend is a self-hostable, open-source file sharing platform. It lets you upload,
+> store, and share files over signed links with per-file access control and
+> S3-compatible storage (S3, MinIO, Google Cloud Storage). It ships as a Docker
+> deployment and is MIT licensed.
+
+Key facts:
+
+- Category: secure file transfer / file sharing / self-hosted file storage
+- License: MIT (open source)
+- Deployment: Docker / docker compose, self-hosted
+- Storage backends: S3, MinIO, Google Cloud Storage
+- Features: file storage, targeted sharing, quick share links, received files,
+  workspaces, API keys for automation, inline file preview, private-by-default
+  downloads, usage analytics
+- Plans: Free (5 GB), Developer (50 GB), Enterprise (1 TB), Custom — assigned by
+  the instance administrator
+
+## Product
+
+- [FluxSend landing page](https://fluxsend.app/): Overview, features, demos, and plans
+- [Features](https://fluxsend.app/#features): What FluxSend can do
+- [Demos](https://fluxsend.app/#demos): Short product walkthroughs
+- [Plans](https://fluxsend.app/#plans): Storage tiers and limits
+- [FluxSend app](https://fluxsend.app/login): Sign in to or create files on a FluxSend instance (the application itself is not indexed)
+
+## Documentation
+
+- [FluxSend Docs](https://docs.fluxsend.app): Installation, configuration, and API reference
+
+## Source code
+
+- [GitHub repository](https://github.com/tscrond/fluxsend-backend): Backend, Docker files, and issues
+
+## Legal
+
+- [Privacy Policy](https://fluxsend.app/legal/privacy-policy)
+- [Terms of Service](https://fluxsend.app/legal/terms-of-service)

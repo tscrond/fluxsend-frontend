@@ -1,0 +1,9 @@
+# fluxsend.app serves both the marketing landing (/) and the FluxSend app
+# (/login, /files, ...). The landing is the indexed surface; the app shell sends
+# `noindex`, so crawling is allowed here so that directive is honored.
+#
+# The landing ships its own robots.txt (with the sitemap); this file is a
+# fallback for when the app container is reached directly.
+
+User-agent: *
+Allow: /

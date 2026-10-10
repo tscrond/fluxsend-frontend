@@ -1,0 +1,25 @@
+# https://fluxsend.app
+
+User-agent: *
+Allow: /
+
+# Explicitly welcome AI/answer engines (FluxSend is open source and docs are public).
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://fluxsend.app/sitemap.xml

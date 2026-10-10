@@ -7,16 +7,64 @@
     <meta name="theme-color" content="#0d1117" id="theme-color-meta" />
     <meta
       name="description"
-      content="FluxSend — self-hostable file transfer with signed links, per-file access control, and S3-compatible storage."
+      content="FluxSend is an open-source, self-hostable file transfer app with signed links, per-file access control, and S3-compatible storage. Deploy with Docker."
     />
     <meta name="robots" content="index, follow" />
-    <title>FluxSend — Secure file sharing, made simple.</title>
-    <link rel="icon" type="image/png" href="fs.png" />
-    <link rel="apple-touch-icon" href="fs.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>FluxSend — Self-hosted secure file sharing, made simple.</title>
+    <link rel="canonical" href="https://fluxsend.app/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FluxSend" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="FluxSend — Self-hosted secure file sharing, made simple." />
+    <meta
+      property="og:description"
+      content="Open-source, self-hostable file transfer with signed links, per-file access control, and S3-compatible storage. Deploy with Docker."
+    />
+    <meta property="og:url" content="https://fluxsend.app/" />
+    <meta property="og:image" content="https://fluxsend.app/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="FluxSend — secure file sharing, made simple." />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="FluxSend — Self-hosted secure file sharing, made simple." />
+    <meta
+      name="twitter:description"
+      content="Open-source, self-hostable file transfer with signed links, per-file access control, and S3-compatible storage."
+    />
+    <meta name="twitter:image" content="https://fluxsend.app/og-image.png" />
+    <meta name="twitter:image:alt" content="FluxSend — secure file sharing, made simple." />
+
+    <link rel="icon" type="image/png" sizes="512x512" href="/fs.png" />
+    <link rel="apple-touch-icon" href="/fs.png" />
+
+    <!-- Self-hosted Datatype (variable) — removes a render-blocking third-party font request -->
+    <link rel="preload" href="/fonts/datatype-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preconnect" href="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Datatype:wght@100..900&display=swap" rel="stylesheet" />
+    <style>
+      @font-face {
+        font-family: 'Datatype';
+        font-style: normal;
+        font-weight: 100 900;
+        font-stretch: 100%;
+        font-display: swap;
+        src: url('/fonts/datatype-latin-ext.woff2') format('woff2');
+        unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
+      @font-face {
+        font-family: 'Datatype';
+        font-style: normal;
+        font-weight: 100 900;
+        font-stretch: 100%;
+        font-display: swap;
+        src: url('/fonts/datatype-latin.woff2') format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+    </style>
     <script>
       (function () {
         var theme = 'dark';
@@ -291,42 +339,6 @@
       html[data-theme='dark'] .i-sun,
       html[data-theme='light'] .i-moon {
         display: none;
-      }
-
-      /* ── Migration notice ──────────────────────────────────────────────── */
-      .migrate-banner {
-        position: relative;
-        z-index: 101;
-        border-bottom: 1px solid var(--line);
-        background: var(--accent-wash);
-      }
-      .migrate-banner p {
-        padding-top: 10px;
-        padding-bottom: 10px;
-        text-align: center;
-        font-size: 0.85rem;
-        line-height: 1.45;
-        color: var(--ink);
-      }
-      .migrate-banner strong {
-        font-weight: 700;
-      }
-      .migrate-banner a {
-        color: var(--accent-2);
-        font-weight: 700;
-        text-decoration: underline;
-        text-underline-offset: 2px;
-        white-space: nowrap;
-      }
-      .migrate-banner a:hover {
-        color: var(--accent);
-      }
-      @media (max-width: 560px) {
-        .migrate-banner p {
-          padding-top: 8px;
-          padding-bottom: 8px;
-          font-size: 0.78rem;
-        }
       }
 
       /* ── Header ────────────────────────────────────────────────────────── */
@@ -1403,6 +1415,51 @@
         }
       }
     </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://fluxsend.app/#organization",
+            "name": "FluxSend",
+            "url": "https://fluxsend.app/",
+            "logo": "https://fluxsend.app/fs.png",
+            "sameAs": [
+              "https://github.com/tscrond/fluxsend-backend",
+              "https://docs.fluxsend.app"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://fluxsend.app/#website",
+            "url": "https://fluxsend.app/",
+            "name": "FluxSend",
+            "description": "Self-hostable, open-source file sharing with signed links, per-file access control, and S3-compatible storage.",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://fluxsend.app/#organization" }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://fluxsend.app/#software",
+            "name": "FluxSend",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web, Docker, Linux, macOS, Windows",
+            "url": "https://fluxsend.app/",
+            "description": "FluxSend is a self-hostable, open-source file sharing platform for uploading, storing, and sharing files with signed links, per-file access control, and S3-compatible storage.",
+            "license": "https://opensource.org/licenses/MIT",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "description": "Free tier with 5 GB storage; higher tiers are assigned by the instance administrator."
+            },
+            "publisher": { "@id": "https://fluxsend.app/#organization" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -1411,7 +1468,7 @@
          separately. Empty string = same origin.
          <script>window.FLUXSEND_CONFIG = { appUrl: "https://app.fluxsend.app" };</script> -->
     <script>
-      window.FLUXSEND_CONFIG = { appUrl: 'https://fluxsend.app' };
+      window.FLUXSEND_CONFIG = { appUrl: '' };
     </script>
 
     <header class="site-head">
@@ -1425,8 +1482,8 @@
           <a href="#features">Features</a>
           <a href="#demos">Demos</a>
           <a href="#plans">Plans</a>
-          <a href="/legal/privacy-policy.html">Privacy</a>
-          <a href="/legal/terms-of-service.html">Terms</a>
+          <a href="/legal/privacy-policy">Privacy</a>
+          <a href="/legal/terms-of-service">Terms</a>
         </nav>
 
         <div class="head-actions">
@@ -1458,8 +1515,8 @@
             <li><a href="#plans">Plans</a></li>
             <li><a href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Docs</a></li>
             <li><a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a></li>
-            <li><a href="/legal/privacy-policy.html">Privacy</a></li>
-            <li><a href="/legal/terms-of-service.html">Terms</a></li>
+            <li><a href="/legal/privacy-policy">Privacy</a></li>
+            <li><a href="/legal/terms-of-service">Terms</a></li>
             <li><a href="/login" data-app-link="/login">Sign in</a></li>
           </ul>
         </div>
@@ -1694,7 +1751,7 @@
               </div>
               <div class="demo-body">
                 <div class="frame">
-                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/workspaces.webm" muted loop playsinline preload="metadata"></video>
+                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/workspaces.webm" poster="/posters/workspaces.jpg" muted loop playsinline preload="metadata"></video>
                   <button class="frame-play" type="button" data-play="Workspace Tour" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/workspaces.webm">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
                     Watch
@@ -1714,7 +1771,7 @@
               </div>
               <div class="demo-body">
                 <div class="frame">
-                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/file-sharing.webm" muted loop playsinline preload="metadata"></video>
+                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/file-sharing.webm" poster="/posters/file-sharing.jpg" muted loop playsinline preload="metadata"></video>
                   <button class="frame-play" type="button" data-play="File Sharing Flow" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/file-sharing.webm">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
                     Watch
@@ -1734,7 +1791,7 @@
               </div>
               <div class="demo-body">
                 <div class="frame">
-                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/quickshare.webm" muted loop playsinline preload="metadata"></video>
+                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/quickshare.webm" poster="/posters/quickshare.jpg" muted loop playsinline preload="metadata"></video>
                   <button class="frame-play" type="button" data-play="Quick Share Links" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/quickshare.webm">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
                     Watch
@@ -1754,7 +1811,7 @@
               </div>
               <div class="demo-body">
                 <div class="frame">
-                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/api-keys.webm" muted loop playsinline preload="metadata"></video>
+                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/api-keys.webm" poster="/posters/api-keys.jpg" muted loop playsinline preload="metadata"></video>
                   <button class="frame-play" type="button" data-play="API Key Automation" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/api-keys.webm">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
                     Watch
@@ -1774,7 +1831,7 @@
               </div>
               <div class="demo-body">
                 <div class="frame">
-                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/stats.webm" muted loop playsinline preload="metadata"></video>
+                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/stats.webm" poster="/posters/stats.jpg" muted loop playsinline preload="metadata"></video>
                   <button class="frame-play" type="button" data-play="Analytics" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/stats.webm">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
                     Watch
@@ -1939,8 +1996,8 @@
           <li><a href="#plans">Plans</a></li>
           <li><a href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Docs</a></li>
           <li><a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a></li>
-          <li><a href="/legal/privacy-policy.html" data-app-link="/legal/privacy-policy.html">Privacy</a></li>
-          <li><a href="/legal/terms-of-service.html" data-app-link="/legal/terms-of-service.html">Terms</a></li>
+          <li><a href="/legal/privacy-policy">Privacy</a></li>
+          <li><a href="/legal/terms-of-service">Terms</a></li>
         </ul>
         <p class="foot-meta">
           <span>Self-hosted · Secure · Open source</span>
