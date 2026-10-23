@@ -415,6 +415,30 @@
         color: var(--ink);
       }
 
+      .theme-button {
+        width: 44px;
+        justify-content: center;
+        padding: 0;
+      }
+
+      .theme-icon {
+        display: block;
+        width: 18px;
+        height: 18px;
+      }
+
+      .theme-icon--moon {
+        display: none;
+      }
+
+      html[data-theme='light'] .theme-icon--sun {
+        display: none;
+      }
+
+      html[data-theme='light'] .theme-icon--moon {
+        display: block;
+      }
+
       .nav-tools {
         display: none;
         align-items: center;
@@ -497,6 +521,7 @@
         z-index: 90;
         display: grid;
         align-content: center;
+        overflow-y: auto;
         padding: 112px 24px 48px;
         background: var(--paper);
         background: color-mix(in srgb, var(--paper) 94%, transparent);
@@ -544,6 +569,7 @@
       .mobile-nav.open li:nth-child(4) { transition-delay: 180ms; }
       .mobile-nav.open li:nth-child(5) { transition-delay: 220ms; }
       .mobile-nav.open li:nth-child(6) { transition-delay: 260ms; }
+      .mobile-nav.open li:nth-child(7) { transition-delay: 300ms; }
 
       .mobile-nav a {
         display: flex;
@@ -562,6 +588,13 @@
         color: var(--accent);
         font-size: 1.5rem;
         font-weight: 450;
+      }
+
+      .mobile-theme {
+        width: 44px;
+        height: 44px;
+        margin: 20px auto 0;
+        border: 1px solid var(--line);
       }
 
       .hero {
@@ -1623,13 +1656,21 @@
           <a href="#features">Features</a>
           <a href="#demos">Demos</a>
           <a href="#plans">Plans</a>
+          <a href="#faq">FAQ</a>
         </nav>
 
         <div class="nav-tools">
           <a href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Docs</a>
           <a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a>
-          <button class="theme-button" type="button" data-theme-toggle>
-            <span class="theme-label">Dark</span>
+          <button class="theme-button" type="button" data-theme-toggle aria-label="Switch to light theme">
+            <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3.5" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" />
+            </svg>
+            <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20.7 15.2A8.5 8.5 0 0 1 8.8 3.3 8.5 8.5 0 1 0 20.7 15.2Z" />
+            </svg>
+            <span class="theme-label sr-only">Light</span>
           </button>
           <a class="nav-cta" href="/login" data-app-link="/login">Sign in</a>
         </div>
@@ -1646,12 +1687,20 @@
         <li><a href="#features">Features</a></li>
         <li><a href="#demos">Demos</a></li>
         <li><a href="#plans">Plans</a></li>
+        <li><a href="#faq">FAQ</a></li>
         <li><a href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Docs</a></li>
         <li><a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a></li>
         <li><a href="/login" data-app-link="/login">Sign in</a></li>
       </ul>
-      <button class="theme-button mobile-theme" type="button" data-theme-toggle>
-        <span class="theme-label">Dark</span>
+      <button class="theme-button mobile-theme" type="button" data-theme-toggle aria-label="Switch to light theme">
+        <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3.5" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" />
+        </svg>
+        <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.7 15.2A8.5 8.5 0 0 1 8.8 3.3 8.5 8.5 0 1 0 20.7 15.2Z" />
+        </svg>
+        <span class="theme-label sr-only">Light</span>
       </button>
     </nav>
 
@@ -1993,7 +2042,7 @@
         </div>
       </section>
 
-      <section class="section" aria-labelledby="faq-title">
+      <section class="section" id="faq" aria-labelledby="faq-title">
         <div class="wrap faq-layout">
           <div class="reveal">
             <h2 id="faq-title">Questions worth asking before you hand over a file.</h2>
