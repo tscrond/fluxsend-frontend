@@ -648,7 +648,6 @@
         display: grid;
         gap: 16px;
         padding: 0 24px 32px 0;
-        perspective: 1200px;
       }
 
       .hero-visual::before {
@@ -662,7 +661,7 @@
       .transfer-effect {
         position: relative;
         width: 100%;
-        max-width: 600px;
+        max-width: 560px;
         aspect-ratio: 1;
         margin-left: auto;
         overflow: hidden;
@@ -672,32 +671,16 @@
         color: var(--line-strong);
         box-shadow: 0 32px 64px -40px var(--shadow);
         isolation: isolate;
-        transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
-        transform-style: preserve-3d;
-        transition: transform 600ms var(--ease);
-        will-change: transform;
       }
 
-      .transfer-effect::before,
-      .transfer-effect::after {
+      .transfer-effect::before {
         content: '';
         position: absolute;
         z-index: 2;
         pointer-events: none;
-      }
-
-      .transfer-effect::before {
         inset: 16px;
         border: 1px solid var(--line);
         border-radius: 16px;
-      }
-
-      .transfer-effect::after {
-        top: 0;
-        left: 50%;
-        width: 1px;
-        height: 20%;
-        background: var(--line);
       }
 
       .effect-lines {
@@ -718,31 +701,6 @@
 
       .effect-ring-faint {
         opacity: 0.48;
-      }
-
-      .effect-ring-ticked {
-        stroke-dasharray: 2 12;
-        opacity: 0.8;
-      }
-
-      .effect-sweep {
-        fill: none;
-        stroke: var(--accent);
-        stroke-dasharray: 118 1230;
-        stroke-linecap: round;
-        stroke-width: 2;
-        transform-origin: 320px 320px;
-        animation: effect-orbit 14s linear infinite;
-      }
-
-      .effect-orbit-label {
-        fill: var(--muted);
-        font-family: var(--font-brand);
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.16em;
-        transform-origin: 320px 320px;
-        animation: effect-orbit 48s linear infinite reverse;
       }
 
       .effect-route {
@@ -865,12 +823,6 @@
 
       .effect-legend span:last-child {
         flex-direction: row-reverse;
-      }
-
-      @keyframes effect-orbit {
-        to {
-          transform: rotate(360deg);
-        }
       }
 
       .hero-caption {
@@ -1484,7 +1436,11 @@
         }
 
         .hero {
-          padding-top: 64px;
+          padding: 56px 0 72px;
+        }
+
+        .hero-grid {
+          gap: 48px;
         }
 
         .hero-actions .btn-primary {
@@ -1492,12 +1448,61 @@
         }
 
         .hero-visual {
-          padding-right: 16px;
-          padding-bottom: 24px;
+          width: min(100%, 360px);
+          margin-inline: auto;
+          padding: 0 0 20px;
         }
 
         .hero-visual::before {
-          inset: 16px 0 0 16px;
+          inset: 12px 0 0 12px;
+          border-radius: 20px;
+        }
+
+        .transfer-effect {
+          border-radius: 20px;
+        }
+
+        .transfer-effect::before {
+          inset: 10px;
+          border-radius: 12px;
+        }
+
+        .effect-grid {
+          opacity: 0.28;
+        }
+
+        .effect-core {
+          width: 48%;
+          gap: 9px;
+        }
+
+        .effect-status {
+          gap: 4px;
+          font-size: 0.625rem;
+          letter-spacing: 0.07em;
+        }
+
+        .effect-wordmark {
+          font-size: clamp(1.9rem, 11vw, 2.8rem);
+        }
+
+        .effect-path-label {
+          font-size: 0.5625rem;
+          letter-spacing: 0.08em;
+        }
+
+        .effect-legend {
+          right: 7%;
+          bottom: 6%;
+          left: 7%;
+          font-size: 0.625rem;
+        }
+
+        .hero-caption {
+          grid-template-columns: 1fr;
+          gap: 4px;
+          margin-top: 8px;
+          font-size: 0.8125rem;
         }
 
         .statement,
@@ -1545,15 +1550,6 @@
           opacity: 1;
           transform: none;
           filter: none;
-        }
-
-        .transfer-effect {
-          transform: none;
-        }
-
-        .effect-orbit-label,
-        .effect-sweep {
-          animation: none;
         }
 
         .effect-packet {
@@ -1681,36 +1677,18 @@
           </div>
 
           <figure class="hero-visual">
-            <div class="transfer-effect" data-transfer-effect aria-hidden="true">
+            <div class="transfer-effect" aria-hidden="true">
               <svg class="effect-lines" viewBox="0 0 640 640" focusable="false">
                 <defs>
                   <pattern id="effect-grid-pattern" width="32" height="32" patternUnits="userSpaceOnUse">
                     <path d="M32 0H0V32" fill="none" stroke="currentColor" stroke-opacity="0.22" stroke-width="1" />
                   </pattern>
-                  <path
-                    id="effect-label-path"
-                    d="M 320,320 m -236,0 a 236,236 0 1,1 472,0 a 236,236 0 1,1 -472,0"
-                    fill="none"
-                  />
                 </defs>
 
                 <rect class="effect-grid" width="640" height="640" fill="url(#effect-grid-pattern)" />
 
-                <circle class="effect-ring effect-ring-faint" cx="320" cy="320" r="250" />
-                <circle class="effect-ring effect-ring-ticked" cx="320" cy="320" r="224" />
-                <circle class="effect-ring effect-ring-faint" cx="320" cy="320" r="176" />
-                <circle class="effect-sweep" cx="320" cy="320" r="212" />
-
-                <g class="effect-orbit-label">
-                  <text>
-                    <textPath href="#effect-label-path" startOffset="4%">
-                      PRIVATE TRANSFER &#183; YOUR STORAGE &#183; SIGNED LINKS &#183; PRIVATE TRANSFER &#183; YOUR STORAGE
-                    </textPath>
-                  </text>
-                </g>
-
-                <path class="effect-route" d="M70 320 C180 320 198 212 320 212 S460 320 570 320" />
-                <path class="effect-route" d="M320 70 C320 174 212 202 212 320 S320 466 320 570" />
+                <circle class="effect-ring effect-ring-faint" cx="320" cy="320" r="212" />
+                <path class="effect-route" d="M70 320H570" />
 
                 <circle cx="70" cy="320" r="9" class="effect-node" />
                 <circle cx="70" cy="320" r="3" class="effect-node-core" />
@@ -1719,9 +1697,9 @@
 
                 <circle class="effect-packet" r="5">
                   <animateMotion
-                    dur="5.6s"
+                    dur="7s"
                     repeatCount="indefinite"
-                    path="M70 320 C180 320 198 212 320 212 S460 320 570 320"
+                    path="M70 320H570"
                   />
                 </circle>
               </svg>
@@ -2111,7 +2089,6 @@
         var root = document.documentElement;
         var config = window.FLUXSEND_CONFIG || {};
         var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
         var themeMeta = document.getElementById('theme-color-meta');
 
         if (config.appUrl) {
@@ -2142,37 +2119,6 @@
           });
         });
         applyThemeLabel();
-
-        var transferEffect = document.querySelector('[data-transfer-effect]');
-        if (transferEffect && canHover && !reduceMotion) {
-          var tiltFrame = 0;
-          var tiltX = 0;
-          var tiltY = 0;
-
-          var resetTilt = function () {
-            tiltX = 0;
-            tiltY = 0;
-            if (tiltFrame) return;
-            tiltFrame = requestAnimationFrame(function () {
-              transferEffect.style.setProperty('--tilt-x', tiltX + 'deg');
-              transferEffect.style.setProperty('--tilt-y', tiltY + 'deg');
-              tiltFrame = 0;
-            });
-          };
-
-          transferEffect.addEventListener('pointermove', function (event) {
-            var rect = transferEffect.getBoundingClientRect();
-            tiltY = ((event.clientX - rect.left) / rect.width - 0.5) * 7;
-            tiltX = ((event.clientY - rect.top) / rect.height - 0.5) * -7;
-            if (tiltFrame) return;
-            tiltFrame = requestAnimationFrame(function () {
-              transferEffect.style.setProperty('--tilt-x', tiltX + 'deg');
-              transferEffect.style.setProperty('--tilt-y', tiltY + 'deg');
-              tiltFrame = 0;
-            });
-          });
-          transferEffect.addEventListener('pointerleave', resetTilt);
-        }
 
         var menu = document.getElementById('mobile-nav');
         var menuToggle = document.getElementById('menu-toggle');
