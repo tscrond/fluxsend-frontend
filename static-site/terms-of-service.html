@@ -536,6 +536,7 @@
         ]
       }
     </script>
+    <link rel="stylesheet" href="/legal.css" />
   </head>
   <body>
     <a class="skip" href="#content">Skip to content</a>
@@ -885,6 +886,16 @@
       (function () {
         var button = document.querySelector('[data-theme-toggle]');
         if (!button) return;
+        var themeMeta = document.querySelector('meta[name="theme-color"]');
+        function syncThemeColor() {
+          if (themeMeta) {
+            themeMeta.setAttribute(
+              'content',
+              document.documentElement.getAttribute('data-theme') === 'light' ? '#f6f8fa' : '#0d1117'
+            );
+          }
+        }
+        syncThemeColor();
         button.addEventListener('click', function () {
           var root = document.documentElement;
           var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
@@ -892,6 +903,7 @@
           try {
             localStorage.setItem('theme-mode', next);
           } catch (e) {}
+          syncThemeColor();
         });
       })();
     </script>

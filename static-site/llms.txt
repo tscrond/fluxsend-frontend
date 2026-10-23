@@ -14,8 +14,9 @@ Key facts:
 - Features: file storage, targeted sharing, quick share links, received files,
   workspaces, API keys for automation, inline file preview, private-by-default
   downloads, usage analytics
-- Plans: Free (5 GB), Developer (50 GB), Enterprise (1 TB), Custom — assigned by
-  the instance administrator
+- Plans: Free (5 GB), Developer (50 GB), Enterprise (1 TB), Custom. The hosted
+  SaaS instance offers these tiers; paid pricing and online billing are planned.
+  Self-hosted instances assign plans through their administrator.
 
 ## Product
 

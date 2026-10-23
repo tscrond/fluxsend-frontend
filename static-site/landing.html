@@ -7,44 +7,52 @@
     <meta name="theme-color" content="#0d1117" id="theme-color-meta" />
     <meta
       name="description"
-      content="FluxSend is an open-source, self-hostable file transfer app with signed links, per-file access control, and S3-compatible storage. Deploy with Docker."
+      content="FluxSend is open source file sharing for teams that keep files in their own MinIO, S3, or Google Cloud Storage."
     />
     <meta name="robots" content="index, follow" />
-    <title>FluxSend — Self-hosted secure file sharing, made simple.</title>
+    <title>FluxSend | Private file sharing on your infrastructure</title>
     <link rel="canonical" href="https://fluxsend.app/" />
 
-    <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="FluxSend" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:title" content="FluxSend — Self-hosted secure file sharing, made simple." />
+    <meta property="og:title" content="FluxSend | Private file sharing on your infrastructure" />
     <meta
       property="og:description"
-      content="Open-source, self-hostable file transfer with signed links, per-file access control, and S3-compatible storage. Deploy with Docker."
+      content="Open source file sharing with workspaces, scoped API keys, expiring share links, and storage you control."
     />
     <meta property="og:url" content="https://fluxsend.app/" />
     <meta property="og:image" content="https://fluxsend.app/og-image.png" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="FluxSend — secure file sharing, made simple." />
+    <meta property="og:image:alt" content="FluxSend secure file sharing" />
 
-    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="FluxSend — Self-hosted secure file sharing, made simple." />
+    <meta name="twitter:title" content="FluxSend | Private file sharing on your infrastructure" />
     <meta
       name="twitter:description"
-      content="Open-source, self-hostable file transfer with signed links, per-file access control, and S3-compatible storage."
+      content="Open source file sharing with workspaces, scoped API keys, expiring share links, and storage you control."
     />
     <meta name="twitter:image" content="https://fluxsend.app/og-image.png" />
-    <meta name="twitter:image:alt" content="FluxSend — secure file sharing, made simple." />
+    <meta name="twitter:image:alt" content="FluxSend secure file sharing" />
 
     <link rel="icon" type="image/png" sizes="512x512" href="/fs.png" />
     <link rel="apple-touch-icon" href="/fs.png" />
-
-    <!-- Self-hosted Datatype (variable) — removes a render-blocking third-party font request -->
     <link rel="preload" href="/fonts/datatype-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preconnect" href="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com" />
+
+    <script>
+      (function () {
+        var theme = 'dark';
+        try {
+          var stored = localStorage.getItem('theme-mode');
+          if (stored === 'light' || stored === 'dark') theme = stored;
+        } catch (e) {}
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.classList.add('js');
+      })();
+    </script>
+
     <style>
       @font-face {
         font-family: 'Datatype';
@@ -64,24 +72,41 @@
         src: url('/fonts/datatype-latin.woff2') format('woff2');
         unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
-    </style>
-    <script>
-      (function () {
-        var theme = 'dark';
-        try {
-          var stored = localStorage.getItem('theme-mode');
-          if (stored === 'light' || stored === 'dark') theme = stored;
-        } catch (e) {}
-        document.documentElement.setAttribute('data-theme', theme);
-      })();
-    </script>
-    <style>
-      /* ── Tokens ────────────────────────────────────────────────────────── */
+
       :root {
+        color-scheme: light;
+        --font-brand: 'Datatype', system-ui, -apple-system, sans-serif;
         --accent: #6366f1;
+        --accent-2: #4f46e5;
+        --accent-3: #4f46e5;
+        --accent-btn: #4f46e5;
+        --accent-btn-hover: #4338ca;
+        --ok: #1a7f37;
+        --edge: #848d99;
+        --bg: #f6f8fa;
+        --panel: #ffffff;
+        --panel-2: #f6f8fa;
+        --line: #d0d7de;
+        --line-2: #e6eaf0;
+        --ink: #1f2328;
+        --ink-2: #57606a;
+        --ink-3: #656d76;
+        --accent-wash: rgba(99, 102, 241, 0.08);
+        --paper: var(--bg);
+        --surface: var(--panel);
+        --surface-2: var(--panel-2);
+        --muted: var(--ink-2);
+        --line-strong: var(--edge);
+        --accent-deep: var(--accent-2);
+        --cta: var(--accent-btn);
+        --cta-hover: var(--accent-btn-hover);
+        --cta-ink: #ffffff;
+        --focus: var(--accent-2);
+        --shadow: rgba(2, 6, 23, 0.22);
         --maxw: 1240px;
-        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+        --ease: cubic-bezier(0.32, 0.72, 0, 1);
       }
+
       html[data-theme='dark'] {
         color-scheme: dark;
         --accent-2: #818cf8;
@@ -91,7 +116,6 @@
         --ok: #3fb950;
         --edge: #59636e;
         --bg: #0d1117;
-        --bg-veil: rgba(13, 17, 23, 0.86);
         --panel: #10161e;
         --panel-2: #0b1017;
         --line: #30363d;
@@ -99,131 +123,104 @@
         --ink: #e6edf3;
         --ink-2: #8b949e;
         --ink-3: #7d8590;
-        --grid: rgba(230, 237, 243, 0.035);
-        --glow: rgba(99, 102, 241, 0.22);
-        --hero-bg-start: rgba(18, 22, 35, 0.92);
-        --hero-bg-mid: rgba(23, 27, 42, 0.84);
-        --hero-bg-end: rgba(10, 13, 20, 0.5);
-        --hero-glow: rgba(99, 102, 241, 0.32);
-        --hero-glow-soft: rgba(99, 102, 241, 0.12);
-        --hero-overlay-start: rgba(13, 17, 23, 0.12);
-        --hero-overlay-end: rgba(13, 17, 23, 0.18);
         --accent-wash: rgba(99, 102, 241, 0.12);
-        --hover: rgba(177, 186, 196, 0.07);
-        --grain: 0.05;
-      }
-      html[data-theme='light'] {
-        color-scheme: light;
-        --accent-2: #4f46e5;
-        --accent-3: #4f46e5;
-        --accent-btn: #4f46e5;
-        --accent-btn-hover: #4338ca;
-        --ok: #1a7f37;
-        --edge: #848d99;
-        --bg: #f6f8fa;
-        --bg-veil: rgba(246, 248, 250, 0.88);
-        --panel: #ffffff;
-        --panel-2: #f6f8fa;
-        --line: #d0d7de;
-        --line-2: #e6eaf0;
-        --ink: #1f2328;
-        --ink-2: #57606a;
-        --ink-3: #656d76;
-        --grid: rgba(31, 35, 40, 0.05);
-        --glow: rgba(99, 102, 241, 0.14);
-        --hero-bg-start: rgba(235, 240, 250, 0.96);
-        --hero-bg-mid: rgba(245, 247, 252, 0.88);
-        --hero-bg-end: rgba(248, 250, 255, 0.72);
-        --hero-glow: rgba(99, 102, 241, 0.2);
-        --hero-glow-soft: rgba(99, 102, 241, 0.08);
-        --hero-overlay-start: rgba(255, 255, 255, 0.14);
-        --hero-overlay-end: rgba(255, 255, 255, 0.28);
-        --accent-wash: rgba(99, 102, 241, 0.08);
-        --hover: rgba(31, 35, 40, 0.05);
-        --grain: 0.035;
+        --shadow: rgba(2, 6, 23, 0.72);
       }
 
-      /* ── Base ──────────────────────────────────────────────────────────── */
       *,
       *::before,
       *::after {
         box-sizing: border-box;
       }
+
       html {
         scroll-behavior: smooth;
+        scroll-padding-top: 112px;
         -webkit-text-size-adjust: 100%;
-        scroll-padding-top: 96px;
+        font-family: var(--font-brand);
       }
+
       body {
         margin: 0;
         overflow-x: hidden;
-        background: var(--bg);
+        background: var(--paper);
         color: var(--ink);
-        font-family: 'Datatype', system-ui, -apple-system, sans-serif;
+        font-family: var(--font-brand);
+        font-size: 1rem;
         font-weight: 500;
-        font-size: 16px;
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        -webkit-tap-highlight-color: transparent;
       }
-      /* Blueprint grid + film grain, both purely decorative */
-      body::before,
-      body::after {
-        content: '';
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
+
+      body.menu-open {
+        overflow: hidden;
       }
-      body::before {
-        background-image: linear-gradient(var(--grid) 1px, transparent 1px),
-          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-        background-size: 72px 72px;
+
+      img {
+        display: block;
+        max-width: 100%;
+        height: auto;
       }
-      body::after {
-        opacity: var(--grain);
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
-      }
-      main,
-      .site-head,
-      .site-foot {
-        position: relative;
-        z-index: 1;
-      }
-      img,
-      svg,
-      video {
+
+      video,
+      svg {
         display: block;
         max-width: 100%;
       }
+
       a {
-        color: var(--accent-2);
-        text-decoration: none;
+        color: inherit;
       }
+
+      h1,
+      h2,
+      h3,
+      p,
+      figure,
+      dl,
+      dd {
+        margin: 0;
+      }
+
       h1,
       h2,
       h3 {
-        margin: 0;
-        font-weight: 800;
-        line-height: 1.06;
-        letter-spacing: -0.035em;
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -0.045em;
         text-wrap: balance;
       }
+
+      h2 {
+        max-width: 18ch;
+        font-size: clamp(2.5rem, 5vw, 4.5rem);
+      }
+
+      h3 {
+        font-size: 1.5rem;
+        letter-spacing: -0.03em;
+      }
+
       p {
-        margin: 0;
         text-wrap: pretty;
-        overflow-wrap: break-word;
       }
-      :focus-visible {
-        outline: 2px solid var(--accent-2);
-        outline-offset: 3px;
-        border-radius: 3px;
-      }
+
       ::selection {
         background: var(--accent);
-        color: #fff;
+        color: var(--surface);
       }
+
+      :focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 4px;
+      }
+
+      .wrap {
+        width: min(100% - 48px, var(--maxw));
+        margin: 0 auto;
+      }
+
       .sr-only {
         position: absolute;
         width: 1px;
@@ -235,1088 +232,1306 @@
         white-space: nowrap;
         border: 0;
       }
+
       .skip {
-        position: absolute;
-        left: 12px;
-        top: -60px;
-        z-index: 200;
-        padding: 10px 16px;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        background: var(--panel);
-        color: var(--ink);
-        font-size: 0.85rem;
-        font-weight: 700;
-        transition: top 0.18s ease;
-      }
-      .skip:focus {
+        position: fixed;
         top: 12px;
-      }
-      .wrap {
-        width: 100%;
-        max-width: var(--maxw);
-        margin: 0 auto;
-        padding: 0 24px;
-      }
-      .mono {
-        font-family: var(--mono);
-        font-size: 0.68rem;
+        left: 12px;
+        z-index: 300;
+        min-height: 44px;
+        padding: 8px 12px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink);
+        font-size: 0.875rem;
         font-weight: 600;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-      }
-      .num {
-        font-variant-numeric: tabular-nums;
-      }
-      .accent {
-        color: var(--accent);
+        transform: translateY(-160%);
+        transition: transform 240ms var(--ease);
       }
 
-      /* ── Buttons ───────────────────────────────────────────────────────── */
+      .skip:focus {
+        transform: none;
+      }
+
       .btn {
         display: inline-flex;
+        min-height: 48px;
         align-items: center;
         justify-content: center;
-        gap: 9px;
-        min-height: 44px;
-        padding: 13px 22px;
+        gap: 8px;
+        padding: 8px 12px;
         border: 1px solid transparent;
-        border-radius: 4px;
-        font-family: inherit;
-        font-size: 0.9rem;
-        font-weight: 700;
-        letter-spacing: -0.01em;
-        line-height: 1;
-        cursor: pointer;
-        touch-action: manipulation;
-        transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
-      }
-      .btn:hover {
+        border-radius: 8px;
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        font-size: 1rem;
+        font-weight: 650;
+        line-height: 1.2;
         text-decoration: none;
-      }
-      .btn-primary {
-        background: var(--accent-btn);
-        color: #fff;
-      }
-      .btn-primary:hover {
-        background: var(--accent-btn-hover);
-      }
-      .btn-primary:active {
-        transform: translateY(1px);
-      }
-      .btn-ghost {
-        border-color: var(--edge);
-        color: var(--ink);
-        background: transparent;
-      }
-      .btn-ghost:hover {
-        border-color: var(--accent);
-        color: var(--accent-2);
-      }
-      .btn-sm {
-        padding: 9px 16px;
-        font-size: 0.82rem;
-      }
-      .icon-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        padding: 0;
-        border: 1px solid transparent;
-        border-radius: 4px;
-        background: transparent;
-        color: var(--ink-2);
         cursor: pointer;
         touch-action: manipulation;
-        transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
-      }
-      .icon-btn:hover {
-        background: var(--hover);
-        color: var(--ink);
-      }
-      html[data-theme='dark'] .i-sun,
-      html[data-theme='light'] .i-moon {
-        display: none;
+        transition:
+          background-color 240ms var(--ease),
+          border-color 240ms var(--ease),
+          color 240ms var(--ease),
+          transform 240ms var(--ease);
       }
 
-      /* ── Header ────────────────────────────────────────────────────────── */
-      .site-head {
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .btn:active {
+        transform: translateY(1px) scale(0.98);
+      }
+
+      .btn-primary {
+        min-width: 176px;
+        padding-inline: 24px;
+        background: var(--cta);
+        color: var(--cta-ink);
+      }
+
+      .btn-primary:hover {
+        background: var(--cta-hover);
+        color: var(--cta-ink);
+      }
+
+      .btn-outline {
+        border-color: var(--line-strong);
+        background: var(--surface);
+      }
+
+      .btn-outline:hover {
+        border-color: var(--accent);
+        color: var(--accent-deep);
+      }
+
+      .btn-small {
+        min-height: 44px;
+        padding: 8px 12px;
+        font-size: 0.875rem;
+      }
+
+      .text-link {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        gap: 8px;
+        color: var(--accent-deep);
+        font-size: 0.9375rem;
+        font-weight: 650;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 5px;
+        transition: color 240ms var(--ease);
+      }
+
+      .text-link:hover {
+        color: var(--ink);
+      }
+
+      .site-header {
         position: sticky;
         top: 0;
         z-index: 100;
-        border-bottom: 1px solid var(--line);
-        background: var(--bg-veil);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
+        padding: 16px 24px 0;
+        pointer-events: none;
       }
-      .head-inner {
+
+      .nav-shell {
         display: flex;
+        width: min(100%, 1180px);
+        min-height: 64px;
         align-items: center;
-        gap: 16px;
-        max-width: var(--maxw);
+        gap: 24px;
         margin: 0 auto;
-        padding: 12px 24px;
+        padding: 8px 8px 8px 20px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface);
+        background: color-mix(in srgb, var(--surface) 88%, transparent);
+        box-shadow: 0 12px 32px -24px var(--shadow);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        pointer-events: auto;
       }
+
       .brand {
         display: inline-flex;
+        min-height: 44px;
+        flex-shrink: 0;
         align-items: center;
         gap: 10px;
-        flex-shrink: 0;
         color: var(--ink);
-        font-size: 1.05rem;
-        font-weight: 800;
+        font-size: 1rem;
+        font-weight: 700;
         letter-spacing: -0.03em;
-      }
-      .brand:hover {
         text-decoration: none;
       }
+
       .brand img {
-        width: 26px;
-        height: 26px;
-        opacity: 0.92;
+        width: 28px;
+        height: 28px;
       }
-      .head-nav {
+
+      .brand-accent {
+        color: var(--accent);
+      }
+
+      .desktop-nav {
+        display: none;
+        align-items: center;
+        gap: 4px;
+        margin-left: 24px;
+      }
+
+      .desktop-nav a,
+      .nav-tools a,
+      .theme-button {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        padding: 8px 10px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+          background-color 240ms var(--ease),
+          color 240ms var(--ease);
+      }
+
+      .desktop-nav a:hover,
+      .nav-tools a:hover,
+      .theme-button:hover {
+        background: var(--surface-2);
+        color: var(--ink);
+      }
+
+      .nav-tools {
         display: none;
         align-items: center;
         gap: 2px;
-        margin-left: 26px;
-      }
-      .head-nav a {
-        padding: 8px 12px;
-        border-radius: 4px;
-        color: var(--ink-2);
-        font-size: 0.85rem;
-        font-weight: 700;
-        transition: background-color 0.18s ease, color 0.18s ease;
-      }
-      .head-nav a:hover {
-        background: var(--hover);
-        color: var(--ink);
-        text-decoration: none;
-      }
-      .head-actions {
-        display: flex;
-        align-items: center;
-        gap: 4px;
         margin-left: auto;
       }
-      .head-actions .quiet {
-        display: none;
+
+      .nav-tools .nav-cta {
+        display: inline-flex;
+        min-height: 44px;
         align-items: center;
-        gap: 6px;
-        padding: 8px 10px;
-        border-radius: 4px;
-        color: var(--ink-2);
-        font-size: 0.82rem;
-        font-weight: 700;
-        transition: color 0.18s ease, background-color 0.18s ease;
-      }
-      .head-actions .quiet:hover {
-        background: var(--hover);
-        color: var(--ink);
+        margin-left: 6px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: var(--cta);
+        color: var(--cta-ink);
+        font-size: 0.875rem;
+        font-weight: 650;
         text-decoration: none;
+        transition:
+          background-color 240ms var(--ease),
+          transform 240ms var(--ease);
       }
-      .head-actions .btn-sm {
-        display: none;
+
+      .nav-tools .nav-cta:hover {
+        background: var(--cta-hover);
+        color: var(--cta-ink);
+        transform: translateY(-1px);
       }
-      .menu-btn {
+
+      .menu-toggle {
         position: relative;
         display: inline-flex;
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        margin-left: auto;
+        padding: 0;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--ink);
+        cursor: pointer;
       }
-      .menu-btn svg {
-        transition: transform 0.25s ease, opacity 0.2s ease;
+
+      .menu-toggle:hover {
+        background: var(--surface-2);
       }
-      .menu-btn .menu-glyph-close {
+
+      .menu-toggle span {
+        position: absolute;
+        width: 18px;
+        height: 1.5px;
+        border-radius: 2px;
+        background: currentColor;
+        transition: transform 320ms var(--ease);
+      }
+
+      .menu-toggle span:first-child {
+        transform: translateY(-4px);
+      }
+
+      .menu-toggle span:last-child {
+        transform: translateY(4px);
+      }
+
+      .menu-toggle[aria-expanded='true'] span:first-child {
+        transform: rotate(45deg);
+      }
+
+      .menu-toggle[aria-expanded='true'] span:last-child {
+        transform: rotate(-45deg);
+      }
+
+      .mobile-nav {
+        position: fixed;
+        inset: 0;
+        z-index: 90;
+        display: grid;
+        align-content: center;
+        padding: 112px 24px 48px;
+        background: var(--paper);
+        background: color-mix(in srgb, var(--paper) 94%, transparent);
+        visibility: hidden;
+        opacity: 0;
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        transition:
+          opacity 320ms var(--ease),
+          visibility 0s linear 320ms;
+      }
+
+      .mobile-nav.open {
+        visibility: visible;
+        opacity: 1;
+        transition-delay: 0s;
+      }
+
+      .mobile-nav ul {
+        display: grid;
+        gap: 0;
+        width: min(100%, 520px);
+        margin: 0 auto;
+        padding: 0;
+        list-style: none;
+      }
+
+      .mobile-nav li {
+        border-bottom: 1px solid var(--line);
+        opacity: 0;
+        transform: translateY(24px);
+        transition:
+          opacity 420ms var(--ease),
+          transform 420ms var(--ease);
+      }
+
+      .mobile-nav.open li {
+        opacity: 1;
+        transform: none;
+      }
+
+      .mobile-nav.open li:nth-child(1) { transition-delay: 60ms; }
+      .mobile-nav.open li:nth-child(2) { transition-delay: 100ms; }
+      .mobile-nav.open li:nth-child(3) { transition-delay: 140ms; }
+      .mobile-nav.open li:nth-child(4) { transition-delay: 180ms; }
+      .mobile-nav.open li:nth-child(5) { transition-delay: 220ms; }
+      .mobile-nav.open li:nth-child(6) { transition-delay: 260ms; }
+
+      .mobile-nav a {
+        display: flex;
+        min-height: 72px;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--ink);
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        text-decoration: none;
+      }
+
+      .mobile-nav a::after {
+        content: '↗';
+        color: var(--accent);
+        font-size: 1.5rem;
+        font-weight: 450;
+      }
+
+      .hero {
+        overflow: clip;
+        padding: 80px 0 96px;
+      }
+
+      .hero-grid {
+        display: grid;
+        gap: 64px;
+        align-items: center;
+      }
+
+      .hero-copy {
+        max-width: 680px;
+      }
+
+      .hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 24px;
+        color: var(--accent-deep);
+        font-size: 0.875rem;
+        font-weight: 650;
+      }
+
+      .hero-kicker::before {
+        content: '';
+        width: 24px;
+        height: 1px;
+        background: currentColor;
+      }
+
+      .hero h1 {
+        max-width: 680px;
+        font-size: clamp(3rem, 6.2vw, 4.5rem);
+        line-height: 0.98;
+      }
+
+      .hero-lede {
+        max-width: 680px;
+        margin-top: 32px;
+        color: var(--muted);
+        font-size: 1.125rem;
+        line-height: 1.65;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px 24px;
+        margin-top: 32px;
+      }
+
+      .hero-proof {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 24px;
+        margin-top: 40px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+
+      .hero-proof span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .hero-proof span::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .hero-visual {
+        position: relative;
+        display: grid;
+        gap: 16px;
+        padding: 0 24px 32px 0;
+        perspective: 1200px;
+      }
+
+      .hero-visual::before {
+        content: '';
+        position: absolute;
+        inset: 24px 0 0 32px;
+        border-radius: 24px;
+        background: var(--accent-wash);
+      }
+
+      .transfer-effect {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        aspect-ratio: 1;
+        margin-left: auto;
+        overflow: hidden;
+        border: 1px solid var(--line-strong);
+        border-radius: 24px;
+        background: var(--panel);
+        color: var(--line-strong);
+        box-shadow: 0 32px 64px -40px var(--shadow);
+        isolation: isolate;
+        transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+        transform-style: preserve-3d;
+        transition: transform 600ms var(--ease);
+        will-change: transform;
+      }
+
+      .transfer-effect::before,
+      .transfer-effect::after {
+        content: '';
+        position: absolute;
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      .transfer-effect::before {
+        inset: 16px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+      }
+
+      .transfer-effect::after {
+        top: 0;
+        left: 50%;
+        width: 1px;
+        height: 20%;
+        background: var(--line);
+      }
+
+      .effect-lines {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .effect-grid {
+        opacity: 0.42;
+      }
+
+      .effect-ring {
+        fill: none;
+        stroke: currentColor;
+      }
+
+      .effect-ring-faint {
+        opacity: 0.48;
+      }
+
+      .effect-ring-ticked {
+        stroke-dasharray: 2 12;
+        opacity: 0.8;
+      }
+
+      .effect-sweep {
+        fill: none;
+        stroke: var(--accent);
+        stroke-dasharray: 118 1230;
+        stroke-linecap: round;
+        stroke-width: 2;
+        transform-origin: 320px 320px;
+        animation: effect-orbit 14s linear infinite;
+      }
+
+      .effect-orbit-label {
+        fill: var(--muted);
+        font-family: var(--font-brand);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        transform-origin: 320px 320px;
+        animation: effect-orbit 48s linear infinite reverse;
+      }
+
+      .effect-route {
+        fill: none;
+        stroke: var(--accent);
+        stroke-dasharray: 4 10;
+        stroke-linecap: round;
+        stroke-width: 1.5;
+        opacity: 0.72;
+      }
+
+      .effect-packet {
+        fill: var(--accent-2);
+      }
+
+      .effect-node {
+        fill: var(--panel);
+        stroke: var(--accent);
+        stroke-width: 2;
+      }
+
+      .effect-node-core {
+        fill: var(--accent);
+        stroke: none;
+      }
+
+      .effect-core {
         position: absolute;
         top: 50%;
         left: 50%;
-        margin: -9px 0 0 -9px;
-        opacity: 0;
-        transform: rotate(-90deg) scale(0.6);
-      }
-      .menu-btn[aria-expanded='true'] .menu-glyph {
-        opacity: 0;
-        transform: rotate(90deg) scale(0.6);
-      }
-      .menu-btn[aria-expanded='true'] .menu-glyph-close {
-        opacity: 1;
-        transform: rotate(0deg) scale(1);
-      }
-      /* Scroll progress rail — driven by CSS scroll timeline where supported */
-      .progress {
-        height: 2px;
-        background: transparent;
-      }
-      .progress span {
-        display: block;
-        height: 100%;
-        width: 100%;
-        transform: scaleX(0);
-        transform-origin: 0 50%;
-        background: var(--accent);
-      }
-      @supports (animation-timeline: scroll()) {
-        .progress span {
-          animation: progress linear both;
-          animation-duration: auto;
-          animation-timeline: scroll(root block);
-        }
-        @keyframes progress {
-          to {
-            transform: scaleX(1);
-          }
-        }
-      }
-      .mobile-menu {
+        z-index: 3;
         display: grid;
-        grid-template-rows: 0fr;
-        opacity: 0;
-        visibility: hidden;
-        transition: grid-template-rows 0.3s ease, opacity 0.24s ease, visibility 0s linear 0.3s;
-      }
-      .mobile-menu.open {
-        grid-template-rows: 1fr;
-        opacity: 1;
-        visibility: visible;
-        transition: grid-template-rows 0.3s ease, opacity 0.24s ease, visibility 0s;
-      }
-      .mobile-menu-collapse {
-        min-height: 0;
-        overflow: hidden;
-      }
-      .mobile-menu ul {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-        margin: 0;
-        padding: 12px 24px 18px;
-        list-style: none;
-        border-top: 1px solid var(--line-2);
-        transform: translateY(-6px);
-        transition: transform 0.3s ease;
-      }
-      .mobile-menu.open ul {
-        transform: none;
-      }
-      .mobile-menu a {
-        display: block;
-        padding: 12px 14px;
-        border: 1px solid var(--line);
-        border-radius: 4px;
-        color: var(--ink);
-        font-size: 0.85rem;
-        font-weight: 700;
-      }
-      .mobile-menu a:hover {
-        border-color: var(--accent);
-        color: var(--accent-2);
-        text-decoration: none;
-      }
-
-      /* ── Section scaffolding ───────────────────────────────────────────── */
-      .band {
-        position: relative;
-        padding: 72px 0;
-        scroll-margin-top: 96px;
-      }
-      .band + .band {
-        border-top: 1px solid var(--line-2);
-      }
-      .band-head {
-        display: flex;
-        align-items: baseline;
-        gap: 16px;
-        margin-bottom: 14px;
-        color: var(--ink-3);
-      }
-      .band-head .rule {
-        flex: 1;
-        height: 1px;
-        background: var(--line);
-        min-width: 20px;
-      }
-      .band h2 {
-        max-width: 22ch;
-        font-size: clamp(1.85rem, 4.4vw, 3rem);
-        margin-bottom: 14px;
-      }
-      .band-sub {
-        max-width: 56ch;
-        color: var(--ink-2);
-        line-height: 1.7;
-      }
-
-      /* ── Hero ──────────────────────────────────────────────────────────── */
-      .hero {
-        position: relative;
-        padding: 64px 0 56px;
-        overflow: hidden;
-        background: linear-gradient(
-          90deg,
-          var(--hero-bg-start) 0%,
-          var(--hero-bg-mid) 26%,
-          var(--hero-bg-end) 56%,
-          var(--bg) 100%
-        );
-      }
-      .hero::before {
-        content: '';
-        position: absolute;
-        inset: -18% -8% -12% -10%;
-        background:
-          radial-gradient(circle at 22% 32%, var(--hero-glow), transparent 34%),
-          linear-gradient(90deg, var(--hero-glow-soft), rgba(255, 255, 255, 0) 38%, transparent 62%);
-        filter: blur(28px);
-        opacity: 0.9;
-        pointer-events: none;
-      }
-      .hero::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          90deg,
-          var(--hero-overlay-start) 0%,
-          var(--hero-overlay-start) 30%,
-          transparent 55%,
-          var(--hero-overlay-end) 100%
-        );
-        pointer-events: none;
-      }
-      .hero-grid {
-        position: relative;
-        display: grid;
-        gap: 48px;
-      }
-      .kicker {
-        display: inline-flex;
-        align-items: center;
-        gap: 9px;
-        margin-bottom: 26px;
-        padding: 6px 12px 6px 10px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        color: var(--ink-2);
-        background: var(--panel-2);
-        font-family: var(--mono);
-        font-size: 0.66rem;
-        font-weight: 600;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-      }
-      .dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--ok);
-        box-shadow: 0 0 0 3px rgba(63, 185, 80, 0.22);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent);
-        flex-shrink: 0;
-      }
-      .hero h1 {
-        font-size: clamp(2.5rem, 8.2vw, 5rem);
-        line-height: 0.98;
-        letter-spacing: -0.045em;
-        margin-bottom: 26px;
-      }
-      .lede {
-        max-width: 46ch;
-        color: var(--ink-2);
-        font-size: 1.08rem;
-        line-height: 1.68;
-        margin-bottom: 32px;
-      }
-      .hero-cta {
-        display: flex;
-        flex-wrap: wrap;
+        width: 44%;
+        aspect-ratio: 1;
+        place-content: center;
+        justify-items: center;
         gap: 12px;
-        margin-bottom: 40px;
-      }
-      .stats {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1px;
-        margin: 0;
-        border: 1px solid var(--line);
-        background: var(--line);
-      }
-      .stats > div {
-        min-width: 0;
-        padding: 12px 14px;
-        background: var(--panel-2);
-      }
-      .stats dt {
-        color: var(--ink-3);
-        font-family: var(--mono);
-        font-size: 0.6rem;
-        font-weight: 600;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-      }
-      .stats dd {
-        margin: 4px 0 0;
-        font-size: 0.86rem;
-        font-weight: 700;
-        overflow-wrap: anywhere;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 999px;
+        background: var(--accent-btn);
+        color: #ffffff;
+        text-align: center;
+        transform: translate(-50%, -50%) translateZ(32px);
+        box-shadow: 0 24px 48px -28px var(--shadow);
       }
 
-      /* Transfer panel */
-      .transfer {
-        margin: 0;
+      .effect-core::before {
+        content: '';
+        position: absolute;
+        inset: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: inherit;
       }
-      .panel {
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        background: var(--panel);
-        box-shadow: 0 24px 60px -30px rgba(2, 6, 23, 0.7);
-      }
-      .panel-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 11px 16px;
-        border-bottom: 1px solid var(--line-2);
-        color: var(--ink-3);
-      }
-      .live {
+
+      .effect-status {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
-        color: var(--ok);
-        font-family: var(--mono);
-        font-size: 0.62rem;
+        gap: 6px;
+        font-size: 0.6875rem;
         font-weight: 600;
-        letter-spacing: 0.16em;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
       }
-      .transfer-body {
-        padding: 20px 16px;
+
+      .effect-status::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: #ffffff;
       }
-      .file-row {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 12px;
-      }
-      .file-name {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: 0.95rem;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-      }
-      .file-size {
-        flex-shrink: 0;
-        color: var(--ink-2);
-      }
-      .bar {
-        height: 6px;
-        margin-bottom: 8px;
-        border-radius: 99px;
-        background: var(--line-2);
-        overflow: hidden;
-      }
-      .bar span {
-        display: block;
-        width: var(--w, 0%);
-        height: 100%;
-        border-radius: 99px;
-        background: linear-gradient(90deg, var(--accent-3), var(--accent-2));
-        transform-origin: 0 50%;
-        animation: fill 1.5s cubic-bezier(0.2, 0.75, 0.2, 1) both;
-      }
-      @keyframes fill {
-        from {
-          transform: scaleX(0);
-        }
-        to {
-          transform: scaleX(1);
-        }
-      }
-      .bar-label {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 22px;
-        color: var(--ink-3);
-      }
-      .meta {
+
+      .effect-wordmark {
         display: grid;
-        gap: 1px;
-        margin: 0;
-        border: 1px solid var(--line-2);
-        background: var(--line-2);
-      }
-      .meta > div {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 9px 12px;
-        background: var(--panel-2);
-      }
-      .meta dt {
-        color: var(--ink-3);
-        font-family: var(--mono);
-        font-size: 0.6rem;
-        font-weight: 600;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-      }
-      .meta dd {
-        min-width: 0;
-        margin: 0;
-        font-size: 0.82rem;
+        font-size: clamp(2.25rem, 5vw, 3.75rem);
         font-weight: 700;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        letter-spacing: -0.06em;
+        line-height: 0.72;
       }
-      .panel-foot {
-        display: flex;
-        gap: 8px;
-        padding: 0 16px 18px;
+
+      .effect-wordmark span:last-child {
+        margin-top: 0.16em;
       }
-      .chip {
-        padding: 7px 12px;
-        border: 1px solid var(--line);
-        border-radius: 4px;
-        color: var(--ink-2);
-        font-family: var(--mono);
-        font-size: 0.62rem;
+
+      .effect-path-label {
+        font-size: 0.625rem;
         font-weight: 600;
         letter-spacing: 0.12em;
         text-transform: uppercase;
       }
-      .chip-strong {
-        border-color: var(--accent-btn);
-        color: #fff;
-        background: var(--accent-btn);
+
+      .effect-legend {
+        position: absolute;
+        right: 8%;
+        bottom: 5%;
+        left: 8%;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--accent-deep);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
       }
 
-      /* ── Ticker ────────────────────────────────────────────────────────── */
-      .ticker {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        overflow: hidden;
-        border-top: 1px solid var(--line-2);
-        border-bottom: 1px solid var(--line-2);
-        padding: 13px 0;
-        mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-        -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-      }
-      .ticker-track {
-        display: flex;
-        flex-shrink: 0;
-        width: max-content;
-        animation: slide 46s linear infinite;
-        color: var(--ink-3);
-      }
-      .ticker-group {
-        display: flex;
-        flex-shrink: 0;
-        align-items: center;
-        gap: 0;
-        padding-right: 40px;
-      }
-      .ticker-track span {
-        position: relative;
+      .effect-legend span {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        padding: 0 22px;
-        white-space: nowrap;
+        gap: 8px;
       }
-      .ticker-track span::before,
-      .ticker-track span::after {
+
+      .effect-legend span::before {
         content: '';
-        position: absolute;
-        top: 50%;
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background: var(--accent);
-        opacity: 0.6;
+        width: 16px;
+        height: 1px;
+        background: currentColor;
       }
-      .ticker-track span::before {
-        left: 0;
-        transform: translate(-50%, -50%);
+
+      .effect-legend span:last-child {
+        flex-direction: row-reverse;
       }
-      .ticker-track span::after {
-        right: 0;
-        transform: translate(50%, -50%);
-      }
-      .ticker:hover .ticker-track {
-        animation-play-state: paused;
-      }
-      @keyframes slide {
+
+      @keyframes effect-orbit {
         to {
-          transform: translateX(calc(-100% / 3));
+          transform: rotate(360deg);
         }
       }
 
-      /* ── Feature spec grid ─────────────────────────────────────────────── */
-      .specs {
-        display: grid;
-        grid-template-columns: 1fr;
-        margin-top: 40px;
-        border: 1px solid var(--line);
-        background: var(--line-2);
-        gap: 1px;
-      }
-      .spec {
-        position: relative;
-        padding: 26px 22px 24px;
-        background: var(--bg);
-        transition: background-color 0.2s ease;
-      }
-      .spec:hover {
-        background: var(--panel);
-      }
-      .spec:hover .spec-icon {
-        border-color: var(--accent);
-        color: var(--accent-2);
-      }
-      .spec-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 20px;
-      }
-      .spec-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 34px;
-        height: 34px;
-        border: 1px solid var(--line);
-        border-radius: 4px;
-        color: var(--ink-2);
-        transition: border-color 0.2s ease, color 0.2s ease;
-      }
-      .spec-icon svg {
-        width: 17px;
-        height: 17px;
-      }
-      .spec-index {
-        color: var(--ink-3);
-        font-family: var(--mono);
-        font-size: 0.66rem;
-        font-weight: 600;
-        letter-spacing: 0.16em;
-      }
-      .spec h3 {
-        margin-bottom: 8px;
-        font-size: 1rem;
-        letter-spacing: -0.02em;
-      }
-      .spec p {
-        color: var(--ink-2);
-        font-size: 0.875rem;
-        line-height: 1.65;
-      }
-
-      /* ── Demos ─────────────────────────────────────────────────────────── */
-      .rail-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 18px;
-      }
-      .rail-buttons {
-        display: none;
-        gap: 8px;
-      }
-      .rail {
-        display: flex;
-        gap: 20px;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        padding: 4px 0 14px;
-        scrollbar-width: none;
-      }
-      .rail::-webkit-scrollbar {
-        display: none;
-      }
-      .demo {
-        flex: 0 0 auto;
-        width: 88%;
-        scroll-snap-align: start;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        background: var(--panel);
-        overflow: hidden;
-        transition: border-color 0.22s ease;
-      }
-      .demo.is-active {
-        border-color: var(--accent);
-      }
-      .demo-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 14px;
-        border-bottom: 1px solid var(--line-2);
-        color: var(--ink-3);
-      }
-      .demo-body {
-        padding: 14px;
-      }
-      .frame {
-        position: relative;
-        aspect-ratio: 16 / 9;
-        border: 1px solid var(--line-2);
-        border-radius: 4px;
-        overflow: hidden;
-        background: var(--panel-2);
-      }
-      .frame video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      .frame-play {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        width: 100%;
-        border: 0;
-        background: linear-gradient(180deg, rgba(2, 6, 23, 0.05), rgba(2, 6, 23, 0.6));
-        color: #f4f7fb;
-        font-family: var(--mono);
-        font-size: 0.66rem;
-        font-weight: 600;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        cursor: pointer;
-        touch-action: manipulation;
-        transition: background-color 0.2s ease;
-      }
-      .frame-play:hover {
-        background: linear-gradient(180deg, rgba(2, 6, 23, 0.15), rgba(2, 6, 23, 0.72));
-      }
-      .frame-play svg {
-        width: 22px;
-        height: 22px;
-      }
-      .demo-copy {
-        padding: 16px 14px 18px;
-      }
-      .demo-copy h3 {
-        margin-bottom: 6px;
-        font-size: 0.95rem;
-      }
-      .demo-copy p {
-        color: var(--ink-2);
-        font-size: 0.85rem;
-        line-height: 1.6;
-      }
-      .dots {
-        display: flex;
-        justify-content: center;
-        gap: 0;
-        margin-top: 8px;
-      }
-      /* The visible dot is a pseudo-element so the button itself keeps a
-         36x44 touch target — the dots are the only paging control on mobile. */
-      .dot-btn {
-        position: relative;
-        width: 32px;
-        height: 44px;
-        padding: 0;
-        border: 0;
-        background: transparent;
-        cursor: pointer;
-        touch-action: manipulation;
-      }
-      .dot-btn::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 8px;
-        height: 8px;
-        border-radius: 99px;
-        background: var(--line);
-        transform: translate(-50%, -50%);
-        transition: width 0.2s ease, background-color 0.2s ease;
-      }
-      .dot-btn.is-active::before {
-        width: 26px;
-        background: var(--accent);
-      }
-
-      /* ── Plans ─────────────────────────────────────────────────────────── */
-      .tier {
-        display: grid;
-        grid-template-columns: 1fr;
-        margin-top: 40px;
-        border: 1px solid var(--line);
-        background: var(--line-2);
-        gap: 1px;
-      }
-      .tier-col {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-        padding: 28px 22px;
-        background: var(--bg);
-      }
-      .tier-col.is-featured {
-        background: var(--panel);
-      }
-      .tier-col.is-featured::before {
-        content: '';
-        position: absolute;
-        inset: -1px -1px auto;
-        height: 2px;
-        background: var(--accent);
-      }
-      .tier-flag {
-        position: absolute;
-        top: 0;
-        right: 0;
-        padding: 4px 9px;
-        background: var(--accent-btn);
-        color: #fff;
-        font-family: var(--mono);
-        font-size: 0.58rem;
-        font-weight: 600;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-      }
-      .tier-name {
-        font-family: var(--mono);
-        font-size: 0.68rem;
-        font-weight: 600;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: var(--ink-2);
-      }
-      .tier-storage {
-        margin: 10px 0 2px;
-        font-size: 2.4rem;
-        font-weight: 800;
-        letter-spacing: -0.045em;
-        font-variant-numeric: tabular-nums;
-        line-height: 1;
-      }
-      .tier-note {
-        color: var(--ink-3);
-        font-size: 0.75rem;
-      }
-      .tier-limits {
-        margin: 22px 0 22px;
-        padding: 0;
-        border-top: 1px solid var(--line-2);
-      }
-      .tier-limits > div {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 14px;
-        padding: 9px 0;
-        border-bottom: 1px dashed var(--line-2);
-      }
-      .tier-limits dt {
-        color: var(--ink-2);
-        font-size: 0.78rem;
-      }
-      .tier-limits dd {
-        margin: 0;
-        font-size: 0.8rem;
-        font-weight: 800;
-        font-variant-numeric: tabular-nums;
-        text-align: right;
-      }
-      .tier-list {
-        display: grid;
-        gap: 9px;
-        margin: 0 0 24px;
-        padding: 0;
-        list-style: none;
-        color: var(--ink-2);
-        font-size: 0.82rem;
-      }
-      .tier-list li {
-        display: flex;
-        align-items: flex-start;
-        gap: 9px;
-        line-height: 1.5;
-      }
-      .tier-list svg {
-        width: 13px;
-        height: 13px;
-        margin-top: 3px;
-        flex-shrink: 0;
-        color: var(--accent);
-      }
-      .tier-cta {
-        margin-top: auto;
-      }
-      .tier-cta .btn {
-        width: 100%;
-      }
-
-      /* ── CTA ───────────────────────────────────────────────────────────── */
-      .cta {
-        position: relative;
-        overflow: hidden;
-        border-top: 1px solid var(--line-2);
-        padding: 88px 0;
-        scroll-margin-top: 96px;
-      }
-      .cta::before {
-        content: '';
-        position: absolute;
-        inset: auto -10% -60% -10%;
-        height: 130%;
-        background: radial-gradient(circle at 50% 100%, var(--glow), transparent 58%);
-        pointer-events: none;
-      }
-      .cta-inner {
+      .hero-caption {
         position: relative;
         display: grid;
-        gap: 28px;
-      }
-      .cta h2 {
-        max-width: 24ch;
-        font-size: clamp(1.9rem, 5vw, 3.1rem);
-      }
-      .cta-copy {
-        max-width: 46ch;
-        color: var(--ink-2);
-        line-height: 1.7;
-      }
-      .cta-actions {
-        display: flex;
-        flex-wrap: wrap;
+        grid-template-columns: auto minmax(0, 1fr);
         gap: 12px;
-      }
-      .ghost-mark {
-        display: none;
-        font-size: clamp(4rem, 12vw, 9rem);
-        font-weight: 100;
-        letter-spacing: -0.05em;
-        line-height: 0.8;
-        color: var(--ink);
-        opacity: 0.06;
-        user-select: none;
+        margin-top: 16px;
+        color: var(--muted);
+        font-size: 0.875rem;
       }
 
-      /* ── Footer ────────────────────────────────────────────────────────── */
-      .site-foot {
+      .hero-caption span:first-child {
+        color: var(--accent-deep);
+        font-weight: 650;
+      }
+
+      .statement {
+        padding: 96px 0;
         border-top: 1px solid var(--line);
-        padding: 34px 0 40px;
+        border-bottom: 1px solid var(--line);
       }
-      .foot-inner {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+
+      .statement-text {
+        max-width: 980px;
+        color: var(--ink);
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 650;
+        letter-spacing: -0.05em;
+        line-height: 1.05;
+        text-wrap: balance;
       }
-      .foot-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px 20px;
-        margin: 0;
+
+      .statement-line {
+        display: block;
+      }
+
+      .word {
+        display: inline-block;
+        opacity: 1;
+        transition: opacity 700ms var(--ease);
+      }
+
+      html.js .word {
+        opacity: 0.24;
+      }
+
+      html.js .word.is-visible {
+        opacity: 1;
+      }
+
+      .section {
+        padding: 112px 0;
+      }
+
+      .section + .section {
+        border-top: 1px solid var(--line);
+      }
+
+      .section-head {
+        display: grid;
+        gap: 24px;
+        margin-bottom: 64px;
+      }
+
+      .section-lede {
+        max-width: 620px;
+        color: var(--muted);
+        font-size: 1.125rem;
+      }
+
+      .feature-layout {
+        display: grid;
+        gap: 48px;
+      }
+
+      .feature-intro {
+        align-self: start;
+      }
+
+      .feature-intro p {
+        max-width: 460px;
+        margin-top: 24px;
+        color: var(--muted);
+      }
+
+      .feature-list {
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .feature {
+        display: grid;
+        gap: 16px;
+        padding: 32px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .feature h3 {
+        max-width: 560px;
+      }
+
+      .feature p {
+        max-width: 620px;
+        color: var(--muted);
+      }
+
+      .feature-note {
+        color: var(--accent-deep);
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .demo-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 48px 24px;
+      }
+
+      .demo-card {
+        min-width: 0;
+      }
+
+      .demo-media {
+        position: relative;
+        display: block;
+        width: 100%;
         padding: 0;
-        list-style: none;
-        font-size: 0.82rem;
+        overflow: hidden;
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        background: #0d1117;
+        color: #fff;
+        cursor: pointer;
+        transition:
+          border-color 280ms var(--ease),
+          transform 280ms var(--ease);
+      }
+
+      .demo-media:hover {
+        border-color: var(--accent);
+        transform: translateY(-4px);
+      }
+
+      .demo-media:active {
+        transform: translateY(-1px) scale(0.995);
+      }
+
+      .demo-media img {
+        width: 100%;
+        aspect-ratio: 1200 / 618;
+        object-fit: cover;
+        opacity: 0.9;
+        transition:
+          opacity 280ms var(--ease),
+          transform 700ms var(--ease);
+      }
+
+      .demo-media:hover img {
+        opacity: 1;
+        transform: scale(1.015);
+      }
+
+      .play-label {
+        position: absolute;
+        right: 16px;
+        bottom: 16px;
+        display: inline-flex;
+        min-height: 40px;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        background: rgba(13, 17, 23, 0.78);
+        color: #fff;
+        font-size: 0.875rem;
+        font-weight: 600;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .play-label::before {
+        content: '▶';
+        font-size: 0.7rem;
+      }
+
+      .demo-copy {
+        display: grid;
+        gap: 8px;
+        padding-top: 16px;
+      }
+
+      .demo-copy h3 {
+        font-size: 1.25rem;
+      }
+
+      .demo-copy p {
+        color: var(--muted);
+        font-size: 0.9375rem;
+      }
+
+      .plans-head {
+        display: grid;
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+
+      .plans-note {
+        max-width: 620px;
+        color: var(--muted);
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line-strong);
+        border-radius: 12px;
+        background: var(--surface);
+        overscroll-behavior-inline: contain;
+      }
+
+      .plan-table {
+        width: 100%;
+        min-width: 880px;
+        border-collapse: collapse;
+        font-size: 0.9375rem;
+      }
+
+      .plan-table th,
+      .plan-table td {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .plan-table tr:last-child th,
+      .plan-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .plan-table thead th {
+        background: var(--surface-2);
+        color: var(--muted);
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .plan-table thead th:first-child,
+      .plan-table tbody th {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        width: 180px;
+        background: var(--surface);
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .plan-table thead th:first-child {
+        background: var(--surface-2);
+      }
+
+      .plan-name {
+        display: block;
+        color: var(--ink);
+        font-size: 1rem;
         font-weight: 700;
       }
-      .foot-links a {
-        display: inline-block;
-        padding: 8px 0;
-        color: var(--ink-2);
-        transition: color 0.18s ease;
-      }
-      .foot-links a:hover {
-        color: var(--accent-2);
-      }
-      .foot-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px 18px;
-        color: var(--ink-3);
-        font-size: 0.78rem;
+
+      .plan-sub {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.875rem;
+        font-weight: 450;
       }
 
-      /* ── Lightbox ──────────────────────────────────────────────────────── */
+      .plan-action-row td,
+      .plan-action-row th {
+        padding-top: 24px;
+        padding-bottom: 24px;
+      }
+
+      .plan-action {
+        justify-content: flex-start;
+      }
+
+      .faq-layout {
+        display: grid;
+        gap: 48px;
+      }
+
+      .faq-list {
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .faq-item {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .faq-item summary {
+        display: flex;
+        min-height: 64px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 16px 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        list-style: none;
+        cursor: pointer;
+      }
+
+      .faq-item summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .faq-item summary::after {
+        content: '+';
+        flex-shrink: 0;
+        color: var(--accent);
+        font-size: 1.5rem;
+        font-weight: 450;
+        transition: transform 280ms var(--ease);
+      }
+
+      .faq-item[open] summary::after {
+        transform: rotate(45deg);
+      }
+
+      .faq-item p {
+        max-width: 720px;
+        padding: 0 40px 24px 0;
+        color: var(--muted);
+      }
+
+      .final-cta {
+        padding: 24px 0 96px;
+      }
+
+      .final-cta-panel {
+        display: grid;
+        gap: 32px;
+        padding: 48px 32px;
+        border-radius: 24px;
+        background: var(--accent-wash);
+      }
+
+      .final-cta h2 {
+        max-width: 14ch;
+        color: var(--ink);
+        font-size: clamp(2.5rem, 5vw, 4.5rem);
+      }
+
+      .final-cta p {
+        max-width: 560px;
+        color: var(--ink);
+        font-size: 1.125rem;
+      }
+
+      .final-cta-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px 24px;
+        align-self: end;
+      }
+
+      .site-footer {
+        padding: 32px 0 48px;
+        border-top: 1px solid var(--line);
+      }
+
+      .footer-grid {
+        display: grid;
+        gap: 32px;
+      }
+
+      .footer-note {
+        max-width: 320px;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+
+      .footer-links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 24px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .footer-links a {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+
+      .footer-links a:hover {
+        color: var(--ink);
+      }
+
+      .footer-legal {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 24px;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      .footer-legal a {
+        display: inline-flex;
+        min-height: 44px;
+        align-items: center;
+      }
+
       .lightbox {
         position: fixed;
         inset: 0;
         z-index: 200;
         display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-        overscroll-behavior: contain;
-        background: rgba(2, 6, 23, 0.72);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        place-items: center;
+        padding: 24px;
+        background: rgba(13, 17, 23, 0.86);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
       }
+
       .lightbox.open {
-        display: flex;
+        display: grid;
       }
+
       .lightbox-panel {
-        width: min(1200px, 100%);
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        background: var(--panel);
+        width: min(1120px, 100%);
         overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        background: #0d1117;
+        color: #fff;
       }
+
       .lightbox-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--line-2);
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.16);
       }
+
       .lightbox-head h3 {
-        font-size: 0.95rem;
+        font-size: 1rem;
       }
+
+      .lightbox-close {
+        display: inline-flex;
+        width: 44px;
+        height: 44px;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: #fff;
+        font: inherit;
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+
+      .lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
       .lightbox-media {
         aspect-ratio: 16 / 9;
-        background: #020617;
       }
+
       .lightbox-media video {
         width: 100%;
         height: 100%;
         object-fit: contain;
       }
 
-      /* ── Reveal ────────────────────────────────────────────────────────── */
-      .reveal {
+      html.js .reveal {
         opacity: 0;
-        visibility: hidden;
-        transform: translate3d(0, 18px, 0);
-        will-change: opacity, transform;
-        transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
-          transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
-          visibility 0s linear 0.8s;
+        transform: translateY(48px);
+        filter: blur(6px);
+        transition:
+          opacity 800ms var(--ease),
+          transform 800ms var(--ease),
+          filter 800ms var(--ease);
       }
-      .reveal.is-in {
+
+      html.js .reveal.is-visible {
         opacity: 1;
-        visibility: visible;
         transform: none;
-        transition-delay: 0s;
+        filter: none;
+      }
+
+      @media (min-width: 700px) {
+        .section-head {
+          grid-template-columns: minmax(0, 1fr) minmax(280px, 0.55fr);
+          align-items: end;
+        }
+
+        .feature {
+          grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        }
+
+        .demo-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .final-cta-panel {
+          padding: 64px 48px;
+        }
+
+        .footer-grid {
+          grid-template-columns: minmax(0, 1fr) minmax(320px, 0.85fr);
+          align-items: start;
+        }
+
+        .footer-links {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .footer-legal {
+          grid-column: 1 / -1;
+          justify-content: space-between;
+          padding-top: 24px;
+          border-top: 1px solid var(--line);
+        }
+      }
+
+      @media (min-width: 1000px) {
+        .desktop-nav,
+        .nav-tools {
+          display: flex;
+        }
+
+        .menu-toggle,
+        .mobile-nav {
+          display: none;
+        }
+
+        .hero {
+          padding: 112px 0 128px;
+        }
+
+        .hero-grid {
+          grid-template-columns: minmax(0, 1.08fr) minmax(400px, 0.92fr);
+        }
+
+        .feature-layout {
+          grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+          gap: 96px;
+        }
+
+        .feature-intro {
+          position: sticky;
+          top: 128px;
+        }
+
+        .demo-grid {
+          grid-template-columns: repeat(12, minmax(0, 1fr));
+        }
+
+        .demo-card:nth-child(1),
+        .demo-card:nth-child(2) {
+          grid-column: span 6;
+        }
+
+        .demo-card:nth-child(n + 3) {
+          grid-column: span 4;
+        }
+
+        .faq-layout {
+          grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
+          gap: 96px;
+        }
+
+        .final-cta-panel {
+          grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+          align-items: end;
+          padding: 80px 64px;
+        }
+      }
+
+      @media (max-width: 699px) {
+        .wrap {
+          width: min(100% - 32px, var(--maxw));
+        }
+
+        .site-header {
+          padding: 12px 16px 0;
+        }
+
+        .nav-shell {
+          min-height: 60px;
+          padding-left: 14px;
+        }
+
+        .brand img {
+          width: 26px;
+          height: 26px;
+        }
+
+        .hero {
+          padding-top: 64px;
+        }
+
+        .hero-actions .btn-primary {
+          width: 100%;
+        }
+
+        .hero-visual {
+          padding-right: 16px;
+          padding-bottom: 24px;
+        }
+
+        .hero-visual::before {
+          inset: 16px 0 0 16px;
+        }
+
+        .statement,
+        .section {
+          padding: 80px 0;
+        }
+
+        .section-head,
+        .plans-head {
+          margin-bottom: 40px;
+        }
+
+        .demo-grid {
+          gap: 40px;
+        }
+
+        .final-cta {
+          padding-bottom: 64px;
+        }
+
+        .final-cta-panel {
+          border-radius: 16px;
+        }
+
+        .final-cta-actions .btn {
+          width: 100%;
+        }
       }
 
       @media (prefers-reduced-motion: reduce) {
         html {
           scroll-behavior: auto;
         }
+
         *,
         *::before,
         *::after {
@@ -1324,97 +1539,29 @@
           animation-iteration-count: 1 !important;
           transition-duration: 0.001ms !important;
         }
-        .ticker-track {
-          animation: none;
-        }
-        .bar span {
-          animation: none;
-        }
-        .reveal {
+
+        html.js .word,
+        html.js .reveal {
           opacity: 1;
           transform: none;
+          filter: none;
         }
-      }
 
-      /* ── Responsive ────────────────────────────────────────────────────── */
-      /* Touch layouts: comfortable hit areas without growing the desktop bar. */
-      @media (max-width: 999px) {
-        .icon-btn {
-          width: 44px;
-          height: 44px;
+        .transfer-effect {
+          transform: none;
         }
-        .brand {
-          min-height: 44px;
+
+        .effect-orbit-label,
+        .effect-sweep {
+          animation: none;
         }
-        .mobile-menu a {
-          padding: 14px;
-        }
-        .foot-links {
-          gap: 4px 20px;
-        }
-      }
-      @media (min-width: 700px) {
-        .specs {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .tier {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-        .demo {
-          width: 58%;
-        }
-        .foot-inner {
-          flex-direction: row;
-          align-items: center;
-          justify-content: space-between;
-        }
-      }
-      @media (min-width: 1000px) {
-        .band {
-          padding: 104px 0;
-        }
-        .hero {
-          padding: 96px 0 84px;
-        }
-        .hero-grid {
-          grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-          align-items: center;
-          gap: 64px;
-        }
-        .head-nav,
-        .head-actions .quiet,
-        .head-actions .btn-sm {
-          display: flex;
-        }
-        .menu-btn {
+
+        .effect-packet {
           display: none;
-        }
-        .mobile-menu {
-          display: none !important;
-        }
-        .specs {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-        .tier {
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-        .demo {
-          width: 44%;
-          scroll-snap-align: center;
-        }
-        .rail-buttons {
-          display: flex;
-        }
-        .cta-inner {
-          grid-template-columns: minmax(0, 1fr) auto;
-          align-items: end;
-        }
-        .ghost-mark {
-          display: block;
-          text-align: right;
         }
       }
     </style>
+
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -1435,7 +1582,7 @@
             "@id": "https://fluxsend.app/#website",
             "url": "https://fluxsend.app/",
             "name": "FluxSend",
-            "description": "Self-hostable, open-source file sharing with signed links, per-file access control, and S3-compatible storage.",
+            "description": "Open source file sharing with private storage, workspaces, signed links, and scoped API keys.",
             "inLanguage": "en",
             "publisher": { "@id": "https://fluxsend.app/#organization" }
           },
@@ -1446,14 +1593,14 @@
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web, Docker, Linux, macOS, Windows",
             "url": "https://fluxsend.app/",
-            "description": "FluxSend is a self-hostable, open-source file sharing platform for uploading, storing, and sharing files with signed links, per-file access control, and S3-compatible storage.",
+            "description": "FluxSend is an open source file sharing platform with workspaces, recipient sharing, quick links, scoped API keys, and MinIO, S3, or Google Cloud Storage backends.",
             "license": "https://opensource.org/licenses/MIT",
             "isAccessibleForFree": true,
             "offers": {
               "@type": "Offer",
               "price": "0",
               "priceCurrency": "USD",
-              "description": "Free tier with 5 GB storage; higher tiers are assigned by the instance administrator."
+              "description": "Free tier with 5 GB storage. The hosted SaaS instance offers higher plan tiers; online billing and paid plan pricing are planned. Self-hosted plans are assigned by the instance administrator."
             },
             "publisher": { "@id": "https://fluxsend.app/#organization" }
           }
@@ -1461,548 +1608,489 @@
       }
     </script>
   </head>
+
   <body>
     <a class="skip" href="#main">Skip to content</a>
 
-    <!-- Deployment config: point appUrl at the app origin when this page is hosted
-         separately. Empty string = same origin.
-         <script>window.FLUXSEND_CONFIG = { appUrl: "https://app.fluxsend.app" };</script> -->
     <script>
       window.FLUXSEND_CONFIG = { appUrl: '' };
     </script>
 
-    <header class="site-head">
-      <div class="head-inner">
-        <a class="brand" href="#top" translate="no">
-          <img src="fs.png" alt="" width="26" height="26" />
-          <span>FLUX<span class="accent">SEND</span></span>
+    <header class="site-header">
+      <div class="nav-shell">
+        <a class="brand" href="#top" translate="no" aria-label="FluxSend home">
+          <img src="fs.png" alt="" width="28" height="28" />
+          <span>FLUX<span class="brand-accent">SEND</span></span>
         </a>
 
-        <nav class="head-nav" aria-label="Primary">
+        <nav class="desktop-nav" aria-label="Primary">
           <a href="#features">Features</a>
           <a href="#demos">Demos</a>
           <a href="#plans">Plans</a>
-          <a href="/legal/privacy-policy">Privacy</a>
-          <a href="/legal/terms-of-service">Terms</a>
         </nav>
 
-        <div class="head-actions">
-          <a class="quiet" href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">
-            Docs
-            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10" /><path d="M7 17 17 7" /></svg>
-          </a>
-          <a class="quiet" href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" /><path d="M9 18c-4.51 2-5-2-7-2" /></svg>
-            GitHub
-          </a>
-          <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch to light theme">
-            <svg class="i-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg>
-            <svg class="i-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
+        <div class="nav-tools">
+          <a href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Docs</a>
+          <a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a>
+          <button class="theme-button" type="button" data-theme-toggle>
+            <span class="theme-label">Dark</span>
           </button>
-          <a class="btn btn-primary btn-sm" href="/login" data-app-link="/login">Sign in</a>
-          <button class="icon-btn menu-btn" type="button" id="menu-toggle" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu">
-            <svg class="menu-glyph" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
-            <svg class="menu-glyph-close" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12" /><path d="M18 6 6 18" /></svg>
-          </button>
+          <a class="nav-cta" href="/login" data-app-link="/login">Sign in</a>
         </div>
-      </div>
 
-      <div class="mobile-menu" id="mobile-menu">
-        <div class="mobile-menu-collapse">
-          <ul>
-            <li><a href="#features">Features</a></li>
-            <li><a href="#demos">Demos</a></li>
-            <li><a href="#plans">Plans</a></li>
-            <li><a href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Docs</a></li>
-            <li><a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a></li>
-            <li><a href="/legal/privacy-policy">Privacy</a></li>
-            <li><a href="/legal/terms-of-service">Terms</a></li>
-            <li><a href="/login" data-app-link="/login">Sign in</a></li>
-          </ul>
-        </div>
+        <button class="menu-toggle" type="button" id="menu-toggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Open menu">
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </button>
       </div>
-
-      <div class="progress" aria-hidden="true"><span></span></div>
     </header>
 
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#demos">Demos</a></li>
+        <li><a href="#plans">Plans</a></li>
+        <li><a href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Docs</a></li>
+        <li><a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a></li>
+        <li><a href="/login" data-app-link="/login">Sign in</a></li>
+      </ul>
+      <button class="theme-button mobile-theme" type="button" data-theme-toggle>
+        <span class="theme-label">Dark</span>
+      </button>
+    </nav>
+
     <main id="main">
-      <!-- ── Hero ──────────────────────────────────────────────────────── -->
       <section class="hero" id="top">
         <div class="wrap hero-grid">
-          <div>
-            <p class="kicker"><span class="dot" aria-hidden="true"></span> Self-hostable · Open source</p>
-            <h1>Secure file sharing,<br /><span class="accent">made simple.</span></h1>
-            <p class="lede">
-              Upload, store, and share your files with anyone. Fast, secure, and effortless — hosted on your own
-              infrastructure.
+          <div class="hero-copy">
+            <p class="hero-kicker">Open source file sharing</p>
+            <h1>File sharing without handing over your storage.</h1>
+            <p class="hero-lede">
+              Give your team private files, recipient sharing, and public links, while the MinIO, S3, or Google Cloud
+              Storage bucket you choose stays under your control.
             </p>
-            <div class="hero-cta">
-              <a class="btn btn-primary" href="/login" data-app-link="/login">
-                Get Started
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-              </a>
-              <a class="btn btn-ghost" href="#features">See Features</a>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="/login" data-app-link="/login">Sign in to FluxSend</a>
+              <a class="text-link" href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Read the docs <span aria-hidden="true">↗</span></a>
             </div>
-            <dl class="stats">
-              <div>
-                <dt>License</dt>
-                <dd>MIT</dd>
-              </div>
-              <div>
-                <dt>Deploy</dt>
-                <dd>Docker</dd>
-              </div>
-              <div>
-                <dt>Storage</dt>
-                <dd>S3 · MinIO · GCS</dd>
-              </div>
-            </dl>
+            <div class="hero-proof">
+              <span>MIT licensed</span>
+              <span>Docker deployment</span>
+              <span>Signed downloads</span>
+            </div>
           </div>
 
-          <figure class="transfer">
-            <figcaption class="sr-only">
-              Illustration of a FluxSend transfer: a 12.4&nbsp;MB file at 76&nbsp;% progress, shared with a recipient over
-              a signed link that expires.
-            </figcaption>
-            <div class="panel" aria-hidden="true">
-              <div class="panel-head">
-                <span class="mono">Transfer</span>
-                <span class="live"><span class="dot"></span>live</span>
+          <figure class="hero-visual">
+            <div class="transfer-effect" data-transfer-effect aria-hidden="true">
+              <svg class="effect-lines" viewBox="0 0 640 640" focusable="false">
+                <defs>
+                  <pattern id="effect-grid-pattern" width="32" height="32" patternUnits="userSpaceOnUse">
+                    <path d="M32 0H0V32" fill="none" stroke="currentColor" stroke-opacity="0.22" stroke-width="1" />
+                  </pattern>
+                  <path
+                    id="effect-label-path"
+                    d="M 320,320 m -236,0 a 236,236 0 1,1 472,0 a 236,236 0 1,1 -472,0"
+                    fill="none"
+                  />
+                </defs>
+
+                <rect class="effect-grid" width="640" height="640" fill="url(#effect-grid-pattern)" />
+
+                <circle class="effect-ring effect-ring-faint" cx="320" cy="320" r="250" />
+                <circle class="effect-ring effect-ring-ticked" cx="320" cy="320" r="224" />
+                <circle class="effect-ring effect-ring-faint" cx="320" cy="320" r="176" />
+                <circle class="effect-sweep" cx="320" cy="320" r="212" />
+
+                <g class="effect-orbit-label">
+                  <text>
+                    <textPath href="#effect-label-path" startOffset="4%">
+                      PRIVATE TRANSFER &#183; YOUR STORAGE &#183; SIGNED LINKS &#183; PRIVATE TRANSFER &#183; YOUR STORAGE
+                    </textPath>
+                  </text>
+                </g>
+
+                <path class="effect-route" d="M70 320 C180 320 198 212 320 212 S460 320 570 320" />
+                <path class="effect-route" d="M320 70 C320 174 212 202 212 320 S320 466 320 570" />
+
+                <circle cx="70" cy="320" r="9" class="effect-node" />
+                <circle cx="70" cy="320" r="3" class="effect-node-core" />
+                <circle cx="570" cy="320" r="9" class="effect-node" />
+                <circle cx="570" cy="320" r="3" class="effect-node-core" />
+
+                <circle class="effect-packet" r="5">
+                  <animateMotion
+                    dur="5.6s"
+                    repeatCount="indefinite"
+                    path="M70 320 C180 320 198 212 320 212 S460 320 570 320"
+                  />
+                </circle>
+              </svg>
+
+              <div class="effect-core">
+                <span class="effect-status">Signed transfer</span>
+                <span class="effect-wordmark"><span>FLUX</span><span>SEND</span></span>
+                <span class="effect-path-label">Store / sign / share</span>
               </div>
-              <div class="transfer-body">
-                <div class="file-row">
-                  <span class="file-name">resume_final.pdf</span>
-                  <span class="mono file-size num">12.4 MB</span>
-                </div>
-                <div class="bar"><span style="--w: 76%"></span></div>
-                <div class="bar-label mono"><span>Uploading</span><span class="num">76 %</span></div>
-                <dl class="meta">
-                  <div><dt>Recipient</dt><dd>ana@studio.dev</dd></div>
-                  <div><dt>Expires</dt><dd>in 7 days</dd></div>
-                  <div><dt>Signed token</dt><dd class="num">4f9c…a71</dd></div>
-                </dl>
-              </div>
-              <div class="panel-foot">
-                <span class="chip chip-strong">Copy link</span>
-                <span class="chip">Revoke</span>
+
+              <div class="effect-legend">
+                <span>Your storage</span>
+                <span>Recipient</span>
               </div>
             </div>
+            <figcaption class="hero-caption">
+              <span>Private route</span>
+              <span>Files keep their source; recipients only receive a signed link.</span>
+            </figcaption>
           </figure>
         </div>
       </section>
 
-      <!-- ── Ticker ────────────────────────────────────────────────────── -->
-      <div class="ticker" aria-hidden="true">
-        <div class="ticker-track">
-          <div class="ticker-group">
-            <span class="mono">Upload</span>
-            <span class="mono">Share</span>
-            <span class="mono">Expire</span>
-            <span class="mono">Preview</span>
-            <span class="mono">Workspaces</span>
-            <span class="mono">API keys</span>
-            <span class="mono">Signed links</span>
-            <span class="mono">MinIO</span>
-            <span class="mono">S3</span>
-            <span class="mono">Self-hosted</span>
-          </div>
-          <div class="ticker-group">
-            <span class="mono">Upload</span>
-            <span class="mono">Share</span>
-            <span class="mono">Expire</span>
-            <span class="mono">Preview</span>
-            <span class="mono">Workspaces</span>
-            <span class="mono">API keys</span>
-            <span class="mono">Signed links</span>
-            <span class="mono">MinIO</span>
-            <span class="mono">S3</span>
-            <span class="mono">Self-hosted</span>
-          </div>
-          <div class="ticker-group">
-            <span class="mono">Upload</span>
-            <span class="mono">Share</span>
-            <span class="mono">Expire</span>
-            <span class="mono">Preview</span>
-            <span class="mono">Workspaces</span>
-            <span class="mono">API keys</span>
-            <span class="mono">Signed links</span>
-            <span class="mono">MinIO</span>
-            <span class="mono">S3</span>
-            <span class="mono">Self-hosted</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Features ──────────────────────────────────────────────────── -->
-      <section class="band" id="features">
+      <section class="statement" aria-label="How FluxSend protects your files">
         <div class="wrap">
-          <div class="band-head mono">
-            <span>02</span>
-            <span>Features</span>
-            <span class="rule"></span>
-          </div>
-          <h2>Everything you need to share files</h2>
-          <p class="band-sub">
-            Built for developers and power users who want full control without sacrificing usability.
+          <p class="statement-text" data-word-reveal>
+            <span class="statement-line">
+              <span class="word">Your</span> <span class="word">files</span> <span class="word">stay</span>
+              <span class="word">in</span> <span class="word">your</span> <span class="word">storage.</span>
+            </span>
+            <span class="statement-line">
+              <span class="word">Your</span> <span class="word">links</span> <span class="word">expire</span>
+              <span class="word">on</span> <span class="word">schedule.</span>
+            </span>
           </p>
-
-          <div class="specs">
-            <article class="spec reveal">
-              <div class="spec-top">
-                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12" /><path d="m17 8-5-5-5 5" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /></svg></span>
-                <span class="spec-index">01</span>
-              </div>
-              <h3>File Storage</h3>
-              <p>Upload and organize files in a structured folder tree. Your own private bucket, accessible anytime.</p>
-            </article>
-            <article class="spec reveal">
-              <div class="spec-top">
-                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /><line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></svg></span>
-                <span class="spec-index">02</span>
-              </div>
-              <h3>Targeted Sharing</h3>
-              <p>Share files directly with registered users. Set expiry times and track what you’ve sent.</p>
-            </article>
-            <article class="spec reveal">
-              <div class="spec-top">
-                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg></span>
-                <span class="spec-index">03</span>
-              </div>
-              <h3>Quick Share Links</h3>
-              <p>Generate one-time download links for any file instantly — no account required on the recipient side.</p>
-            </article>
-            <article class="spec reveal">
-              <div class="spec-top">
-                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg></span>
-                <span class="spec-index">04</span>
-              </div>
-              <h3>Received Files</h3>
-              <p>Files shared with you appear in your inbox. Preview inline or download — always organised.</p>
-            </article>
-            <article class="spec reveal">
-              <div class="spec-top">
-                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z" /><path d="m7 16.5-4.74-2.85" /><path d="m7 16.5 5-3" /><path d="M7 16.5v5.17" /><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z" /><path d="m17 16.5-5-3" /><path d="m17 16.5 4.74-2.85" /><path d="M17 16.5v5.17" /><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z" /><path d="M12 8 7.26 5.15" /><path d="m12 8 4.74-2.85" /><path d="M12 13.5V8" /></svg></span>
-                <span class="spec-index">05</span>
-              </div>
-              <h3>Workspaces</h3>
-              <p>Create multiple workspaces to isolate teams, projects, and data domains with clean switching.</p>
-            </article>
-            <article class="spec reveal">
-              <div class="spec-top">
-                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" /><circle cx="16.5" cy="7.5" r=".5" fill="currentColor" /></svg></span>
-                <span class="spec-index">06</span>
-              </div>
-              <h3>API Keys</h3>
-              <p>Generate and revoke workspace and private API keys for automated uploads and secure integrations.</p>
-            </article>
-            <article class="spec reveal">
-              <div class="spec-top">
-                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg></span>
-                <span class="spec-index">07</span>
-              </div>
-              <h3>File Preview</h3>
-              <p>Preview images, PDFs, and text files directly in the browser — no download needed.</p>
-            </article>
-            <article class="spec reveal">
-              <div class="spec-top">
-                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /></svg></span>
-                <span class="spec-index">08</span>
-              </div>
-              <h3>Private by Default</h3>
-              <p>Every file is private until you explicitly share it. Signed tokens protect every download.</p>
-            </article>
-            <article class="spec reveal">
-              <div class="spec-top">
-                <span class="spec-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg></span>
-                <span class="spec-index">09</span>
-              </div>
-              <h3>Self-Hostable</h3>
-              <p>Deploy FluxSend on your own infrastructure. Full control over your data and storage backend.</p>
-            </article>
-          </div>
         </div>
       </section>
 
-      <!-- ── Demos ─────────────────────────────────────────────────────── -->
-      <section class="band" id="demos">
-        <div class="wrap">
-          <div class="band-head mono">
-            <span>03</span>
-            <span>Product demo</span>
-            <span class="rule"></span>
-          </div>
-          <div class="rail-head">
-            <h2>See FluxSend in action</h2>
-            <div class="rail-buttons">
-              <button class="icon-btn" type="button" id="demo-prev" aria-label="Show previous demo">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
-              </button>
-              <button class="icon-btn" type="button" id="demo-next" aria-label="Show next demo">
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="rail" id="demo-rail">
-            <article class="demo reveal" data-demo>
-              <div class="demo-head">
-                <span class="mono">Frame 01</span>
-                <span class="mono">Webm</span>
-              </div>
-              <div class="demo-body">
-                <div class="frame">
-                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/workspaces.webm" poster="/posters/workspaces.jpg" muted loop playsinline preload="metadata"></video>
-                  <button class="frame-play" type="button" data-play="Workspace Tour" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/workspaces.webm">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
-                    Watch
-                  </button>
-                </div>
-              </div>
-              <div class="demo-copy">
-                <h3>Workspace Tour</h3>
-                <p>Create and switch workspaces, then manage files per workspace boundary.</p>
-              </div>
-            </article>
-
-            <article class="demo reveal" data-demo>
-              <div class="demo-head">
-                <span class="mono">Frame 02</span>
-                <span class="mono">Webm</span>
-              </div>
-              <div class="demo-body">
-                <div class="frame">
-                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/file-sharing.webm" poster="/posters/file-sharing.jpg" muted loop playsinline preload="metadata"></video>
-                  <button class="frame-play" type="button" data-play="File Sharing Flow" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/file-sharing.webm">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
-                    Watch
-                  </button>
-                </div>
-              </div>
-              <div class="demo-copy">
-                <h3>File Sharing Flow</h3>
-                <p>Share files to between users and track received items.</p>
-              </div>
-            </article>
-
-            <article class="demo reveal" data-demo>
-              <div class="demo-head">
-                <span class="mono">Frame 03</span>
-                <span class="mono">Webm</span>
-              </div>
-              <div class="demo-body">
-                <div class="frame">
-                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/quickshare.webm" poster="/posters/quickshare.jpg" muted loop playsinline preload="metadata"></video>
-                  <button class="frame-play" type="button" data-play="Quick Share Links" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/quickshare.webm">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
-                    Watch
-                  </button>
-                </div>
-              </div>
-              <div class="demo-copy">
-                <h3>Quick Share Links</h3>
-                <p>Demonstrate one-time links and secure download flow for external recipients.</p>
-              </div>
-            </article>
-
-            <article class="demo reveal" data-demo>
-              <div class="demo-head">
-                <span class="mono">Frame 04</span>
-                <span class="mono">Webm</span>
-              </div>
-              <div class="demo-body">
-                <div class="frame">
-                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/api-keys.webm" poster="/posters/api-keys.jpg" muted loop playsinline preload="metadata"></video>
-                  <button class="frame-play" type="button" data-play="API Key Automation" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/api-keys.webm">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
-                    Watch
-                  </button>
-                </div>
-              </div>
-              <div class="demo-copy">
-                <h3>API Key Automation</h3>
-                <p>Generate keys and run scripted uploads from CI, CLI, or external services.</p>
-              </div>
-            </article>
-
-            <article class="demo reveal" data-demo>
-              <div class="demo-head">
-                <span class="mono">Frame 05</span>
-                <span class="mono">Webm</span>
-              </div>
-              <div class="demo-body">
-                <div class="frame">
-                  <video src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/stats.webm" poster="/posters/stats.jpg" muted loop playsinline preload="metadata"></video>
-                  <button class="frame-play" type="button" data-play="Analytics" data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/stats.webm">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polygon points="10 8 16 12 10 16 10 8" /></svg>
-                    Watch
-                  </button>
-                </div>
-              </div>
-              <div class="demo-copy">
-                <h3>Analytics</h3>
-                <p>View your workspace/personal usage - full visibility, no surprises.</p>
-              </div>
-            </article>
-          </div>
-
-          <div class="dots" id="demo-dots"></div>
-        </div>
-      </section>
-
-      <!-- ── Plans ─────────────────────────────────────────────────────── -->
-      <section class="band" id="plans">
-        <div class="wrap">
-          <div class="band-head mono">
-            <span>04</span>
-            <span>Plans</span>
-            <span class="rule"></span>
-          </div>
-          <h2>Plan tiers</h2>
-          <p class="band-sub">
-            Plans are assigned by your instance administrator. Each tier unlocks higher limits and capacity.
-          </p>
-
-          <div class="tier">
-            <article class="tier-col reveal">
-              <p class="tier-name">Free</p>
-              <p class="tier-storage">5 GB</p>
-              <p class="tier-note">total storage</p>
-              <dl class="tier-limits">
-                <div><dt>Max file size</dt><dd>250 MB / file</dd></div>
-                <div><dt>Max files</dt><dd>20 files</dd></div>
-                <div><dt>Uploads</dt><dd>5 / day</dd></div>
-                <div><dt>Shares</dt><dd>10 / day</dd></div>
-              </dl>
-              <ul class="tier-list">
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>File upload &amp; storage</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Targeted sharing</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Quick share links</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Inline file preview</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Private downloads</li>
-              </ul>
-              <div class="tier-cta">
-                <a class="btn btn-ghost" href="/login" data-app-link="/login">Start free</a>
-              </div>
-            </article>
-
-            <article class="tier-col is-featured reveal">
-              <span class="tier-flag">Recommended</span>
-              <p class="tier-name">Developer</p>
-              <p class="tier-storage">50 GB</p>
-              <p class="tier-note">total storage</p>
-              <dl class="tier-limits">
-                <div><dt>Max file size</dt><dd>2 GB / file</dd></div>
-                <div><dt>Max files</dt><dd>500 files</dd></div>
-                <div><dt>Uploads</dt><dd>100 / day</dd></div>
-                <div><dt>Shares</dt><dd>500 / day</dd></div>
-              </dl>
-              <ul class="tier-list">
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Everything in Free</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Large file transfers</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>High daily upload limit</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>High daily share limit</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>File notes &amp; metadata</li>
-              </ul>
-              <div class="tier-cta">
-                <a class="btn btn-primary" href="/login" data-app-link="/login">Get started</a>
-              </div>
-            </article>
-
-            <article class="tier-col reveal">
-              <p class="tier-name">Enterprise</p>
-              <p class="tier-storage">1 TB</p>
-              <p class="tier-note">total storage</p>
-              <dl class="tier-limits">
-                <div><dt>Max file size</dt><dd>10 GB / file</dd></div>
-                <div><dt>Max files</dt><dd>Unlimited</dd></div>
-                <div><dt>Uploads</dt><dd>Unlimited</dd></div>
-                <div><dt>Shares</dt><dd>Unlimited</dd></div>
-              </dl>
-              <ul class="tier-list">
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Everything in Developer</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Maximum storage quota</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>No upload restrictions</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>No share restrictions</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Full platform access</li>
-              </ul>
-              <div class="tier-cta">
-                <a class="btn btn-ghost" href="/login" data-app-link="/login">Get started</a>
-              </div>
-            </article>
-
-            <article class="tier-col reveal">
-              <p class="tier-name">Custom</p>
-              <p class="tier-storage">Tailored</p>
-              <p class="tier-note">limits negotiated with admin</p>
-              <dl class="tier-limits">
-                <div><dt>Max file size</dt><dd>Negotiated</dd></div>
-                <div><dt>Max files</dt><dd>Negotiated</dd></div>
-                <div><dt>Uploads</dt><dd>Negotiated</dd></div>
-                <div><dt>Shares</dt><dd>Negotiated</dd></div>
-              </dl>
-              <ul class="tier-list">
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Custom storage quota</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Negotiated limits</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Dedicated support</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>Priority onboarding</li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>White glove setup</li>
-              </ul>
-              <div class="tier-cta">
-                <a class="btn btn-ghost" href="mailto:admin@fluxsend.app">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" /></svg>
-                  Contact administrator
-                </a>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <!-- ── CTA ───────────────────────────────────────────────────────── -->
-      <section class="cta" id="start">
-        <div class="wrap cta-inner">
-          <div class="reveal">
-            <div class="band-head mono">
-              <span>05</span>
-              <span>Start</span>
-              <span class="rule"></span>
-            </div>
-            <h2>Ready to take control of your files?</h2>
-            <p class="cta-copy" style="margin-top: 16px">
-              Sign in to your FluxSend instance and start sharing securely.
+      <section class="section" id="features">
+        <div class="wrap feature-layout">
+          <div class="feature-intro reveal">
+            <h2>Everything your team needs to move a file.</h2>
+            <p>
+              FluxSend handles the storage, access rules, and sharing flow without turning your file server into a
+              second product to manage.
             </p>
-            <div class="cta-actions" style="margin-top: 28px">
-              <a class="btn btn-primary" href="/login" data-app-link="/login">
-                Get Started
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
-              </a>
-              <a class="btn btn-ghost" href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Read the docs</a>
+          </div>
+
+          <div class="feature-list reveal">
+            <article class="feature">
+              <h3>Share with a person or a public link.</h3>
+              <div>
+                <p>Send files to registered users, or create quick share links that recipients can open without an account.</p>
+                <p class="feature-note">Optional expiry dates and password protection for public links.</p>
+              </div>
+            </article>
+            <article class="feature">
+              <h3>Keep each team inside its own workspace.</h3>
+              <div>
+                <p>Separate files by team or project with owner, editor, and viewer roles, plus invitations and shared storage.</p>
+                <p class="feature-note">Workspace boundaries stay visible in the product.</p>
+              </div>
+            </article>
+            <article class="feature">
+              <h3>Choose the bucket behind the product.</h3>
+              <div>
+                <p>Run with self hosted MinIO, AWS S3, or Google Cloud Storage. Downloads resolve through short lived signed URLs.</p>
+                <p class="feature-note">Your public bucket can stay private.</p>
+              </div>
+            </article>
+            <article class="feature">
+              <h3>Automate uploads without sharing a password.</h3>
+              <div>
+                <p>Create private or workspace API keys with scoped permissions, then send files from CI, a CLI, or another service.</p>
+                <p class="feature-note">Revoke a key without changing how people sign in.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="demos">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <h2>Look at the product before you deploy it.</h2>
+            <p class="section-lede">
+              These are recordings from FluxSend. Open any view to see how files, workspaces, sharing, keys, and usage
+              fit together.
+            </p>
+          </div>
+
+          <div class="demo-grid">
+            <article class="demo-card reveal">
+              <button
+                class="demo-media"
+                type="button"
+                data-play="Workspace tour"
+                data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/workspaces.webm"
+                aria-label="Play the FluxSend workspace tour"
+              >
+                <img src="posters/workspaces.jpg" width="1200" height="618" loading="lazy" alt="FluxSend workspace screen" />
+                <span class="play-label">Play demo</span>
+              </button>
+              <div class="demo-copy">
+                <h3>Workspace tour</h3>
+                <p>Create and switch workspaces, then manage files within each team boundary.</p>
+              </div>
+            </article>
+
+            <article class="demo-card reveal">
+              <button
+                class="demo-media"
+                type="button"
+                data-play="File sharing flow"
+                data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/file-sharing.webm"
+                aria-label="Play the FluxSend file sharing demo"
+              >
+                <img src="posters/file-sharing.jpg" width="1200" height="618" loading="lazy" alt="FluxSend file sharing screen" />
+                <span class="play-label">Play demo</span>
+              </button>
+              <div class="demo-copy">
+                <h3>File sharing flow</h3>
+                <p>Share files between people and track what they have received.</p>
+              </div>
+            </article>
+
+            <article class="demo-card reveal">
+              <button
+                class="demo-media"
+                type="button"
+                data-play="Quick share links"
+                data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/quickshare.webm"
+                aria-label="Play the FluxSend quick share demo"
+              >
+                <img src="posters/quickshare.jpg" width="1200" height="618" loading="lazy" alt="FluxSend quick share link screen" />
+                <span class="play-label">Play demo</span>
+              </button>
+              <div class="demo-copy">
+                <h3>Quick share links</h3>
+                <p>Create a public link for an external recipient and control when it stops working.</p>
+              </div>
+            </article>
+
+            <article class="demo-card reveal">
+              <button
+                class="demo-media"
+                type="button"
+                data-play="API key automation"
+                data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/api-keys.webm"
+                aria-label="Play the FluxSend API key demo"
+              >
+                <img src="posters/api-keys.jpg" width="1200" height="618" loading="lazy" alt="FluxSend API key management screen" />
+                <span class="play-label">Play demo</span>
+              </button>
+              <div class="demo-copy">
+                <h3>API key automation</h3>
+                <p>Create scoped keys and run uploads from CI, a CLI, or another service.</p>
+              </div>
+            </article>
+
+            <article class="demo-card reveal">
+              <button
+                class="demo-media"
+                type="button"
+                data-play="Usage analytics"
+                data-src="https://fluxsend-landingpage-resources.s3.eu-north-1.amazonaws.com/stats.webm"
+                aria-label="Play the FluxSend usage analytics demo"
+              >
+                <img src="posters/stats.jpg" width="1200" height="618" loading="lazy" alt="FluxSend usage analytics screen" />
+                <span class="play-label">Play demo</span>
+              </button>
+              <div class="demo-copy">
+                <h3>Usage analytics</h3>
+                <p>Review personal and workspace storage use without leaving the app.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="plans">
+        <div class="wrap">
+          <div class="plans-head reveal">
+            <h2>Hosted plans are available today.</h2>
+            <p class="plans-note">
+              The main FluxSend instance is our hosted SaaS, where you can review plan options now. Online checkout is
+              not live yet; paid SaaS pricing will appear when billing launches. Self hosted deployments assign plans
+              through their administrator.
+            </p>
+          </div>
+
+          <div class="table-wrap reveal" role="region" tabindex="0" aria-label="Plan comparison table">
+            <table class="plan-table">
+              <thead>
+                <tr>
+                  <th scope="col">Limit</th>
+                  <th scope="col"><span class="plan-name">Free</span><span class="plan-sub">Start here</span></th>
+                  <th scope="col"><span class="plan-name">Developer</span><span class="plan-sub">Recommended</span></th>
+                  <th scope="col"><span class="plan-name">Enterprise</span><span class="plan-sub">Full platform</span></th>
+                  <th scope="col"><span class="plan-name">Custom</span><span class="plan-sub">Talk to your admin</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Price</th>
+                  <td>Free</td>
+                  <td>Pricing planned</td>
+                  <td>Pricing planned</td>
+                  <td>Contact admin</td>
+                </tr>
+                <tr>
+                  <th scope="row">Storage</th>
+                  <td>5 GB</td>
+                  <td>50 GB</td>
+                  <td>1 TB</td>
+                  <td>Tailored</td>
+                </tr>
+                <tr>
+                  <th scope="row">Maximum file size</th>
+                  <td>250 MB</td>
+                  <td>2 GB</td>
+                  <td>10 GB</td>
+                  <td>Negotiated</td>
+                </tr>
+                <tr>
+                  <th scope="row">Maximum files</th>
+                  <td>20</td>
+                  <td>500</td>
+                  <td>Unlimited</td>
+                  <td>Negotiated</td>
+                </tr>
+                <tr>
+                  <th scope="row">Uploads per day</th>
+                  <td>5</td>
+                  <td>100</td>
+                  <td>Unlimited</td>
+                  <td>Negotiated</td>
+                </tr>
+                <tr>
+                  <th scope="row">Shares per day</th>
+                  <td>10</td>
+                  <td>500</td>
+                  <td>Unlimited</td>
+                  <td>Negotiated</td>
+                </tr>
+                <tr>
+                  <th scope="row">File storage and folders</th>
+                  <td>Included</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                </tr>
+                <tr>
+                  <th scope="row">Targeted and quick sharing</th>
+                  <td>Included</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                </tr>
+                <tr>
+                  <th scope="row">Preview and private downloads</th>
+                  <td>Included</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                </tr>
+                <tr>
+                  <th scope="row">File notes and metadata</th>
+                  <td>Not included</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                </tr>
+                <tr>
+                  <th scope="row">Support and setup</th>
+                  <td>Standard</td>
+                  <td>Standard</td>
+                  <td>Full platform access</td>
+                  <td>Dedicated, priority, white glove</td>
+                </tr>
+                <tr class="plan-action-row">
+                  <th scope="row"><span class="sr-only">Choose a plan</span></th>
+                  <td><a class="btn btn-outline btn-small plan-action" href="/login" data-app-link="/login">Start free</a></td>
+                  <td><a class="btn btn-primary btn-small plan-action" href="/login" data-app-link="/login">Get started</a></td>
+                  <td><a class="btn btn-outline btn-small plan-action" href="/login" data-app-link="/login">Get started</a></td>
+                  <td><a class="btn btn-outline btn-small plan-action" href="mailto:admin@fluxsend.app">Contact admin</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="faq-title">
+        <div class="wrap faq-layout">
+          <div class="reveal">
+            <h2 id="faq-title">Questions worth asking before you hand over a file.</h2>
+          </div>
+
+          <div class="faq-list reveal">
+            <details class="faq-item">
+              <summary>Is FluxSend open source?</summary>
+              <p>Yes. FluxSend is available under the MIT license, and the backend source is public on GitHub.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Do recipients need a FluxSend account?</summary>
+              <p>Only for targeted sharing between registered users. Quick share links can be opened by people outside your instance.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Where are the files stored?</summary>
+              <p>FluxSend supports self hosted MinIO, AWS S3, and Google Cloud Storage. Your instance chooses the provider.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Can I run FluxSend on my own server?</summary>
+              <p>Yes. The project includes Docker Compose configurations, including a MinIO setup that avoids a managed cloud storage dependency.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Can I pay for a hosted plan?</summary>
+              <p>Not yet. The main FluxSend SaaS instance shows the available plan tiers, but online billing is not live. Payment support and paid plan pricing are planned; self hosted instances assign plans through their administrator.</p>
+            </details>
+            <details class="faq-item">
+              <summary>Are file downloads exposed publicly?</summary>
+              <p>Files remain private until shared. Downloads resolve through short lived signed URLs rather than direct public bucket access.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta" aria-labelledby="final-cta-title">
+        <div class="wrap">
+          <div class="final-cta-panel reveal">
+            <div>
+              <h2 id="final-cta-title">Put your file sharing back on your own terms.</h2>
+              <p>Sign in to your FluxSend instance, or read the deployment guide and start with MinIO, S3, or GCS.</p>
+            </div>
+            <div class="final-cta-actions">
+              <a class="btn btn-primary" href="/login" data-app-link="/login">Sign in to FluxSend</a>
+              <a class="text-link" href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Open the docs <span aria-hidden="true">↗</span></a>
             </div>
           </div>
-          <p class="ghost-mark" translate="no" aria-hidden="true">FLUXSEND</p>
         </div>
       </section>
     </main>
 
-    <footer class="site-foot">
-      <div class="wrap foot-inner">
-        <a class="brand" href="#top" translate="no">
-          <img src="fs.png" alt="" width="26" height="26" />
-          <span>FLUX<span class="accent">SEND</span></span>
-        </a>
-        <ul class="foot-links">
+    <footer class="site-footer">
+      <div class="wrap footer-grid">
+        <div>
+          <a class="brand" href="#top" translate="no">
+            <img src="fs.png" alt="" width="28" height="28" />
+            <span>FLUX<span class="brand-accent">SEND</span></span>
+          </a>
+          <p class="footer-note">Open source file sharing for teams that want to keep control of their storage.</p>
+        </div>
+        <ul class="footer-links">
           <li><a href="#features">Features</a></li>
           <li><a href="#demos">Demos</a></li>
           <li><a href="#plans">Plans</a></li>
           <li><a href="https://docs.fluxsend.app" target="_blank" rel="noreferrer">Docs</a></li>
           <li><a href="https://github.com/tscrond/fluxsend-backend" target="_blank" rel="noreferrer">GitHub</a></li>
-          <li><a href="/legal/privacy-policy">Privacy</a></li>
-          <li><a href="/legal/terms-of-service">Terms</a></li>
+          <li><a href="/login" data-app-link="/login">Sign in</a></li>
         </ul>
-        <p class="foot-meta">
-          <span>Self-hosted · Secure · Open source</span>
+        <div class="footer-legal">
           <span>© 2026 Orion Software Tomasz Skrond</span>
-        </p>
+          <span>
+            <a href="/legal/privacy-policy">Privacy</a>
+            <span aria-hidden="true"> · </span>
+            <a href="/legal/terms-of-service">Terms</a>
+          </span>
+        </div>
       </div>
     </footer>
 
@@ -2010,9 +2098,7 @@
       <div class="lightbox-panel">
         <div class="lightbox-head">
           <h3 id="lightbox-title">Demo</h3>
-          <button class="icon-btn" type="button" id="lightbox-close" aria-label="Close demo video">
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-          </button>
+          <button class="lightbox-close" type="button" id="lightbox-close" aria-label="Close demo">×</button>
         </div>
         <div class="lightbox-media">
           <video id="lightbox-video" controls playsinline preload="metadata"></video>
@@ -2028,7 +2114,6 @@
         var canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
         var themeMeta = document.getElementById('theme-color-meta');
 
-        /* Point app/legal links at the app origin when this page is hosted separately. */
         if (config.appUrl) {
           var base = String(config.appUrl).replace(/\/+$/, '');
           document.querySelectorAll('[data-app-link]').forEach(function (el) {
@@ -2036,17 +2121,19 @@
           });
         }
 
-        /* Theme */
         function applyThemeLabel() {
-          var dark = root.getAttribute('data-theme') !== 'light';
+          var dark = root.getAttribute('data-theme') === 'dark';
           if (themeMeta) themeMeta.setAttribute('content', dark ? '#0d1117' : '#f6f8fa');
           document.querySelectorAll('[data-theme-toggle]').forEach(function (button) {
+            var label = button.querySelector('.theme-label');
+            if (label) label.textContent = dark ? 'Light' : 'Dark';
             button.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
           });
         }
+
         document.querySelectorAll('[data-theme-toggle]').forEach(function (button) {
           button.addEventListener('click', function () {
-            var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             root.setAttribute('data-theme', next);
             try {
               localStorage.setItem('theme-mode', next);
@@ -2056,142 +2143,93 @@
         });
         applyThemeLabel();
 
-        /* Mobile menu */
-        var menu = document.getElementById('mobile-menu');
+        var transferEffect = document.querySelector('[data-transfer-effect]');
+        if (transferEffect && canHover && !reduceMotion) {
+          var tiltFrame = 0;
+          var tiltX = 0;
+          var tiltY = 0;
+
+          var resetTilt = function () {
+            tiltX = 0;
+            tiltY = 0;
+            if (tiltFrame) return;
+            tiltFrame = requestAnimationFrame(function () {
+              transferEffect.style.setProperty('--tilt-x', tiltX + 'deg');
+              transferEffect.style.setProperty('--tilt-y', tiltY + 'deg');
+              tiltFrame = 0;
+            });
+          };
+
+          transferEffect.addEventListener('pointermove', function (event) {
+            var rect = transferEffect.getBoundingClientRect();
+            tiltY = ((event.clientX - rect.left) / rect.width - 0.5) * 7;
+            tiltX = ((event.clientY - rect.top) / rect.height - 0.5) * -7;
+            if (tiltFrame) return;
+            tiltFrame = requestAnimationFrame(function () {
+              transferEffect.style.setProperty('--tilt-x', tiltX + 'deg');
+              transferEffect.style.setProperty('--tilt-y', tiltY + 'deg');
+              tiltFrame = 0;
+            });
+          });
+          transferEffect.addEventListener('pointerleave', resetTilt);
+        }
+
+        var menu = document.getElementById('mobile-nav');
         var menuToggle = document.getElementById('menu-toggle');
+
+        function closeMenu() {
+          if (!menu || !menuToggle) return;
+          menu.classList.remove('open');
+          menuToggle.setAttribute('aria-expanded', 'false');
+          menuToggle.setAttribute('aria-label', 'Open menu');
+          document.body.classList.remove('menu-open');
+        }
+
         if (menu && menuToggle) {
           menuToggle.addEventListener('click', function () {
             var open = !menu.classList.contains('open');
             menu.classList.toggle('open', open);
             menuToggle.setAttribute('aria-expanded', String(open));
             menuToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+            document.body.classList.toggle('menu-open', open);
           });
           menu.addEventListener('click', function (event) {
-            if (event.target.closest('a')) {
-              menu.classList.remove('open');
-              menuToggle.setAttribute('aria-expanded', 'false');
-              menuToggle.setAttribute('aria-label', 'Open menu');
-            }
+            if (event.target.closest('a')) closeMenu();
           });
         }
 
-        /* Reveal on scroll — transform/opacity only */
         var revealables = document.querySelectorAll('.reveal');
+        var words = document.querySelectorAll('.word');
+
         if (reduceMotion || !('IntersectionObserver' in window)) {
-          revealables.forEach(function (el) {
-            el.classList.add('is-in');
-          });
+          revealables.forEach(function (el) { el.classList.add('is-visible'); });
+          words.forEach(function (el) { el.classList.add('is-visible'); });
         } else {
-          var observer = new IntersectionObserver(
+          var revealObserver = new IntersectionObserver(
             function (entries) {
-              entries.forEach(function (entry, index) {
+              entries.forEach(function (entry) {
                 if (!entry.isIntersecting) return;
-                entry.target.style.transitionDelay = Math.min(index * 80, 260) + 'ms';
-                entry.target.classList.add('is-in');
-                observer.unobserve(entry.target);
+                entry.target.classList.add('is-visible');
+                revealObserver.unobserve(entry.target);
               });
             },
-            { threshold: 0.12, rootMargin: '0px 0px -48px 0px' }
+            { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
           );
-          revealables.forEach(function (el) {
-            observer.observe(el);
-          });
-        }
+          revealables.forEach(function (el) { revealObserver.observe(el); });
 
-        /* Demo rail */
-        var rail = document.getElementById('demo-rail');
-        var dotsHost = document.getElementById('demo-dots');
-        var cards = rail ? Array.prototype.slice.call(rail.querySelectorAll('[data-demo]')) : [];
-        var active = 0;
-
-        function setActive(index) {
-          active = Math.max(0, Math.min(index, cards.length - 1));
-          cards.forEach(function (card, i) {
-            card.classList.toggle('is-active', i === active);
-          });
-          dots.forEach(function (dot, i) {
-            dot.classList.toggle('is-active', i === active);
-            dot.setAttribute('aria-current', i === active ? 'true' : 'false');
-          });
-        }
-
-        function goTo(index) {
-          if (!cards.length) return;
-          var safe = Math.max(0, Math.min(index, cards.length - 1));
-          cards[safe].scrollIntoView({
-            behavior: reduceMotion ? 'auto' : 'smooth',
-            block: 'nearest',
-            inline: 'center',
-          });
-          setActive(safe);
-        }
-
-        var dots = [];
-        if (dotsHost) {
-          dots = cards.map(function (_, index) {
-            var dot = document.createElement('button');
-            dot.type = 'button';
-            dot.className = 'dot-btn';
-            dot.setAttribute('aria-label', 'Show demo ' + (index + 1));
-            dot.addEventListener('click', function () {
-              goTo(index);
-            });
-            dotsHost.appendChild(dot);
-            return dot;
-          });
-        }
-
-        if (rail && cards.length) {
-          var frame = 0;
-          rail.addEventListener(
-            'scroll',
-            function () {
-              if (frame) cancelAnimationFrame(frame);
-              frame = requestAnimationFrame(function () {
-                var railRect = rail.getBoundingClientRect();
-                var best = 0;
-                var bestRatio = -1;
-                cards.forEach(function (card, index) {
-                  var rect = card.getBoundingClientRect();
-                  var visible = Math.max(0, Math.min(rect.right, railRect.right) - Math.max(rect.left, railRect.left));
-                  var ratio = rect.width ? visible / rect.width : 0;
-                  if (ratio > bestRatio) {
-                    bestRatio = ratio;
-                    best = index;
-                  }
-                });
-                setActive(best);
+          var wordObserver = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('is-visible');
+                wordObserver.unobserve(entry.target);
               });
             },
-            { passive: true }
+            { threshold: 1, rootMargin: '0px 0px -18% 0px' }
           );
-          setActive(0);
-
-          var prev = document.getElementById('demo-prev');
-          var next = document.getElementById('demo-next');
-          if (prev) prev.addEventListener('click', function () { goTo(active - 1); });
-          if (next) next.addEventListener('click', function () { goTo(active + 1); });
+          words.forEach(function (el) { wordObserver.observe(el); });
         }
 
-        /* Hover preview on fine pointers — never under reduced motion */
-        if (canHover && !reduceMotion) {
-          document.querySelectorAll('.frame').forEach(function (frame) {
-            var video = frame.querySelector('video');
-            if (!video) return;
-            frame.addEventListener('pointerenter', function () {
-              var play = video.play();
-              if (play && typeof play.catch === 'function') play.catch(function () {});
-            });
-            frame.addEventListener('pointerleave', function () {
-              video.pause();
-              try {
-                video.currentTime = 0;
-              } catch (e) {}
-            });
-          });
-        }
-
-        /* Lightbox */
         var lightbox = document.getElementById('lightbox');
         var lightboxVideo = document.getElementById('lightbox-video');
         var lightboxTitle = document.getElementById('lightbox-title');
@@ -2204,6 +2242,7 @@
           lightboxVideo.setAttribute('src', src);
           lightbox.classList.add('open');
           document.body.style.overflow = 'hidden';
+          closeMenu();
           lightboxClose.focus();
           var play = lightboxVideo.play();
           if (play && typeof play.catch === 'function') play.catch(function () {});
@@ -2224,12 +2263,15 @@
             openLightbox(button.getAttribute('data-play'), button.getAttribute('data-src'), button);
           });
         });
+
         lightboxClose.addEventListener('click', closeLightbox);
         lightbox.addEventListener('click', function (event) {
           if (event.target === lightbox) closeLightbox();
         });
         document.addEventListener('keydown', function (event) {
-          if (event.key === 'Escape') closeLightbox();
+          if (event.key !== 'Escape') return;
+          closeLightbox();
+          closeMenu();
         });
       })();
     </script>

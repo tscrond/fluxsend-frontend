@@ -11,7 +11,7 @@ RUN rm -f /usr/share/nginx/html/index.html /usr/share/nginx/html/50x.html
 
 # Only these files are published. Listing them explicitly means a missing asset
 # fails the build instead of turning into a silent 404 on the live site.
-COPY landing.html fs.png favicon.svg robots.txt sitemap.xml llms.txt og-image.png /usr/share/nginx/html/
+COPY landing.html legal.css fs.png favicon.svg robots.txt sitemap.xml llms.txt og-image.png /usr/share/nginx/html/
 
 # Self-hosted webfont subsets and demo video posters.
 COPY fonts/ /usr/share/nginx/html/fonts/
