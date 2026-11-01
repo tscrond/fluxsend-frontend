@@ -21,5 +21,6 @@ ENV NGINX_BACKEND_PORT=3000
 ENV NGINX_BACKEND_API_PORT=8091
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/templates/default.conf.template
+COPY nginx-proxy-headers.conf /etc/nginx/templates/proxy-headers.conf.template
 EXPOSE 8000
 CMD ["nginx", "-g", "daemon off;"]
