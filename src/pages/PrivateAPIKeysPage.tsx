@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
   FormControl,
   InputLabel,
@@ -12,6 +13,7 @@ import {
   Tabs,
   Typography,
 } from '@mui/material';
+import { BookOpen } from 'lucide-react';
 import { listWorkspaces, type Workspace } from '@/api';
 import WorkspaceAPIKeysPanel from '@/components/WorkspaceAPIKeysPanel';
 import PrivateAPIKeysPanel from '@/components/PrivateAPIKeysPanel';
@@ -77,11 +79,23 @@ export default function PrivateAPIKeysPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <Typography variant="h5" fontWeight={700}>API Keys</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Manage personal keys and workspace keys from one place.
-        </Typography>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Typography variant="h5" fontWeight={700}>API Keys</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Manage personal keys and workspace keys from one place.
+          </Typography>
+        </div>
+        <Button
+          variant="outlined"
+          size="small"
+          href="https://docs.fluxsend.app/sdks/go/"
+          target="_blank"
+          rel="noreferrer"
+          startIcon={<BookOpen size={16} />}
+        >
+          Go SDK guide
+        </Button>
       </div>
 
       <Tabs
